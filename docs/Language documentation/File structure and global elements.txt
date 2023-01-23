@@ -1,0 +1,231 @@
+* - to be reviewed.
+
+!!!  Overall structure of a file  !!!
+
+[module options...]
+import ...
+...
+
+file body...
+...
+
+
+
+/////   [MODULE OPTIONS]   /////
+The flags for compiler.
+Format:
+@set -some_flag- -value-
+    Flags:
+        visibility (default public) - sets the module's visibility through import.
+        Values:
+            public - all the symbols (functions, variables, etc) are visible by default when the module is imported.
+            direct_import - all the symbols are visible by default only in the module the current one is imported to.
+            private - all the symbols (functions, variables, etc) are invisible by default when the module is imported.
+			
+		safety (default safe_only) - sets the default safety of symbols within the module.
+		Values:
+			safe - all the symbols (functions, variables, etc) can use unsafe code, but are safe by default.
+			safe_only - all the symbols (functions, variables, etc) can only use safe code and thus are safe (default value).
+			unsafe - all the symbols (functions, variables, etc) can use unsafe code and thus are unsafe.
+            
+        program_type (default program) - shows whether the file is a common program or something else. If the flag is not in the file that is originally compiled (through a direct 
+            call to the compiler), it is ignored.
+        Values:
+            program - starts from the main function, all the symbols that are not called from there in any way are omitted. An executable is created.
+            object - all the symbols are compiled. .obj would be the compilation result.
+            dynamic_library - all the symbols are compiled. .dll library would be the compilation result.
+            static_library - all the symbols are compiled. .lib library would be the compilation result.
+
+
+/////   IMPORT   /////
+The directive to import other core files.
+Format:
+    import -path.to.file-;
+    or
+    import -path.to.folder.*-; to import all the importable files in the folder.
+    
+The first part of the name is the project the core file is imported from. core.* is the way for the standard library.
+E.g. import core.math;
+Searcing for the imported file begins from the current directory and up to the root, then other stated paths.
+
+
+/////   FILE BODY   /////
+The main part of the file.
+Consists of elements, where an elements is:
+    [@annotation...]
+    element...
+    or
+    use...
+    
+    /// USE ///
+    Allows to use one symbol instead of another.
+    Format:
+        use -symbol- [as -word-];
+    Applies:
+        1. use -type- as -alias-: allows to use -alias- instead of -type-
+        2. use -name- as -alias-: allows to use -alias- as function/global variable -name-
+        3. use -module.func-/-module.var-: allows to use a function/variable without naming the module
+        4. use -module-: allows to use all the symbols from the module without naming the module
+    Examples:
+        use u8 as byte; - now byte can be as an alias of u8
+        use math.sin; - now the sinus function can be called as sin(x) instead of math.sin(x)
+        use math; - now all the functions of the math module can be used without 'math' part.
+    
+    
+    /// ANNOTATION ///
+    A hint/instruction for compiler regarding the element after the annotation.
+    Format:
+        @annotation
+    Annotations:
+        @public - makes the elements visible wherever the module is imported no matter the visibility flag.
+        @direct_import - makes the element visible only in the module it is directly imported to.
+        @private - makes the elements invisible wherever the module is imported no matter the visibility flag.
+    
+        @override - applicable only to methods. Makes sure that the method override that of the base class.
+        @const - applicable only to methods. Means the method do not change the state of the instance when it is called.
+        @final - applicable only to classes. Makes sure that there are no derived classes of the class and there are no abstract methods in the class.
+        
+        @safe - allows the element to use unsafe code inside and remain safe. Elements by default are safe, but cannot use unsafe code. Cannot be applied to variables.
+		@safe_only - does not allow the element to use unsafe code. Default value.
+        @unsafe - means that the element is unsafe to use. Can contain unsafe code. Cannot be applied to variables.
+        
+        @explicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion explicit (which is default value).
+        @implicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion implicit.
+		
+		@stdcall - 	applicable to functions. Used to state using of the stdcall calling convention.
+		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention. Default convention.
+		@fastcall - applicable to functions. Used to state using of the fastcall calling convention.
+		@thiscall - applicable to functions. Used to state using of the thiscall calling convention. Default convention for methods.
+		@vectorcall - applicable to functions. Used to state using of the vectorcall calling convention.
+		@coldcall - applicable to functions. Used to state using of the llvm coldcall calling convention.
+		@tailcall - applicable to functions. Used to state using of the llvm tailcall calling convention.
+        
+        
+    /// ELEMENT ///
+    Can be one of the types:
+        /// Function ///
+        Format:
+            def [native] -name-([-type- -argument name- [= -default_value-]]...) [-return type-] [-function body-]
+            
+            Keyword def is necessary to state that it is a function.
+            Keyword native means that the function body is outside (in a library). When used, there cannot be function body. There must be ; after the declaration then.
+            -Name- is a necessary part used to refer to the function and to call it. Instead of name, there can be an operator, but it must not overlap with an existing one.
+                Instead of name, there can be a type to declare a type conversion function (explicit by default, use @implicit to make it implicit).
+            After -name- there come arguments. There can be none (then function takes no arguments) or any number of them. Each argument has to have a -type- and a -name-.
+                An argument can have a -default value-. Then, when called, the function can have the argument not stated and it will be given the -default value-.
+                To add more than an argument there should be comma (,) before stating the next one.
+            -Return type- is the type of value the function return when called. If not stated, then function returns nothing.
+            Function body is the main part of function. It is necessary if the function is not native. It can be either a -statement- or have a format of
+                = -exression-, which is equivalent to 'return -expression-;'
+            Function can be in several variants with the same name and different argument types.
+            
+            Function with the name main is where the program starts. Function can be called either like -name-(-args...-) or like -first arg-.-name-(-args from the second-).
+                The latter would work if only there are no methods of the type of the -first arg- with such a name and signature.
+                
+        /// Global variable ///
+        Format:
+            [const] [extern] -type- -name- [= -expression-];
+            
+            Keyword const means that the variable is unmutable and cannot be changed.
+            Keyword extern means that the variable is declared in an external library. Similar to native functions. Extern variables cannot be initialized.
+                Extern variables cannot be const.
+            -Type- is the type of a variable. It is necessary, but the keyword var can be used to automatically equate the type to that of the value.
+            -Name- is a necessary part of declaration of a variable. It is used to refer to the variable.
+            After the -name-, there can be the sign = and an -expression- to initialize the variable with. It cannot be used with extern and must be used with const.
+                Otherwise, if there is none, the variable would be initialized with default value of the type if there is such, else there would be an error.
+                
+        /// Class ///
+        Format:
+            [abstract] class -name- [: -BaseClass-[, -BaseInterfaces-...]] { [-class body-] }
+            
+            Keyword abstract means the class cannot have instances, but can be derived. Abstract class cannot have annotation @final.
+            Keyword class is necessary to state that it is a class.
+            Name is a necessary part which is used to refer to the class.
+            After the name, there can be the letter : and the list of base classes. It is used to derive from the classes. Among base class,
+                there can be a single class and any number of interfaces.
+            Class body must be declared in braces { }.
+            
+            /// Class body ///
+            Can contain fields and methods.
+            Format:
+                // Field
+                [public/private/protected] [static] -type- -name- [= -expression-];
+                
+                First come the visibility. Public means the field is visible outside the class. Private means the field is visible in the class only.
+                    Protected means the field is visible in the class and the derived classes, but not outside. By default, visibility is private.
+                Keyword static means the field is common for all the instances. It can be used even if there are no instances at all.
+                -Type- is the type of the variable.
+                -Name- is the name of the variable.
+                After the name, there can be the sign = and -expression- to initialize the field by default when an instance of the class is created.
+                
+                // Method
+                def [public/private/protected] [static/virtual/abstract] [native] -name-([-type- -argument name- [= -default_value-]]...) [-type-] [-method body-]
+                
+                The same as a global function apart from:
+                Visibility is the same as of field.
+                Keyword static means the method can be called without an instance. Only static fields can be used inside a static method.
+                Keyword virtual means the method can be overrided in a derived class.
+                Keyword abstract means the method has no definition and must be overrided in a derived class. The class must be abstract to have abstract methods.
+                Keyword native cannot be used with keyword abstract.
+                Method body can use the keyword this to refer to the instance of the class the method was called from if the method is not static.
+                
+                There are special cases of a method:
+                    // Constructor
+                    Keyword this is used instead of -name-. Constructor can only be public. Constructor cannot be static/virtual/abstract nor can it have a -type-.
+                    Constructor is called when an instance of the class is created in order to initialize it. By default a constructor with no arguments created if 
+                    all the fields have default values, and a constructor with arguments equivalent to the fields is created which initialize all the fields with 
+                    given values.
+                    
+                    // Destructor
+                    Same as constructor, but a tilde (~) must be added before keyword this. Cannot have arguments. Destructor is called when an instance of the class
+                    is destroyed in order to free resources. By default the destructor is created if all the fields have a destructor. Otherwise, it must be
+                    explicitly defined.
+            
+        /// Interface ///
+        Format:
+            interface -name- [: -BaseInterfaces-...] { [-interface body-] }
+            
+            Similar to a class, but:
+                1. All the methods are abstract by default. If there is a definition, the method cannot be overrided.
+                2. No instances of an interface can be created.
+                3. No class can be derived by an interface.
+                4. Keywords virtual/abstract are not applicable to the methods.
+                
+        /// Struct ///
+        Format:
+            struct [-name-] { [-struct body-] }
+            
+            Similar to a class, but:
+                1. Cannot derive other classes/interfaces/... nor can be derived.
+                2. All the members are public by default.
+                3. Keywords virtual/abstract are not applicable to the methods.
+                4. If no name is specified, it is no different from declaring several variables. No methods can be defined then.
+                
+        /// Enum ///
+        Format:
+            enum [-name-] [: -base type- ] { -enumeration body- }
+            
+            Enum is a type with predefined possible values.
+            -Base type- is the type which the values will have.
+            -Enumeration body- must first of all contain an enumeration like:
+                -name- [= -value-] [,
+                -name = [= -value]...]
+                
+                -Value- must be of the base type (i32 by default). An assignment can be omitted if the -base type- is:
+                    Some int/uint/float/bool type (e.g. i32). Then the first value would be 0 (or 0.0) and the next would increase by 1.
+                        In case some -name- has a -value-, it would then increase by 1 from that -value-. There cannot be more elements than
+                        the max value of the type.
+                    A string type. Then all the -names- would have the value equivalent to the name in string format.
+                Other types must be expicitly assigned.    
+                
+                Enum may contain methods and constructors/destructors as a class, but no fields are allowed.
+                If the name is not specified, no methods can be defined as well. The values of the enum would be just constants of the -base type-.
+                
+        /// Union ///
+        Format:
+            union [-name-] { -union body- }
+            
+            Same as structure, but:
+                1. Union can be used in unsafe code only.
+                2. -Union body- contains fields that are located in the same place in the memory (thus changing one field changes other as well).
+                3. If no name is specified, union would just create several variables in the same piece of memory. No methods can be declared then.

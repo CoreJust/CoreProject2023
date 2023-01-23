@@ -104,6 +104,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +120,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,7 +131,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Lexer\ImportsHandler.cpp" />
+    <ClCompile Include="Lexer\Lexer.cpp" />
+    <ClCompile Include="Lexer\Token.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Module\Annotations.cpp" />
+    <ClCompile Include="Utils\ErrorManager.cpp" />
+    <ClCompile Include="Utils\File.cpp" />
+    <ClCompile Include="Utils\String.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Lexer\ImportsHandler.h" />
+    <ClInclude Include="Lexer\Lexer.h" />
+    <ClInclude Include="Lexer\Token.h" />
+    <ClInclude Include="Module\Annotations.h" />
+    <ClInclude Include="Module\Module.h" />
+    <ClInclude Include="Utils\Defs.h" />
+    <ClInclude Include="Utils\ErrorManager.h" />
+    <ClInclude Include="Utils\File.h" />
+    <ClInclude Include="Utils\String.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,10 @@
+Initial development
+23.01.2023
+	Made an initial commit
+	Created docs and CoreStdLib directories
+	Copied language docs from old CoreProject
+	Copied and edited Token and Lexer files from old CoreProject
+	Created (partialy copied from old CoreProject) Utils/Defs, Utils/String, Utils/ErrorManager, Utils/File
+	Copied Module/Annotations
+	Created Lexer/ImportHandler
+	

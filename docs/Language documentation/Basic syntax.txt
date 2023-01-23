@@ -1,0 +1,276 @@
+* - to be reviewed.
+
+!!!  Basic Syntax  !!!
+
+/////   COMMENTS   /////
+A comment starts with # and continues till the end of the line
+A multiline comment starts with ### on a line and ends with ### on another. There cannot be anything else on the lines.
+
+
+
+/////   IDENTIFIERS    /////
+Names of variables, functions, types, etc can contain both lower and upper case latin letters (a-z and A-Z),
+    numbers(0-9, name cannot start with a number), symbols _ and $.
+
+
+
+/////   TYPE SYSTEM   /////
+Basic types are:
+    1. Signed integer types: i8, i16, i32, i64 for signed integers with 8..64 bits length respectively.
+    2. Unsigned integer types: u8, u16, u32, u64 for unsigned integers with 8..64 bits length respectively.
+    3. Floating point types: f32, f64 for floats with 32..64 bits length respectively.
+    4. Boolean type: bool for boolean (true or false).
+    5. Character types: c8, c16, c32 for characters with ASCII, utf-16 and utf-32 encodings.
+    6. String types: str8, str16, str32 (basically these are c8[], c16[], and c32[]).
+    
+Complex types are:
+    1. Array: -type-[-size-] for an array of -size- number of -type- values.
+    2. Dynamic array: -type-[] for a dynamic array of -type- values. Has the .size property. Must be initialized in the safe code.
+    3. Pointer: -type- [const]* for a pointer to a -type-. Cannot be used in safe code.
+    4. Reference: -type- [const]& for a reference to a -type-.
+    5. Optional: -type-? for an optional of a type (either -type- or null). Method .resolve() must be called to get the item after checking for null.
+    6. Tuple: tuple<-types...-> for a tuple of -types...-.
+    7. Function: func -return type- (-argument types...-). A function type with no return value nor arguments would be: func().
+    
+User defined types are:
+    1. Class - implicit safe pointer
+    2. Structure
+    3. Enum - implicit base type
+    4. Union
+    
+    
+    
+    
+/////   TYPE CONVERSIONS   /////
+Implicit type conversions:
+    1. Integer types can be implicitly conversed into a larger integer type (e.g. i32 -> i64, u8 -> u32).
+    2. Unsigned integer can be implicitly casted to a larger signed integer (e.g. u8 -> i16).
+    3. Integer types can be implicitly casted to floating point types (e.g. u64 -> f32).
+    4. Floating point types can be implicitly casted to larger ones (f32 -> f64).
+    5. Character types can be implicitly casted to larger ones (c8 -> c16, c16 -> c32)
+    6. Bool type can be implicitly casted to any number type (e.g. bool -> u64, bool -> f32). False would be 0 and true would be 1.
+    7. Number, character, string, dynamic array and pointer types can be implicitly casted to bool.
+        False if number is 0, character is '\00', string is "", dynamic array's size is 0 or pointer is null, else true.
+    
+Explicit type conversions:
+    1. Integer types can be casted to another integer type (e.g. u8(i64)).
+    2. Floating point types can be converted to integers and smaller floats (e.g. i32(f32), f32(f64)).
+    3. Characters can be converted to smaller ones (c16(c32), c8(c16)).
+    4. Strings can be converted to other strings (e.g. str16(str8)).
+    5. Characters can be casted to string (e.g. str8(c8)).
+    6. Character and integers are mutually convertible (e.g. c8(u8), i32(c16)).
+    7. Pointers are convertible to integers (e.g. u64(i8*)).
+    8. Functions, strings, arrays (dynamic ones included), classes and optionals can be casted to pointers (e.g. u8*(func(), i32*(i32[8])).
+    9. Numbers, pointers, arrays, tuples and bool can be casted to string.
+    10. Boolean can be converted to character.
+    11. Structures can be casted to tuples.
+    12. Enums convert according to their types.
+
+Other conversion are possible through -value- as -type-, which is a bit cast, or can be defined through def -type-(...)...
+
+
+
+
+/////   LITERALS   /////
+Integer and floating point literals:
+    [-system-]-value-[-type-]
+    
+    -System- is the numeric system (base) for the literal. By default the base is 10 (decimal).
+        0x is used for the base 16 (hexadecimal).
+        0o is used for the base 8 (octodecimal).
+        0b is used for the base 2 (binary).
+    -Value- is the value of the literal. In the case of floating point, the format would be: abc.efg. -Value- can have character ' in the middle
+        to split a long number. In case of hexadecimal number, all the letters must be of the same case (it cannot be 0xFffa).
+    -Type- is the type of the literal. By default it is i32 for integers and f32 for floating point numbers.
+    
+    Examples:
+        0xfu8 - 15 as an 8-bit unsigned integer.
+        0b11.01f32 - 3.25 as a 32-bit floating point number.
+        1'125'625'000u32 - 1125625000 as a 32-bit unsigned integer.
+        0xf.ff64 - 15.935 as a 64-bit floating point number. !In hexadecimal numbers, the endings "f32" and "f64" would mean -type- rather than value.
+            In order to put them as value, either the type can be specified additionally or a zero can be added in the end for floats (0xf64f32/0x0.ff640).
+        
+Boolean literals:
+    false for 0 and true for 1.
+    
+    Anything other than 0 or null would be true when converting to bool.
+    
+Character literals:
+    '-value-'[-type-]
+    
+    -Value- is the value. Format:
+        A single character
+        or an escape sequence (\n, \t, \r, \a, \b, \f, \v, \', \", \\)
+        or the code of a symbol \-code- with code in decimal formal and \x-code- with code in hexadecimal format.
+    -Type- is either c8, c16 or c32 for corresponding utf-ies. By default it is c8.
+    
+String literals:
+    [f]"-value-"[-type-]
+    
+    F means format. It is used if the literal is a string template.
+    -Value- is the string itself, where each character has the same format as of character literal.
+        But if it is a template, then characters { and } must be used with \ before them.
+        Parts of template strings which are in {} are compiled as an expression and then their values are put into the string.
+    -Type- is the string type: str8, str16 or str32. By default it is str8.
+    
+    Note: string literals in core language can be multiline.
+    
+    Examples:
+        "\tAlert!!!\a\n"str16
+        f"a + b is {a + b}" - the resulting string would be "a + b is 32" for example.
+        "a
+        
+        b" - same as "a\n\n\t\tb"
+    
+Array literals:
+    [-type-[-size-]]{ -values...- }
+    
+    The type of the array literal would be the type of the first value if it is not specified, otherwise -type-[-the size-].
+    
+    Examples:
+        { 1, 2, 3 } - i32[3]
+        u8{ 8, 16, 12 } - u8[3]
+        f32[2]{ } - f32[2] with values { 0.0f32, 0.0f32 } - if values of the array are not specified, they would be default.
+        c8[3]{ 'a', 'b' } - c8[3] with values { 'a', 'b', 'b' } - if the size is bigger than the number of specified values, the last value
+            will repeat itself.
+            
+Pointer and optional literal:
+    null
+    
+Tuple literals:
+    tuple[<-types...->](-values-)
+    
+    If the types of the tuple are not specified, they will be the same as those of the values.
+    
+    Examples:
+        tuple(1, 4.0, 'a') - tuple<i32, f32, c8>
+        tuple<u8, f64, c16>(1, 4.0, 'a') - tuple<u8, f64, c16>
+        
+Function literals:
+    def [-return type-]([-arguments...-]) -function body-
+    
+    Everything is the same as of a global function, apart from lack of some keywords in definition and annotations.
+    
+    Examples:
+        func u64(u32) fact = def u64(u32 n) = if n <= 1 1 else n * this(n - 1) - keyword this in lambdas refers to the lambda itself.
+        var f = def tuple<str8, str16>(const str8& s) = tuple(s, str16(s)) - typeof(f) = func tuple<str8, str16>(const str8& s)
+        
+        
+        
+        
+/////   OPERATORS   /////
+! number is any type of (un)signed integer type, floating point type or bool.
+Operator precedence(from highest to lowest):
+    1.  a++, a-- - postfix increment and decrement.
+            Equivalent to += 1 or -= 1, but return the value of a before changing it.
+            By default it is used with number types, character types and pointers.
+        -type-(a) - type cast.
+        -function-(a) - function call.
+        typeof(a) - type of an expression. Not overrideable.
+        a[b] - access to an element, applicable to arrays, pointers and tuples by default. b is an integer.
+        a[[b]:[c]] - slice of a part of an array, pointer or tuples. b and c are integers
+        a.b - member access. Not overrideable.
+        
+    2.  ++a, --a - prefix increment and decrement
+            Equivalent to += 1 or -= 1, by default it is used with number types, character types and pointers.
+        +a, -a - unary plus and minus. Applcable to number types.
+        !a - logical NOT. Applcable to any type that can be converted to bool.
+        ~a - bitwise NOT. Applcable to integer and boolean types.
+        *a - dereference of a pointer. Unsafe. Applcable to pointers.
+        &a - address of. Unsafe. Applcable to any rvalue.
+        new -type-([-arguments...-]), new -type-[-size-] - allocation of memory and call of a constructor. new() is used for classes(safe)
+            and for pointers(unsafe). new[] is used for dynamic arrays.
+        delete a - deallocation of memory and call of the destructor. Applcable to classes (to free memory before gc), pointers and dynamic arrays.
+        
+    3.  a ** b - raise to power. Applcable to numbers.
+    
+    4.  a * b - multiplication. Applcable to numbers, characters, strings and pointers (string * n to duplicate string n times, n * n, c * n, p * n).
+        a / b - division. Applcable to numbers. The result is a floating point number.
+        a // b - division with the whole result. Applcable to numbers, characters and pointers. (n // n, c // n, p // n)
+        a % b - remainder. Applcable to numbers, characters and pointers. (n % n, c % n, p % n)
+        
+    5.  a + b - addition. Applcable to numbers, strings, characters and pointers. (n + n, s + s, s + c, c + n, p + p, p + n)
+        a - b - substraction. Applcable to numbers, characters and pointers. (n - n, c - n, p - p, p - n)
+        
+    6.  a <<, >>, &, |, ^ b - bitwise left and right shifts, bitwise AND, OR and XOR. Applcable to numbers, characters and pointers. (n << n, c << n, p << n)
+    
+    7.  a as -type- - bit cast of a to the -type-. Applcable to any types.
+        a..b[..-step-] - range creation. Returns a range that starts with a and continues till b (exclusively) with step -step-. *
+     
+    8.  a <, <=, >, >= b - relational operators. Applcable to numbers, characters, strings, pointers.
+        a ==, != b - equation and non-equation. Applcable to any types that can be compared.
+        a is -type- - returns true if a is an instance of -type-.
+        a in b - returns true if b contains a. Applcable to: c in s, s in s, -type- in -type-[].
+        
+    9.  a && b - logical AND. Applcable to any types that can be converted into bool.
+    
+    10. a || b - logical OR. Applcable to any types that can be converted into bool.
+    
+    11. if e a else b - ternary operator. e is anything convertible to bool. If e is true then a would be the result, else b.
+        match e { case -val-: a, case -val- b..., default: c } - match operator. If e matches any of the cases, the respective value is the result, otherwise default.
+            Default must be specified anyway.
+        a =, +=, -=, *=, **=, /=, //=, %=, ^=, |=, &=, <<=, >>= b - compound and direct assignments. Applcable to any types that can be used
+            with respective operators. Direct assignment is applicable to any type. a must be rvalue.
+            
+    12. , - comma.
+    
+    
+    
+/////   STATEMENTS   /////
+Block statement:
+    { -statement-; [-statement-; ...] }
+    A block of statements. It is a statement itself.
+    Other statements must end with ;
+    
+safe statement:
+    safe -statement-
+    Used to declare the statement as safe. Allows to used unsafe code in it.
+
+Variable declaration:
+    [const] -type- -name- [= -expression-];
+    The same as of a global variable, apart from that local variable cannot be extern nor have any annotations.
+    
+if -expression- -statement- [elif -expression- -statement-][else -statement-]
+    If the first expression is true, the first statement if executed, else if the second expression is true, the second statement is executed.
+    If nothing is true, the else branch is executed.
+    
+Cycles:
+    while -expression- -statement-
+        While the expression is true, the statement is executed continuously (check expression, if true, execute statement and repeat, if false, end the cycle).
+        
+    do -statement- while -expression-;
+        Same as while, but first the statement is executed, then the expression is checked. Thus, statement is executed at least once.
+        
+    for -type- a : b -statement-
+        Iterates throught b and executes -statement- for each element a in b.
+        
+    for [-type- a = -expression-]; [-expression-]; [-expression-] -statement-
+        First executes first block, then checks the second block, is true, executes statement, executes third block, returns to step 2.
+        A usual C-like for.
+        
+    for -expression- -statement-
+        Saves the result of the expression. It must be an unsigned integer. Executes -statement- -expression- times.
+        Equivalent to: for u64 i = -expression-; i; i-- -statement-.
+        
+    continue [-number-];
+        Ends current iteration and starts the next one in the cycle -number- (by default it is 0).
+        Example:
+            for i32 i : a
+                for i32 j : b
+                    ...
+                    continue 1; // will start a new iteration of the outer cycle.
+                    
+    break [-number-];
+        Ends the cycle -number- (by default 0).
+        
+Switch -expression- { [case -value-: -statement-; ...] default: -statement-; }
+    If any case coincides with the expression, executes the case's statement. Else executes default statement.
+    
+union { variable declarations }
+    Allows to declare several variable in one piece of memory. Unsafe.
+    
+struct { variable declarations }
+    Equivalent to common variable declaration. Safe.
+    
+return [-expression-];
+    Returns an expression from the function/method. The type of expression should be the same as the return value.

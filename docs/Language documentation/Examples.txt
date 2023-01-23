@@ -1,0 +1,17 @@
+!!!  Examples of programs  !!!
+///  Hello world  ///
+import core.console;
+
+def main() {
+    console.println("Hello world!");
+}
+
+///  Factorial  ///
+import core.console;
+
+def u64 fact(u32 n) = if n <= 1 1 else n * fact(n - 1);
+
+def main() {
+    u32 n = console.input<u32>("Enter the number: ");
+    console.println(f"The result is {fact(n)}");
+}

@@ -21,19 +21,20 @@ Basic types are:
     3. Floating point types: f32, f64 for floats with 32..64 bits length respectively.
     4. Boolean type: bool for boolean (true or false).
     5. Character types: c8, c16, c32 for characters with ASCII, utf-16 and utf-32 encodings.
-    6. String types: str8, str16, str32 (basically these are c8[], c16[], and c32[]).
+    6. String types: str8, str16, str32 (basically these are c8[], c16[], and c32[]). Complex type.
     
 Complex types are:
-    1. Array: -type-[-size-] for an array of -size- number of -type- values.
-    2. Dynamic array: -type-[] for a dynamic array of -type- values. Has the .size property. Must be initialized in the safe code.
+    1. Array: -type-[-size-] for an array of -size- number of -type- values. Complex type.
+    2. Dynamic array: -type-[] for a dynamic array of -type- values. Has the .size property. Must be initialized in the safe code. Complex type.
     3. Pointer: -type- [const]* for a pointer to a -type-. Cannot be used in safe code.
     4. Reference: -type- [const]& for a reference to a -type-.
-    5. Optional: -type-? for an optional of a type (either -type- or null). Method .resolve() must be called to get the item after checking for null.
-    6. Tuple: tuple<-types...-> for a tuple of -types...-.
-    7. Function: func -return type- (-argument types...-). A function type with no return value nor arguments would be: func().
+	5. Rvalue reference: -type-&&. This type might be initialized only through move(rvalue).
+    6. Optional: -type-? for an optional of a type (either -type- or null). Method .resolve() must be called to get the item after checking for null.
+    7. Tuple: tuple<-types...-> for a tuple of -types...-.
+    8. Function: func -return type- (-argument types...-). A function type with no return value nor arguments would be: func().
     
 User defined types are:
-    1. Class - implicit safe pointer
+    1. Class - implicit safe pointer. Complex type.
     2. Structure
     3. Enum - implicit base type
     4. Union
@@ -178,6 +179,8 @@ Operator precedence(from highest to lowest):
         ~a - bitwise NOT. Applcable to integer and boolean types.
         *a - dereference of a pointer. Unsafe. Applcable to pointers.
         &a - address of. Unsafe. Applcable to any rvalue.
+		ref [const] a - reference to. Applcable to any rvalue, needed to get a reference to a value.
+		move a - commiting a movement of a value. a, if it is not a simple type, would be null after that. The resulting types is -type-&&.
         new -type-([-arguments...-]), new -type-[-size-] - allocation of memory and call of a constructor. new() is used for classes(safe)
             and for pointers(unsafe). new[] is used for dynamic arrays.
         delete a - deallocation of memory and call of the destructor. Applcable to classes (to free memory before gc), pointers and dynamic arrays.
@@ -213,6 +216,16 @@ Operator precedence(from highest to lowest):
             with respective operators. Direct assignment is applicable to any type. a must be rvalue.
             
     12. , - comma.
+	
+	
+	
+/////   OVERLOADED FUNCTIONS   /////
+In case of an overloaded function's (same name, different argument types) call:
+	1) If there is only one function with the stated number of arguments, it would be chosen.
+	2) If there is several such functions, and if one of them has exactly the types of the values stated, it is chosen.
+	3) Otherwise, the function with the least implicit type conversions is called.
+	4) If there are several such functions, the one with the most standard (not defined by user) conversions is chosen.
+	5) Otherwise, compiler states an error.
     
     
     
@@ -263,7 +276,7 @@ Cycles:
     break [-number-];
         Ends the cycle -number- (by default 0).
         
-Switch -expression- { [case -value-: -statement-; ...] default: -statement-; }
+switch -expression- { [case -value-: -statement-; ...] default: -statement-; }
     If any case coincides with the expression, executes the case's statement. Else executes default statement.
     
 union { variable declarations }
@@ -274,3 +287,14 @@ struct { variable declarations }
     
 return [-expression-];
     Returns an expression from the function/method. The type of expression should be the same as the return value.
+
+
+
+
+/////   OWNING   /////
+Owning of simple types (e.g. i32, f64, bool, c8) is always copying, applying move would be ignored.
+For complex types, copying is default option. But they can be moved with operator move(a).
+In a class, moving can become the only option if the class is annotated with @move_only.
+So as to leave the option of copying, the moving constructor (def this(-type-&&)) can be annotated with @prefer,
+	and moving would become the default option (without stating move(a)). To use copying in such a case, ref(a)
+	must be used for initialization.

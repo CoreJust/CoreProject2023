@@ -84,6 +84,7 @@ Consists of elements, where an elements is:
         @override - applicable only to methods. Makes sure that the method override that of the base class.
         @const - applicable only to methods. Means the method do not change the state of the instance when it is called.
         @final - applicable only to classes. Makes sure that there are no derived classes of the class and there are no abstract methods in the class.
+		@move_only - applicable only to classes. Makes moving the default option for owning for this class. Moving constructor (def this(-type-&&)) must be implemented.
         
         @safe - allows the element to use unsafe code inside and remain safe. Elements by default are safe, but cannot use unsafe code. Cannot be applied to variables.
 		@safe_only - does not allow the element to use unsafe code. Default value.
@@ -91,6 +92,8 @@ Consists of elements, where an elements is:
         
         @explicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion explicit (which is default value).
         @implicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion implicit.
+		
+		@prefer - applicable to functions. Used to make the overloaded function preferable when possible.
 		
 		@stdcall - 	applicable to functions. Used to state using of the stdcall calling convention.
 		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention. Default convention.

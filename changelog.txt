@@ -7,4 +7,21 @@ Initial development
 	Created (partialy copied from old CoreProject) Utils/Defs, Utils/String, Utils/ErrorManager, Utils/File
 	Copied Module/Annotations
 	Created Lexer/ImportHandler
+	Added extensions for git to ignore
 	
+	Commited as "Added Lexer"
+	
+	
+	Included LLVM
+	Copied INode, Expression, ValueExpr, Visitor
+	Started experiments with LLVM (partial success)
+
+26.01.2023
+	Added Statement and Declaration basic classes (interfaces)
+	In documentation, the language part, the owning concept, ref, move operators, overloaded function choosing were added
+	In documentation, the annotations @move_only and @prefer were presented
+	Parser module partially copied from old CoreProject
+	Added simple compilation (must be edited)
+	Now can compile and print a character with some code
+
+	Commited as "Added Parser and simple compilation"

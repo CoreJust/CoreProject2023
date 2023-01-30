@@ -1,3 +1,17 @@
 import some_file;
 
-15
+def native putchar(i32 val);
+def native getchar();
+
+const i32 H = 72;
+i32 i = 105;
+const i32 new_line = 10;
+
+def main() {
+	putchar(H);
+	putchar(i);
+	putchar(new_line);
+	putchar(getchar());
+	getchar();
+	return 0;
+}

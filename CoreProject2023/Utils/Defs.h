@@ -4,7 +4,7 @@
 
 #ifdef _DEBUG
 #define ASSERT(expr, message)\
-	if (expr) {\
+	if (!(expr)) {\
 		std::cout << __FILE__ << ": assertion failed on line " << __LINE__ << " : " << (message) << std::endl;\
 	}
 #else

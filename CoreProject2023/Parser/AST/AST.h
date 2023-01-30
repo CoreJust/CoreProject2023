@@ -1,2 +1,10 @@
 #pragma once
-#include "ValueExpr.h"
+#include "Decls/FunctionDeclaration.h"
+#include "Decls/VariableDeclaration.h"
+#include "States/BlockStatement.h"
+#include "States/ReturnStatement.h"
+#include "States/ExpressionStatement.h"
+#include "Exprs/FunctionCallExpr.h"
+#include "Exprs/FunctionExpr.h"
+#include "Exprs/VariableExpr.h"
+#include "Exprs/ValueExpr.h"

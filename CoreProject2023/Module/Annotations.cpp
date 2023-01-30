@@ -87,3 +87,11 @@ CallingConvention FunctionQualities::getCallingConvention() const {
 void FunctionQualities::setCallingConvention(CallingConvention convention) {
     m_additionalData = (m_additionalData & ~0b11100) | ((u8)convention << 2);
 }
+
+bool FunctionQualities::isManglingOn() const {
+    return bool((m_additionalData >> 5) & 1);
+}
+
+void FunctionQualities::setMangling(bool isToMangle) {
+    m_additionalData = (m_additionalData & ~0b100000) | ((isToMangle ? 1 : 0) << 5);
+}

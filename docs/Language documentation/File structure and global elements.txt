@@ -40,9 +40,9 @@ Format:
 /////   IMPORT   /////
 The directive to import other core files.
 Format:
-    import -path.to.file-;
+    import -path.to.file- [as -alias-];
     or
-    import -path.to.folder.*-; to import all the importable files in the folder.
+    import -path.to.folder.*- [as -alias-]; to import all the importable files in the folder.
     
 The first part of the name is the project the core file is imported from. core.* is the way for the standard library.
 E.g. import core.math;
@@ -63,7 +63,7 @@ Consists of elements, where an elements is:
         use -symbol- [as -word-];
     Applies:
         1. use -type- as -alias-: allows to use -alias- instead of -type-
-        2. use -name- as -alias-: allows to use -alias- as function/global variable -name-
+        2. use -name- as -alias-: allows to use -alias- as function/global variable/module -name-
         3. use -module.func-/-module.var-: allows to use a function/variable without naming the module
         4. use -module-: allows to use all the symbols from the module without naming the module
     Examples:
@@ -94,6 +94,7 @@ Consists of elements, where an elements is:
         @implicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion implicit.
 		
 		@prefer - applicable to functions. Used to make the overloaded function preferable when possible.
+		@no_mangling - applicable to function. Turns off mangling (available if only the function is not overloaded).
 		
 		@stdcall - 	applicable to functions. Used to state using of the stdcall calling convention.
 		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention. Default convention.

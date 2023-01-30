@@ -54,7 +54,7 @@ std::string ImportsHandler::findFullImportPath(const std::string& module, const 
 		}
 	}
 
-	ErrorManager::lexerError(-1, module + " - no such module found");
+	ErrorManager::lexerError(ErrorID::E1001_NO_SUCH_MODULE_FOUND, -1, module);
 	return "";
 }
 

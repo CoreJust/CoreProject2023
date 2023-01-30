@@ -111,6 +111,7 @@ enum class CallingConvention : u8 {
 *	8: is override (if method)
 *	9: is explicit(0) or implicit(1) (if type cast function)
 *	10-12: calling convention (default ccall)
+*	13: is mangling on
 */
 class FunctionQualities final : public CommonQualities {
 	u8 m_additionalData = 0;
@@ -133,4 +134,7 @@ public:
 
 	CallingConvention getCallingConvention() const;
 	void setCallingConvention(CallingConvention convention);
+
+	bool isManglingOn() const;
+	void setMangling(bool isToMangle);
 };

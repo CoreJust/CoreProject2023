@@ -25,3 +25,23 @@ Initial development
 	Now can compile and print a character with some code
 
 	Commited as "Added Parser and simple compilation"
+
+27.01.2023
+	Added new Error management (with ErrorID, e.g. E1001, W1001)
+	Added format strings' handling to lexer
+	Began adding functions
+	Created modules FunctionDeclaration, FunctionPrototype
+
+29.01.2023
+	Started adding symbol handling
+	Created modules Compiler, ModuleSymbols, SymbolTable
+	Module main.cpp cleaned, most of the content is moved to module Compiler
+	Created modules Variable, Function, FunctionArgument
+	Edited imports documentation
+	Created module SymbolLoader
+
+30.01.2023
+	Created module Project
+	Remade module Compiler, it's working now
+	Created modules ReturnStatement, BlockStatemen, VariableDeclaration, FunctionExpr, FunctionCallExpr
+	

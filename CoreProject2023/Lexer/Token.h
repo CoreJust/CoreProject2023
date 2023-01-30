@@ -22,6 +22,10 @@ enum class TokenType : u8 {
 	TEXT8,
 	TEXT16,
 	TEXT32,
+	FORMAT_TEXT8,
+	FORMAT_TEXT16,
+	FORMAT_TEXT32,
+	FORMAT_STRING_END,
 
 	WORD, // identifier
 

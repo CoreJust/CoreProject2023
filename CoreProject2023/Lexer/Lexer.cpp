@@ -88,7 +88,8 @@ std::vector<Token> Lexer::tokenize() {
 			tokenizeWord();
 		else if (m_text[m_pos] == '\'')
 			tokenizeCharacter();
-		else if (m_text[m_pos] == '\"')
+		else if (m_text[m_pos] == '\"' ||
+			(m_pos < m_text.size() - 1 && m_text[m_pos] == 'f' && m_text[m_pos + 1] == '\"'))
 			tokenizeText();
 		else if (m_text[m_pos] == '#')
 			tokenizeComment();
@@ -126,14 +127,14 @@ ModuleQualities Lexer::handleModuleQualities() {
 
 		skipWhitespaces(true);
 		if (m_pos >= m_text.size() || !(isalnum(m_text[m_pos]) || m_text[m_pos] == '_' || m_text[m_pos] == '&'))
-			ErrorManager::lexerError(m_line, "the parameter of @set is unstated");
+			ErrorManager::lexerError(ErrorID::E1053_ANNOTATION_PARAMETER_UNSTATED, m_line, "the parameter of @set is unstated");
 
 		std::string parameter;
 		loadIdentifier(parameter);
 
 		skipWhitespaces(true);
 		if (m_pos >= m_text.size() || !(isalnum(m_text[m_pos]) || m_text[m_pos] == '_' || m_text[m_pos] == '&'))
-			ErrorManager::lexerError(m_line, "the value of @set is unstated");
+			ErrorManager::lexerError(ErrorID::E1054_ANNOTATION_VALUE_UNSTATED, m_line, "the value of @set is unstated");
 
 		m_buffer.clear();
 		loadIdentifier(m_buffer);
@@ -143,20 +144,20 @@ ModuleQualities Lexer::handleModuleQualities() {
 			if (m_buffer == "public") result.setVisibility(Visibility::PUBLIC);
 			else if (m_buffer == "private") result.setVisibility(Visibility::PRIVATE);
 			else if (m_buffer == "direct_import") result.setVisibility(Visibility::DIRECT_IMPORT);
-			else ErrorManager::lexerError(m_line, "unknown value for @set visibility: " + m_buffer);
+			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set visibility " + m_buffer);
 		} else if (parameter == "safety") {
 			if (m_buffer == "safe") result.setSafety(Safety::SAFE);
 			else if (m_buffer == "unsafe") result.setSafety(Safety::UNSAFE);
 			else if (m_buffer == "safe_only") result.setSafety(Safety::SAFE_ONLY);
-			else ErrorManager::lexerError(m_line, "unknown value for @set safety: " + m_buffer);
+			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set safety " + m_buffer);
 		} else if (parameter == "program_type") {
 			if (m_buffer == "program") result.setProgramType(ProgramType::PROGRAM);
 			else if (m_buffer == "object") result.setProgramType(ProgramType::OBJECT);
 			else if (m_buffer == "dynamic_library") result.setProgramType(ProgramType::DYNAMIC_LIBRARY);
 			else if (m_buffer == "static_library") result.setProgramType(ProgramType::STATIC_LIBRARY);
-			else ErrorManager::lexerError(m_line, "unknown value for @set program_type: " + m_buffer);
+			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set program_type " + m_buffer);
 		} else {
-			ErrorManager::lexerError(m_line, "unknown parameter for @set: " + m_buffer);
+			ErrorManager::lexerError(ErrorID::E1055_UNKNOWN_ANNOTATION_PARAMETER, m_line, "@set " + m_buffer);
 		}
 	}
 
@@ -186,7 +187,7 @@ std::vector<std::string> Lexer::handleImports() {
 
 			while (m_pos < m_text.size() && m_text[m_pos] != ';') {
 				if (m_text[m_pos] == '\n')
-					ErrorManager::lexerError(m_line, "the command 'import' has no ending ';'");
+					ErrorManager::lexerError(ErrorID::E1002_NO_ENDING_SEMICOLON, m_line, "import " + m_buffer);
 
 				m_buffer += m_text[m_pos]; // read the module to import
 				next();
@@ -230,7 +231,7 @@ void Lexer::tokenizeNumber() {
 		loadIdentifier(type);
 
 		if (m_buffer.find('.') != std::string::npos && type[0] != 'f')
-			ErrorManager::lexerError(m_line, "improper postfix for a floating point number: " + type);
+			ErrorManager::lexerError(ErrorID::E1101_FLOAT_LITERAL_IMPROPER_POSTFIX, m_line, "postfix: " + type);
 
 		if (type == "f32") {
 			return m_toks.push_back(Token(TokenType::NUMBERF32, m_buffer, m_line));
@@ -253,7 +254,7 @@ void Lexer::tokenizeNumber() {
 		} else if (type == "u64") {
 			return m_toks.push_back(Token(TokenType::NUMBERU64, m_buffer, m_line));
 		} else {
-			ErrorManager::lexerError(m_line, "unknown number postfix: " + type);
+			ErrorManager::lexerError(ErrorID::E1102_NUMBER_LITERAL_IMPROPER_POSTFIX, m_line, m_buffer + " " + type);
 		}
 	}
 
@@ -292,31 +293,83 @@ void Lexer::tokenizeOperator() {
 void Lexer::tokenizeText() {
 	m_buffer.clear();
 
+	bool isFString = false; // f"...{code}...", tokens are: FORMAT_TEXT, code tokens, FORMAT_TEXT, ..., FORMAT_STRING_END
+	std::vector<size_t> fStringParts; // for formated strings: the tokens with strings between inserted code parts
+	if (m_text[m_pos] == 'f') {
+		isFString = true;
+		m_pos++;
+	}
+
 	while (m_pos < m_text.size() - 1 && m_text[m_pos + 1] != '\"') {
+		if (isFString && m_text[m_pos + 1] == '{') {
+			m_pos++;
+			fStringParts.push_back(m_toks.size());
+			m_toks.push_back(Token(TokenType::FORMAT_TEXT8, m_buffer, m_line));
+
+			// Note: Copied from tokenize() function
+			while (m_pos < m_text.size() - 1 && m_text[m_pos] != '}') {
+				if (isdigit(m_text[m_pos]))
+					tokenizeNumber();
+				else if (isalpha(m_text[m_pos]) || m_text[m_pos] == '_')
+					tokenizeWord();
+				else if (m_text[m_pos] == '\'')
+					tokenizeCharacter();
+				else if (m_text[m_pos] == '\"' ||
+					(m_pos < m_text.size() - 1 && m_text[m_pos] == 'f' && m_text[m_pos + 1] == '\"'))
+					tokenizeText();
+				else if (m_text[m_pos] == '#')
+					tokenizeComment();
+				else if (isOperator(m_text[m_pos]))
+					tokenizeOperator();
+				else
+					next();
+			}
+
+			m_buffer.clear();
+			continue;
+		}
+
 		addUtf32(m_buffer, getSingleChar());
 	}
 
 	next(); // skip the last character
 	next(); // skip closing "
 
+	std::function<u32(std::string&)> convertFunc = utf32ToASCII;
+	TokenType tok_type = isFString ? TokenType::FORMAT_TEXT8 : TokenType::TEXT8;
 	if (m_text[m_pos] == 's') {
 		std::string type;
 		loadIdentifier(type);
 		if (type == "str8") {
-			if (auto errCode = utf32ToASCII(m_buffer)) printStringTranslationError(errCode);
-			return m_toks.push_back(Token(TokenType::TEXT8, m_buffer, m_line));
+			convertFunc = utf32ToASCII;
+			tok_type = isFString ? TokenType::FORMAT_TEXT8 : TokenType::TEXT8;
 		} else if (type == "str16") {
-			if (auto errCode = utf32ToUtf16(m_buffer)) printStringTranslationError(errCode);
-			return m_toks.push_back(Token(TokenType::TEXT16, m_buffer, m_line));
+			convertFunc = utf32ToUtf16;
+			tok_type = isFString ? TokenType::FORMAT_TEXT16 : TokenType::TEXT16;
 		} else if (type == "str32") {
-			return m_toks.push_back(Token(TokenType::TEXT32, m_buffer, m_line));
+			convertFunc = [](std::string& str) -> u32 { return 0; };
+			tok_type = isFString ? TokenType::FORMAT_TEXT32 : TokenType::TEXT32;
 		} else {
-			ErrorManager::lexerError(m_line, "unknown string postfix: " + type);
+			ErrorManager::lexerError(ErrorID::E1103_STRING_IMPROPER_POSTFIX, m_line, "postfix: " + type);
 		}
 	}
 
-	if (auto errCode = utf32ToASCII(m_buffer)) printStringTranslationError(errCode);
-	m_toks.push_back(Token(TokenType::TEXT8, m_buffer, m_line));
+	if (isFString) {
+		for (size_t pos : fStringParts) {
+			if (auto errCode = convertFunc(m_toks[pos].data)) printStringTranslationError(errCode);
+			m_toks[pos].type = tok_type;
+		}
+
+		if (m_buffer.size()) {
+			if (auto errCode = convertFunc(m_buffer)) printStringTranslationError(errCode);
+			m_toks.push_back(Token(tok_type, m_buffer, m_line));
+		}
+
+		m_toks.push_back(Token(TokenType::FORMAT_STRING_END, m_line));
+	} else {
+		if (auto errCode = convertFunc(m_buffer)) printStringTranslationError(errCode);
+		m_toks.push_back(Token(tok_type, m_buffer, m_line));
+	}
 }
 
 void Lexer::tokenizeCharacter() {
@@ -324,7 +377,7 @@ void Lexer::tokenizeCharacter() {
 
 	addUtf32(m_buffer, getSingleChar());
 	if (next() != '\'')
-		ErrorManager::lexerError(m_line, "closing ' mismatched");
+		ErrorManager::lexerError(ErrorID::E1111_NO_CLOSING_APOSTROPHE, m_line, "");
 
 	next(); // skip closing '
 
@@ -340,7 +393,7 @@ void Lexer::tokenizeCharacter() {
 		} else if (type == "c32") {
 			return m_toks.push_back(Token(TokenType::LETTER32, m_buffer, m_line));
 		} else {
-			ErrorManager::lexerError(m_line, "unknown character postfix: " + type);
+			ErrorManager::lexerError(ErrorID::E1104_CHARACTER_IMPROPER_POSTFIX, m_line, "unknown character postfix: " + type);
 		}
 	}
 
@@ -385,7 +438,7 @@ void Lexer::tokenizeComment() {
 		next();
 		while (true) {
 			if (m_pos == m_text.size())
-				ErrorManager::lexerError(m_line, "a multiline comment has no ending");
+				ErrorManager::lexerError(ErrorID::E1003_MULTILINE_COMMENT_IS_NOT_CLOSED, m_line, "");
 			
 			if (m_text[m_pos] == '\n' && m_pos < m_text.size() - 3) {
 				if (m_text[m_pos + 1] == '#' && m_text[m_pos + 2] == '#' && m_text[m_pos + 3] == '#') {
@@ -441,7 +494,8 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 		case 8: isDigit = octIsDigit; break;
 		case 10: isDigit = decIsDigit; break;
 		case 16: isDigit = hexIsDigit; break;
-		default: ErrorManager::lexerError(m_line, "unknown numeric system: " + std::to_string(base));
+		default: ErrorManager::lexerError(ErrorID::E1105_NUMBER_HAS_UNKNOWN_NUMERIC_SYSTEM, m_line,
+			"numeric system : " + std::to_string(base));
 	}
 
 	m_buffer.clear();
@@ -450,7 +504,7 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 		if (c != '\'') {
 			m_buffer += c;
 		} else if (!allowDelimiter) {
-			ErrorManager::lexerError(m_line, "delimeter ' is not allowed there");
+			ErrorManager::lexerError(ErrorID::E1106_NUMBER_DELIMITER_FORBIDDEN, m_line, "");
 		}
 
 		c = next();
@@ -464,7 +518,7 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 			if (c != '\'') {
 				m_buffer += c;
 			} else if (!allowDelimiter) {
-				ErrorManager::lexerError(m_line, "delimeter ' is not allowed there");
+				ErrorManager::lexerError(ErrorID::E1106_NUMBER_DELIMITER_FORBIDDEN, m_line, "");
 			}
 
 			c = next();
@@ -481,8 +535,8 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 		}
 
 		if (firstWrongCase != -1 && firstWrongCase < m_pos) {
-			ErrorManager::lexerError(m_line, 
-										  "hexadecimal value is inconsistent: all letters must be of the same case");
+			ErrorManager::lexerError(ErrorID::E1107_INCONSISTENT_HEX_NUMBER, m_line, 
+										  m_buffer);
 		}
 	}
 
@@ -504,6 +558,8 @@ u32 Lexer::getSingleChar() {
 				return '\'';
 			case '\"':
 				return '\"';
+			case '{':
+				return '{'; // for formated strings
 			case 'n':
 				return '\n';
 			case 't':
@@ -546,9 +602,9 @@ void Lexer::skipWhitespaces(bool spacesOnly) {
 
 void Lexer::printStringTranslationError(u32 errCode) {
 	if (errCode == 1) {
-		ErrorManager::lexerError(m_line, "wrong string type: cannot convert");
+		ErrorManager::internalError(ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE, m_line, "wrong string type: cannot convert");
 	} else {
-		ErrorManager::lexerError(m_line,
+		ErrorManager::lexerError(ErrorID::E1108_STRING_CONTAINS_CHARS_BIGGER_THAN_FORMAT_ALLOWS, m_line,
 									  "cannot cast the character to shorter code: " + std::to_string(errCode));
 	}
 }

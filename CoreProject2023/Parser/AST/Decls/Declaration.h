@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "INode.h"
+#include "../INode.h"
 
 class Declaration : public INode {
 public:

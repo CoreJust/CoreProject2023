@@ -2,7 +2,9 @@
 #include <vector>
 #include <memory>
 #include <Lexer/Token.h>
-#include "AST/Expression.h"
+#include "AST/Decls/Declaration.h"
+#include "AST/States/Statement.h"
+#include "AST/Exprs/Expression.h"
 
 class Parser {
 private:
@@ -12,9 +14,18 @@ private:
 public:
 	Parser(std::vector<Token> tokens);
 
-	std::unique_ptr<Expression> parse();
+	std::vector<std::unique_ptr<Declaration>> parse();
 
 private:
+	std::unique_ptr<Declaration> declaration();
+	std::unique_ptr<Declaration> functionDeclaration();
+	std::unique_ptr<Declaration> variableDeclaration();
+
+	std::unique_ptr<Statement> stateOrBlock();
+	std::unique_ptr<Statement> statement();
+
+	std::unique_ptr<Expression> expression();
+	std::unique_ptr<Expression> postfix();
 	std::unique_ptr<Expression> primary();
 
 private:

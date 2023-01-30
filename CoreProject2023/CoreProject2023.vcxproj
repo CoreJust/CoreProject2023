@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreJust\Core-Project\CoreProject;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -192,7 +192,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreJust\Core-Project\CoreProject;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -308,7 +308,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX20_CISO646_REMOVED_WARNING;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -330,7 +330,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX20_CISO646_REMOVED_WARNING;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -352,10 +352,25 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Lexer\Token.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Module\Annotations.cpp" />
+    <ClCompile Include="Compiler.cpp" />
+    <ClCompile Include="Module\Module.cpp" />
+    <ClCompile Include="Module\ModuleSymbols.cpp" />
+    <ClCompile Include="Module\SymbolTable.cpp" />
+    <ClCompile Include="Parser\AST\Decls\VariableDeclaration.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\FunctionCallExpr.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\FunctionExpr.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\VariableExpr.cpp" />
+    <ClCompile Include="Parser\AST\States\BlockStatement.cpp" />
+    <ClCompile Include="Parser\AST\States\ExpressionStatement.cpp" />
+    <ClCompile Include="Parser\AST\Decls\FunctionDeclaration.cpp" />
     <ClCompile Include="Parser\AST\INode.cpp" />
-    <ClCompile Include="Parser\AST\ValueExpr.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\ValueExpr.cpp" />
+    <ClCompile Include="Module\FunctionPrototype.cpp" />
+    <ClCompile Include="Parser\AST\States\ReturnStatement.cpp" />
     <ClCompile Include="Parser\Parser.cpp" />
     <ClCompile Include="Parser\Visitor\Visitor.cpp" />
+    <ClCompile Include="Project.cpp" />
+    <ClCompile Include="SymbolLoader\SymbolLoader.cpp" />
     <ClCompile Include="Utils\ErrorManager.cpp" />
     <ClCompile Include="Utils\File.cpp" />
     <ClCompile Include="Utils\String.cpp" />
@@ -365,15 +380,33 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Lexer\Lexer.h" />
     <ClInclude Include="Lexer\Token.h" />
     <ClInclude Include="Module\Annotations.h" />
+    <ClInclude Include="Compiler.h" />
+    <ClInclude Include="Module\Function.h" />
+    <ClInclude Include="Module\FunctionArgument.h" />
     <ClInclude Include="Module\Module.h" />
+    <ClInclude Include="Module\ModuleSymbols.h" />
+    <ClInclude Include="Module\SymbolTable.h" />
+    <ClInclude Include="Module\Variable.h" />
     <ClInclude Include="Parser\AST\AST.h" />
-    <ClInclude Include="Parser\AST\Declaration.h" />
-    <ClInclude Include="Parser\AST\Expression.h" />
+    <ClInclude Include="Parser\AST\Decls\Declaration.h" />
+    <ClInclude Include="Parser\AST\Decls\VariableDeclaration.h" />
+    <ClInclude Include="Parser\AST\Exprs\Expression.h" />
+    <ClInclude Include="Parser\AST\Exprs\FunctionCallExpr.h" />
+    <ClInclude Include="Parser\AST\Exprs\FunctionExpr.h" />
+    <ClInclude Include="Parser\AST\Exprs\VariableExpr.h" />
+    <ClInclude Include="Parser\AST\States\BlockStatement.h" />
+    <ClInclude Include="Parser\AST\States\ExpressionStatement.h" />
+    <ClInclude Include="Parser\AST\Decls\FunctionDeclaration.h" />
     <ClInclude Include="Parser\AST\INode.h" />
-    <ClInclude Include="Parser\AST\Statement.h" />
-    <ClInclude Include="Parser\AST\ValueExpr.h" />
+    <ClInclude Include="Parser\AST\States\ReturnStatement.h" />
+    <ClInclude Include="Parser\AST\States\Statement.h" />
+    <ClInclude Include="Parser\AST\Exprs\ValueExpr.h" />
+    <ClInclude Include="Module\FunctionPrototype.h" />
     <ClInclude Include="Parser\Parser.h" />
     <ClInclude Include="Parser\Visitor\Visitor.h" />
+    <ClInclude Include="Project.h" />
+    <ClInclude Include="SymboleLoader\SymboleLoader.h" />
+    <ClInclude Include="SymbolLoader\SymbolLoader.h" />
     <ClInclude Include="Utils\Defs.h" />
     <ClInclude Include="Utils\ErrorManager.h" />
     <ClInclude Include="Utils\File.h" />

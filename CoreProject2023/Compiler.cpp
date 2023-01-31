@@ -9,6 +9,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include "llvm/MC/TargetRegistry.h"
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/FileSystem.h>
@@ -43,6 +44,21 @@ void Compiler::initAll() {
 	llvm::InitializeAllAsmPrinters();
 
 	ErrorManager::init(ErrorManager::CONSOLE);
+
+	initPasses();
+}
+
+void Compiler::initPasses(llvm::TargetMachine* machine) {
+	llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O3; // !
+	llvm::PassBuilder pb(machine);
+
+	pb.registerModuleAnalyses(*g_moduleAnalysisManager);
+	pb.registerCGSCCAnalyses(*g_cgsccAnalysisManager);
+	pb.registerFunctionAnalyses(*g_functionAnalysisManager);
+	pb.registerLoopAnalyses(*g_loopAnalysisManager);
+	pb.crossRegisterProxies(*g_loopAnalysisManager, *g_functionAnalysisManager, *g_cgsccAnalysisManager, *g_moduleAnalysisManager);
+
+	g_modulePassManager = std::make_unique<llvm::ModulePassManager>(pb.buildPerModuleDefaultPipeline(optLevel));
 }
 
 void Compiler::handleFrontEnd() {
@@ -97,7 +113,7 @@ void Compiler::compileModule(const std::string& path) {
 	// Parser
 	thisModule->loadSymbols();
 	g_moduleList.setCurrentModule(path);
-	g_functionPassManager = std::make_unique<llvm::legacy::FunctionPassManager>(&thisModule->getLLVMModule());
+	g_functionPassManager = std::make_unique<llvm::FunctionPassManager>();
 	addDefaultFunctions();
 	auto astVec = Parser(std::move(toks)).parse();
 	for (auto& decl : astVec) {
@@ -106,62 +122,73 @@ void Compiler::compileModule(const std::string& path) {
 }
 
 void Compiler::compileLLVM() {
-	auto targetTriple = llvm::sys::getDefaultTargetTriple();//"x86_64-pc-windows-msvc";
+	// Common settings
+	std::string targetTriple = llvm::sys::getDefaultTargetTriple();//"x86_64-pc-windows-msvc";
+
+	llvm::TargetOptions options;
+	llvm::Optional<llvm::Reloc::Model> RM = llvm::Optional<llvm::Reloc::Model>();
+
+	std::string error;
+	const llvm::Target* target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
+	if (!target)
+		std::cout << error;
+
+	llvm::TargetMachine* targetMachine = target->createTargetMachine(targetTriple, "generic", "", options, RM);
+
+
+	// Compiling llvm modules
 	for (auto& module : g_moduleList.getModules()) {
 		llvm::Module& llvmModule = module.getLLVMModule();
 		llvmModule.setTargetTriple(targetTriple);
 
+		initPasses(targetMachine);
+		g_modulePassManager->run(llvmModule, *g_moduleAnalysisManager);
+
 		std::cout << module.getName() << ": \n";
 		llvmModule.print(llvm::errs(), nullptr);
 
-		llvm::TargetOptions options;
-		auto RM = llvm::Optional<llvm::Reloc::Model>();
-
 		std::error_code err_code;
-		std::string buildFilePath = getBuildFilePath(module.getPath(), ".o");
+		std::string buildFilePath = genBuildFilePath(module.getPath(), ".o");
 		llvm::raw_fd_ostream dest(buildFilePath, err_code, llvm::sys::fs::OF_None);
 		if (err_code)
 			std::cout << "cannot open file: " << err_code.message();
 
 		m_filesToLink.append(" " + buildFilePath);
 
-		std::string error;
-		auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
-		if (!target)
-			std::cout << error;
-
-		auto targetMachine = target->createTargetMachine(targetTriple, "generic", "", options, RM);
 		llvmModule.setDataLayout(targetMachine->createDataLayout());
-		if (targetMachine->addPassesToEmitFile(*g_modulePassManager, dest, nullptr, llvm::CGFT_ObjectFile))
+		llvm::legacy::PassManager pass;
+		if (targetMachine->addPassesToEmitFile(pass, dest, nullptr, llvm::CGFT_ObjectFile))
 			std::cout << "targetMachine can't emit a file of this type";
 
-		g_modulePassManager->run(llvmModule);
+		pass.run(llvmModule);
 		dest.flush();
 		dest.close();
 	}
 }
 
 void Compiler::addDefaultFunctions() {
-	llvm::Module* llvmModule = &g_module->getLLVMModule();
 
-	llvm::ArrayRef<llvm::Type*> system_params(llvm::Type::getInt8PtrTy(g_context));
-	llvm::FunctionType* system_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(g_context), system_params, false);
-	llvm::Function* system_f = llvm::Function::Create(system_type, llvm::Function::ExternalLinkage, "system", llvmModule);
 }
 
-std::string Compiler::getBuildFilePath(const std::string& modulePath, const std::string& extension) {
+std::string Compiler::genBuildFilePath(const std::string& modulePath, const std::string& extension) {
+	static std::set<std::string> s_generatedNames;
 	std::string moduleName = Module::getModuleNameFromPath(modulePath);
 	size_t postfix = 0;
-	if (std::filesystem::exists("build/" + moduleName + extension)) {
+	if (s_generatedNames.contains("build/" + moduleName + extension)) {
 		postfix++;
-		while (std::filesystem::exists("build/" + moduleName + std::to_string(postfix) + extension)) {
+		while (s_generatedNames.contains("build/" + moduleName + std::to_string(postfix) + extension)) {
 			postfix++;
 		}
 	}
 
+	std::string generatedName;
 	if (postfix) {
-		return "build/" + moduleName + std::to_string(postfix) + extension;
+		generatedName = "build/" + moduleName + std::to_string(postfix) + extension;
+	} else {
+		generatedName = "build/" + moduleName + extension;
 	}
 
-	return "build/" + moduleName + extension;
+	//createFileIfNotExists(generatedName);
+	s_generatedNames.insert(generatedName);
+	return generatedName;
 }

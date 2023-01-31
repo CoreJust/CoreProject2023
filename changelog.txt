@@ -45,3 +45,13 @@ Initial development
 	Remade module Compiler, it's working now
 	Created modules ReturnStatement, BlockStatemen, VariableDeclaration, FunctionExpr, FunctionCallExpr
 	
+	Commited as "Added functions and global variables"
+
+31.01.2023
+	Created a repository on GitHub, pushed the local repository there (in process, deleted large files from old commits)
+	Fixed bug when compiler generated a new set of .o files each time (file.o, file1.o, file2.o, etc)
+	Added new llvm PassManagers
+	Fixed bug: program fails when freeing resources (somewhere in llvm destructors), used quick_exit(0)
+
+	Commited as "Some bug fixes, new llvm PassManager"
+	

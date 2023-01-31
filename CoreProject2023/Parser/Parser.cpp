@@ -63,6 +63,8 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 		// Short function, like def a() int = 10;
 		if (match(TokenType::EQ)) {
 			std::unique_ptr<Expression> expr = expression();
+			std::unique_ptr<Statement> body = std::make_unique<ReturnStatement>(std::move(expr));
+			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		} else if (match(TokenType::LBRACE)) {
 			m_pos--;
 			std::unique_ptr<Statement> body = stateOrBlock();
@@ -163,6 +165,7 @@ std::unique_ptr<Expression> Parser::primary() {
 	}
 
 	ErrorManager::parserError(ErrorID::E2001_EXPRESSION_NOT_FOUND, getCurrLine(), "No expression found");
+	return nullptr;
 }
 
 Token& Parser::consume(TokenType type) {

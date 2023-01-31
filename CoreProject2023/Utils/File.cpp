@@ -14,7 +14,7 @@ std::string readFile(const std::string& file) {
 
 void createFileIfNotExists(const std::string& file) {
 	if (!std::filesystem::exists(file)) {
-		std::ofstream tmp(file);
+		std::ofstream tmp(file, std::ofstream::binary | std::ofstream::trunc | std::ofstream::out);
 		tmp.close();
 	}
 }

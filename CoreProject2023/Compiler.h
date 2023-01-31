@@ -2,6 +2,10 @@
 #include <set>
 #include "Project.h"
 
+namespace llvm {
+	class TargetMachine;
+}
+
 class Compiler final {
 private:
 	Project& m_project;
@@ -18,6 +22,7 @@ public:
 
 private:
 	void initAll();
+	void initPasses(llvm::TargetMachine* machine = nullptr);
 
 	void handleFrontEnd(); // lexer, parser, IR generation
 	void compileModule(const std::string& path);
@@ -25,5 +30,5 @@ private:
 
 	void addDefaultFunctions();
 
-	std::string getBuildFilePath(const std::string& modulePath, const std::string& extension);
+	std::string genBuildFilePath(const std::string& modulePath, const std::string& extension);
 };

@@ -20,6 +20,6 @@ void FunctionDeclaration::generate() {
 		m_body->generate();
 
 		llvm::verifyFunction(*fun);
-		g_functionPassManager->run(*fun);
+		g_functionPassManager->run(*fun, *g_functionAnalysisManager);
 	}
 }

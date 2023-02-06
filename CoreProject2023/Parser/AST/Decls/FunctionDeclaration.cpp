@@ -1,6 +1,8 @@
 #include "FunctionDeclaration.h"
 #include "llvm/IR/Verifier.h"
 #include <Parser/Visitor/Visitor.h>
+#include <Module/Module.h>
+#include <Module/LLVMUtils.h>
 
 FunctionDeclaration::FunctionDeclaration(Function* func, std::unique_ptr<Statement> body)
 	: m_function(func), m_body(std::move(body)) {
@@ -17,7 +19,25 @@ void FunctionDeclaration::generate() {
 		llvm::BasicBlock* bb = llvm::BasicBlock::Create(g_context, "entry", fun);
 		g_builder->SetInsertPoint(bb);
 
+		g_module->addBlock();
+		size_t index = 0;
+		for (size_t i = 0; i < m_function->prototype.args().size(); i++) {
+			Argument& arg = m_function->prototype.args()[i];
+			VariableQualities qualities;
+			if (arg.type->isConst) {
+				qualities.setVariableType(VariableType::CONST);
+			}
+
+			g_module->addLocalVariable(arg.name, arg.type->copy(), qualities, //m_function->functionValue->getArg(i));
+				llvm_utils::genFunctionArgumentValue(m_function, arg, m_function->functionValue->getArg(i)));
+		}
+
 		m_body->generate();
+		g_module->deleteBlock();
+
+		if (m_function->prototype.getReturnType()->basicType == BasicType::NO_TYPE) {
+			g_builder->CreateRetVoid();
+		}
 
 		llvm::verifyFunction(*fun);
 		g_functionPassManager->run(*fun, *g_functionAnalysisManager);

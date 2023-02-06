@@ -14,6 +14,8 @@ private:
 	std::map<std::string, ModuleSymbols*> m_allTheImportedModules; // needed to get symbols from imports in imported modules
 	std::unique_ptr<llvm::Module> m_llvmModule;
 
+	std::vector<Variable> m_localVariables;
+
 public:
 	Module(const std::string& name, const std::string& path, ModuleQualities qualities, std::vector<std::string> imports);
 	Module(Module& other);
@@ -21,6 +23,10 @@ public:
 
 	void loadSymbols();
 	void addModuleAlias(const std::string& moduleName, const std::string& alias);
+
+	void addBlock();
+	void addLocalVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value);
+	void deleteBlock();
 
 	SymbolType getSymbolType(const std::string& name) const;
 	SymbolType getSymbolType(const std::string& moduleAlias, const std::string& name) const;

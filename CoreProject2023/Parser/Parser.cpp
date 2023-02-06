@@ -44,12 +44,20 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 	Function* function = g_module->getFunction(alias);
 
 	// Arguments
+	g_module->addBlock();
 	consume(TokenType::LPAR);
 	if (!match(TokenType::RPAR)) {
 		do {
-			match(TokenType::CONST);
-			TypeParser(m_toks, m_pos).consumeType();
-			consume(TokenType::WORD);
+			VariableQualities qualities;
+			bool isConst = match(TokenType::CONST);
+			std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+			type->isConst = isConst;
+			if (isConst) {
+				qualities.setVariableType(VariableType::CONST);
+			}
+
+			std::string name = consume(TokenType::WORD).data;
+			g_module->addLocalVariable(name, std::move(type), qualities, nullptr);
 		} while (match(TokenType::COMMA));
 
 		consume(TokenType::RPAR);
@@ -64,10 +72,12 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 		if (match(TokenType::EQ)) {
 			std::unique_ptr<Expression> expr = expression();
 			std::unique_ptr<Statement> body = std::make_unique<ReturnStatement>(std::move(expr));
+			g_module->deleteBlock();
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		} else if (match(TokenType::LBRACE)) {
 			m_pos--;
 			std::unique_ptr<Statement> body = stateOrBlock();
+			g_module->deleteBlock();
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		}
 	}
@@ -92,11 +102,13 @@ std::unique_ptr<Declaration> Parser::variableDeclaration() {
 
 std::unique_ptr<Statement> Parser::stateOrBlock() {
 	if (match(TokenType::LBRACE)) {
+		g_module->addBlock();
 		std::vector<std::unique_ptr<Statement>> states;
 		while (!match(TokenType::RBRACE)) {
 			states.push_back(statement());
 		}
 
+		g_module->deleteBlock();
 		return std::make_unique<BlockStatement>(std::move(states));
 	} else {
 		return statement();
@@ -107,12 +119,46 @@ std::unique_ptr<Statement> Parser::statement() {
 	std::unique_ptr<Statement> result;
 	if (match(TokenType::RETURN)) {
 		result = std::make_unique<ReturnStatement>(expression());
+	} else if (peek(0).type == TokenType::VAR || peek(0).type == TokenType::CONST
+		|| TypeParser(m_toks, m_pos).isType()) {
+		result = variableDefStatement();
 	} else {
 		result = std::make_unique<ExpressionStatement>(expression());
 	}
 
 	consume(TokenType::SEMICOLON);
 	return result;
+}
+
+std::unique_ptr<Statement> Parser::variableDefStatement() {
+	std::unique_ptr<Type> type;
+	bool isConst = match(TokenType::CONST);
+	if (!match(TokenType::VAR)) {
+		type = TypeParser(m_toks, m_pos).consumeType();
+		type->isConst = isConst;
+	}
+
+	std::string alias = consume(TokenType::WORD).data;
+
+	std::unique_ptr<Expression> expr = nullptr;
+	if (match(TokenType::EQ)) {
+		expr = expression();
+	}
+
+	if (!type) {
+		if (!expr) {
+			ErrorManager::parserError(ErrorID::E2101_VAR_HAS_NO_INIT, getCurrLine(), "variable: " + alias);
+		} else {
+			type = expr->getType()->copy();
+		}
+	}
+
+	VariableQualities qualities;
+	qualities.setVariableType(isConst ? VariableType::CONST : VariableType::COMMON);
+	g_module->addLocalVariable(alias, type->copy(), qualities, nullptr);
+	Variable variable(alias, std::move(type), qualities, nullptr);
+
+	return std::make_unique<VariableDefStatement>(std::move(variable), std::move(expr));
 }
 
 std::unique_ptr<Expression> Parser::expression() {
@@ -213,6 +259,9 @@ std::unique_ptr<Expression> Parser::primary() {
 		} else if (symType == SymbolType::FUNCTION) {
 			Function* function = g_module->getFunction(moduleName, name);
 			return std::make_unique<FunctionExpr>(function);
+		} else if (symType == SymbolType::NO_SYMBOL) {
+			ErrorManager::parserError(ErrorID::E2003_UNKNOWN_IDENTIFIER, getCurrLine(),
+				"identifier: " + (moduleName.size() ? moduleName + "." + name : name));
 		}
 	}
 

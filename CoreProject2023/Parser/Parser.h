@@ -23,6 +23,7 @@ private:
 
 	std::unique_ptr<Statement> stateOrBlock();
 	std::unique_ptr<Statement> statement();
+	std::unique_ptr<Statement> variableDefStatement();
 
 	std::unique_ptr<Expression> expression();
 	std::unique_ptr<Expression> postfix();

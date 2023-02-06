@@ -185,6 +185,15 @@ std::unique_ptr<Type> TypeParser::parseType() {
 	return result;
 }
 
+bool TypeParser::isType() {
+	if (parseType()) {
+		m_pos = m_originalPos;
+		return true;
+	}
+
+	return false;
+}
+
 Token& TypeParser::consume(TokenType type) {
 	if (!match(type))
 		ErrorManager::typeError(ErrorID::E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE, getCurrLine(), "expected " + Token::toString(type));

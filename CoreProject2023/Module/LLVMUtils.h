@@ -6,6 +6,9 @@ namespace llvm_utils {
 	llvm::Value* createGlobalVariable(Variable& var, llvm::Value* initializer);
 	llvm::Value* addGlobalVariableFromOtherModule(Variable& var, llvm::Module& module);
 
+	llvm::Value* genFunctionArgumentValue(Function* func, Argument& arg, llvm::Argument* llvmArg);
+	llvm::Value* createLocalVariable(llvm::Function* func, const std::unique_ptr<Type>& type, const std::string& name);
+
 	llvm::Constant* getDefaultValueOf(const std::unique_ptr<Type>& type);
 	llvm::Constant* getConstantInt(u64 value, u64 bit_width, bool isSigned = false);
 

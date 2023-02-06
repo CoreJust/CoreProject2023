@@ -12,5 +12,5 @@ public:
 	llvm::Value* generate() override;
 
 private:
-	Variable* m_variable;
+	std::string m_name;
 };

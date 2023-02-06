@@ -21,6 +21,8 @@ public:
 	// returns nullptr if there is no type expression, returns m_pos to m_originalPos
 	std::unique_ptr<Type> parseType();
 
+	bool isType();
+
 private:
 	Token& consume(TokenType type);
 	bool match(TokenType type);

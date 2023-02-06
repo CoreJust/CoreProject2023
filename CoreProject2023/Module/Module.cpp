@@ -55,7 +55,32 @@ void Module::addModuleAlias(const std::string& moduleName, const std::string& al
 	}
 }
 
+void Module::addBlock() {
+	m_localVariables.push_back(Variable{ "", nullptr, VariableQualities(), nullptr });
+}
+
+void Module::addLocalVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value) {
+	m_localVariables.push_back(Variable{ name, std::move(type), qualities, value });
+}
+
+void Module::deleteBlock() {
+	while (true) {
+		if (m_localVariables.back().name == "") {
+			m_localVariables.pop_back();
+			break;
+		}
+
+		m_localVariables.pop_back();
+	}
+}
+
 SymbolType Module::getSymbolType(const std::string& name) const {
+	for (auto it = m_localVariables.rbegin(); it != m_localVariables.rend(); it++) {
+		if (it->name == name) {
+			return SymbolType::VARIABLE;
+		}
+	}
+
 	if (m_symbols.contains(name)) {
 		return SymbolType::MODULE;
 	}
@@ -73,6 +98,14 @@ SymbolType Module::getSymbolType(const std::string& moduleAlias, const std::stri
 	if (!m_symbols.contains(moduleAlias)) {
 		ErrorManager::internalError(ErrorID::E4052_NO_MODULE_FOUND_BY_ALIAS, -1, "alias is: " + moduleAlias + ", symbol: " + name);
 		return SymbolType::MODULE;
+	}
+
+	if (moduleAlias == "") {
+		for (auto it = m_localVariables.rbegin(); it != m_localVariables.rend(); it++) {
+			if (it->name == name) {
+				return SymbolType::VARIABLE;
+			}
+		}
 	}
 
 	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleAlias)) {
@@ -105,6 +138,12 @@ Function* Module::getFunction(const std::string& moduleAlias, const std::string&
 }
 
 Variable* Module::getVariable(const std::string& name) {
+	for (auto it = m_localVariables.rbegin(); it != m_localVariables.rend(); it++) {
+		if (it->name == name) {
+			return &*it;
+		}
+	}
+
 	for (ModuleSymbolsUnit* unit : m_symbols.at("")) {
 		if (auto var = unit->getVariable(name); var != nullptr) {
 			return var;
@@ -115,6 +154,14 @@ Variable* Module::getVariable(const std::string& name) {
 }
 
 Variable* Module::getVariable(const std::string& moduleAlias, const std::string& name) {
+	if (moduleAlias == "") {
+		for (auto it = m_localVariables.rbegin(); it != m_localVariables.rend(); it++) {
+			if (it->name == name) {
+				return &*it;
+			}
+		}
+	}
+
 	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleAlias)) {
 		if (auto var = unit->getVariable(name); var != nullptr) {
 			return var;

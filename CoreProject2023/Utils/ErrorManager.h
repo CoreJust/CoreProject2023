@@ -41,6 +41,9 @@ enum ErrorID : u32 {
 	// Parser errors
 	E2001_EXPRESSION_NOT_FOUND, // No expression where it is expected
 	E2002_UNEXPECTED_TOKEN, // Expected token not met
+	E2003_UNKNOWN_IDENTIFIER, // No such variable/function/type
+
+	E2101_VAR_HAS_NO_INIT, // Variable declared through var cannot deduce type without initial value
 	E2102_CANNOT_BE_CALLED, // Expression cannot be called through -expr-(...)
 
 	
@@ -48,8 +51,10 @@ enum ErrorID : u32 {
 	E3001_TYPE_NOT_SPECIFIED, // No type expression found where it is expected
 	E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE, // Expected token not met
 	E3003_NOT_A_TYPE, // The identifier is not a type (e.g. variable or function)
+
 	E3051_REFERENCE_TO_REFERENCE, // Tried to create a reference to a reference (like i32 & &&)
 	E3052_NEGATIVE_SIZE_ARRAY, // Tried to create an array of negative or zero size
+
 	E3101_CANNOT_BE_IMPLICITLY_CONVERTED, // Imposible implicit conversion of types
 	E3102_CANNOT_BE_EXPLICITLY_CONVERTED, // Imposible explicit conversion of types
 	E3103_CANNOT_CONVERT_TO_ONE, // Imposible to convert types to one
@@ -57,6 +62,7 @@ enum ErrorID : u32 {
 
 	// Internal errors
 	E4001_WRONGLY_READ_STRING_BAD_SIZE, // Cannot convert string from utf32 if its size is not multiple of 4
+
 	E4051_LOADING_MODULE_SYMBOLS_TWICE, // The module symbols were added to symbol table twice
 	E4052_NO_MODULE_FOUND_BY_ALIAS, // Tried to get symbol of module with a wrong alias
 	E4053_CANNOT_SET_NO_MODULE_AS_CURRENT, // Tried to set g_module to nullptr (since no module was found)

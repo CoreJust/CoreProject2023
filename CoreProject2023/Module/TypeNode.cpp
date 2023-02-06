@@ -79,6 +79,6 @@ void initBasicTypeNodes() {
 }
 
 TypeNode& getBasicTypeNode(BasicType type) {
-    ASSERT(!hasSubtypes(type) && type != BasicType::NO_TYPE, "Complex types have no type node");
+    ASSERT(!hasSubtypes(type), "Complex types have no type node");
     return g_basicTypeNodes[u8(type)];
 }

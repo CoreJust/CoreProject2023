@@ -144,11 +144,14 @@ void Compiler::compileLLVM() {
 		llvm::Module& llvmModule = module.getLLVMModule();
 		llvmModule.setTargetTriple(targetTriple);
 
-		std::cout << module.getName() << ": \n";
+		std::cout << "\n\n\n\t\t===================================\n\n\n" << module.getName() << ": \n";
 		llvmModule.print(llvm::errs(), nullptr);
 
 		initPasses(targetMachine);
 		g_modulePassManager->run(llvmModule, *g_moduleAnalysisManager);
+
+		std::cout << "\n\n\n\nAfter opt " << module.getName() << ": \n";
+		llvmModule.print(llvm::errs(), nullptr);
 
 		std::error_code err_code;
 		std::string buildFilePath = genBuildFilePath(module.getPath(), ".o");

@@ -72,3 +72,10 @@ Initial development
 06.02.2023
 	Added tools for type conversion, type system is mostly ready, apart from user-defined types
 	Working type system
+
+	Commited as "Added type system (without user-defined types), literals"
+
+	Added function using function arguments in function body
+	Added local variables
+
+	Commited as "Added local variables"

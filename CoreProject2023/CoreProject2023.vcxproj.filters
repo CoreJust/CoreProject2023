@@ -126,6 +126,9 @@
     <ClCompile Include="Module\FunctionArgument.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Parser\AST\States\VariableDefStatement.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h">
@@ -252,6 +255,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Parser\AST\Exprs\TypeConversionExpr.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser\AST\States\VariableDefStatement.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

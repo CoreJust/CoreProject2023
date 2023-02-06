@@ -53,6 +53,19 @@ llvm::Value* llvm_utils::addGlobalVariableFromOtherModule(Variable& var, llvm::M
 	return varValue;
 }
 
+llvm::Value* llvm_utils::genFunctionArgumentValue(Function* func, Argument& arg, llvm::Argument* llvmArg) {
+	llvm::Value* result = createLocalVariable(func->functionValue, arg.type, arg.name);
+	g_builder->CreateStore(llvmArg, result);
+	return result;
+
+}
+
+llvm::Value* llvm_utils::createLocalVariable(llvm::Function* func, const std::unique_ptr<Type>& type, const std::string& name) {
+	llvm::IRBuilder<> tmpBuilder(&func->getEntryBlock(),
+		func->getEntryBlock().begin());
+	return tmpBuilder.CreateAlloca(type->to_llvm(), 0, name);
+}
+
 llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type) {
 	llvm::Type* llvmType = type->to_llvm();
 	switch (type->basicType) {

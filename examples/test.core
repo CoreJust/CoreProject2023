@@ -1,7 +1,15 @@
 import some_file;
 
-def main() i32 {
-	some_file.puts(c8*("Hello world!\n"));
+def reprint(const c8* question) {
+	some_file.puts(question);
 	some_file.getchar();
+	reprint(question);
+}
+
+def main() i32 {
+	const var question = c8*(">>> ");
+	
+	some_file.puts(c8*("Hello world!\n"));
+	reprint(question);
 	return 0;
 }

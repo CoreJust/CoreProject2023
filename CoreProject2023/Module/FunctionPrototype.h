@@ -20,6 +20,7 @@ public:
 
 	std::vector<std::unique_ptr<Type>> genArgumentTypes() const;
 	std::vector<Argument>& args();
+	const std::unique_ptr<Type>& getReturnType() const;
 
 	static llvm::CallingConv::ID getCallingConvention(CallingConvention conv);
 

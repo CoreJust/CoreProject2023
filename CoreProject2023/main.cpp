@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Compiler.h"
 
-// TODO: add variables, add type system (types symbol loading, parsing, in AST, etc), add expressions, add aliases, name mangling
+// TODO: add user-defined types, add expressions, add aliases, name mangling, safe/unsafe code, fix current
 // Long term TODO: project settings file, user-defined types
 // To test: strings, format strings, str's convertions
 

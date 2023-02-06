@@ -27,11 +27,19 @@ llvm::Function* FunctionPrototype::generate(bool is_native, CallingConvention co
 		types.push_back(arg.type->to_llvm());
 	}
 
-	llvm::FunctionType* ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(g_context), types, false);
+	llvm::FunctionType* ft = llvm::FunctionType::get(m_returnType->to_llvm(), types, false);
 	llvm::Function* fun = llvm::Function::Create(ft,
 		llvm::Function::ExternalLinkage,
 		m_name,
 		g_module->getLLVMModule());
+
+	// TODO: delete this block
+	if (m_name == "reprint") {
+		fun->addFnAttr(llvm::Attribute::NoInline);
+		fun->addFnAttr(llvm::Attribute::OptimizeNone);
+		fun->addFnAttr(llvm::Attribute::NoReturn);
+		fun->addFnAttr(llvm::Attribute::MustProgress);
+	}
 
 	fun->setCallingConv(getCallingConvention(conv));
 	u32 index = 0;
@@ -44,10 +52,10 @@ llvm::Function* FunctionPrototype::generate(bool is_native, CallingConvention co
 llvm::Function* FunctionPrototype::generateImportedFromOtherModule(llvm::Module& thisModule, CallingConvention conv) const {
 	std::vector<llvm::Type*> types;
 	for (auto& arg : m_args) {
-		types.push_back(llvm::Type::getInt32Ty(g_context));
+		types.push_back(arg.type->to_llvm());
 	}
 
-	llvm::FunctionType* ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(g_context), types, false);
+	llvm::FunctionType* ft = llvm::FunctionType::get(m_returnType->to_llvm(), types, false);
 	llvm::Function* fun = llvm::Function::Create(ft,
 		llvm::Function::ExternalLinkage,
 		m_name,
@@ -84,6 +92,10 @@ std::vector<std::unique_ptr<Type>> FunctionPrototype::genArgumentTypes() const {
 
 std::vector<Argument>& FunctionPrototype::args() {
 	return m_args;
+}
+
+const std::unique_ptr<Type>& FunctionPrototype::getReturnType() const {
+	return m_returnType;
 }
 
 llvm::CallingConv::ID FunctionPrototype::getCallingConvention(CallingConvention conv) {

@@ -2,6 +2,7 @@
 #include "Decls/FunctionDeclaration.h"
 #include "Decls/VariableDeclaration.h"
 #include "States/BlockStatement.h"
+#include "States/VariableDefStatement.h"
 #include "States/ReturnStatement.h"
 #include "States/ExpressionStatement.h"
 #include "Exprs/FunctionCallExpr.h"

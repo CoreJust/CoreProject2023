@@ -376,6 +376,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Parser\AST\Exprs\ValueExpr.cpp" />
     <ClCompile Include="Module\FunctionPrototype.cpp" />
     <ClCompile Include="Parser\AST\States\ReturnStatement.cpp" />
+    <ClCompile Include="Parser\AST\States\VariableDefStatement.cpp" />
     <ClCompile Include="Parser\Parser.cpp" />
     <ClCompile Include="Parser\TypeParser.cpp" />
     <ClCompile Include="Parser\Visitor\Visitor.cpp" />
@@ -418,6 +419,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Parser\AST\States\Statement.h" />
     <ClInclude Include="Parser\AST\Exprs\ValueExpr.h" />
     <ClInclude Include="Module\FunctionPrototype.h" />
+    <ClInclude Include="Parser\AST\States\VariableDefStatement.h" />
     <ClInclude Include="Parser\Parser.h" />
     <ClInclude Include="Parser\TypeParser.h" />
     <ClInclude Include="Parser\Visitor\Visitor.h" />

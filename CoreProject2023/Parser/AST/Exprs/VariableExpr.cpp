@@ -3,7 +3,7 @@
 
 VariableExpr::VariableExpr(Variable* variable)
 	: m_variable(variable) {
-
+	m_type = variable->type->copy();
 }
 
 void VariableExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {

@@ -29,6 +29,8 @@ public:
 	Function* getFunction(const std::string& moduleAlias, const std::string& name);
 	Variable* getVariable(const std::string& name);
 	Variable* getVariable(const std::string& moduleAlias, const std::string& name);
+	TypeNode* getType(const std::string& name);
+	TypeNode* getType(const std::string& moduleAlias, const std::string& name);
 
 	const std::string& getName() const noexcept;
 	const std::string& getPath() const noexcept;

@@ -32,8 +32,16 @@ std::string ErrorIDStrings[] = {
 
 	"E2001: No expression found where it is expected to be",
 	"E2002: Unexpected token",
+	"E2101: Expression cannot be called; no operator () defined",
 
-	"E3001: ",
+	"E3001: Type not specified; type expression expected",
+	"E3002: Unexpected token while parsing a type",
+	"E3003: Not a type; type expression expected",
+	"E3051: Reference to a reference; impossible syntax",
+	"E3052: Non-positive size array; array must have size bigger than 0",
+	"E3101: Type cannot be implicitly converted",
+	"E3102: Type cannot be explicitly converted",
+	"E3103: Types cannot be converted to single type",
 
 	"E4001: String conversion error; cannot convert string from utf32 when its size is not multiple of 4",
 	"E4051: Loading module symbols twice; symbols of the module with such name were already loaded",
@@ -72,12 +80,12 @@ void ErrorManager::lexerError(ErrorID id, int line, const std::string& data) {
 }
 
 void ErrorManager::parserError(ErrorID id, int line, const std::string& data) {
-	ASSERT(id >= ErrorID::E2001_EXPRESSION_NOT_FOUND && id < ErrorID::E3001, "Not a parser error");
+	ASSERT(id >= ErrorID::E2001_EXPRESSION_NOT_FOUND && id < ErrorID::E3001_TYPE_NOT_SPECIFIED, "Not a parser error");
 	printError("Parser error " + errorIDToString(id), line, data);
 }
 
 void ErrorManager::typeError(ErrorID id, int line, const std::string& data) {
-	ASSERT(id >= ErrorID::E3001 && id < ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE, "Not a type error");
+	ASSERT(id >= ErrorID::E3001_TYPE_NOT_SPECIFIED && id < ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE, "Not a type error");
 	printError("Type error " + errorIDToString(id), line, data);
 }
 

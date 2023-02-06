@@ -57,11 +57,19 @@ enum class ClassType : u8 {
 /*
 * bits starting from common qualities' last one:
 *	4-5: class type
+*	6: is move only
+*	7: is constant
 */
 class TypeQualities final : public CommonQualities {
 public:
 	ClassType getClassType() const;
 	void setClassType(ClassType type);
+
+	bool isMoveOnly() const;
+	void setMoveOnly(bool isMoveOnly);
+
+	bool isConst() const;
+	void setConst(bool isConst);
 };
 
 enum class VariableType : u8 {
@@ -79,11 +87,6 @@ class VariableQualities final : public CommonQualities {
 public:
 	VariableType getVariableType() const;
 	void setVariableType(VariableType type);
-};
-
-enum class FunctionType : u8 {
-	COMMON = 0,
-	METHOD
 };
 
 enum class MethodType : u8 {
@@ -105,7 +108,7 @@ enum class CallingConvention : u8 {
 
 /*
 * bits starting from common qualities' last one:
-*	4: function type
+*	4: isMethod
 *	5: is native
 *	6-7: method type (if method)
 *	8: is override (if method)
@@ -117,8 +120,8 @@ class FunctionQualities final : public CommonQualities {
 	u8 m_additionalData = 0;
 
 public:
-	FunctionType getFunctionType() const;
-	void setFunctionType(FunctionType type);
+	bool isMethod() const;
+	void setIsMethod(bool isMethod);
 
 	bool isNative() const;
 	void setNative(bool isNative);

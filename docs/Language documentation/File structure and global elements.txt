@@ -97,8 +97,8 @@ Consists of elements, where an elements is:
 		@no_mangling - applicable to function. Turns off mangling (available if only the function is not overloaded).
 		
 		@stdcall - 	applicable to functions. Used to state using of the stdcall calling convention.
-		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention. Default convention.
-		@fastcall - applicable to functions. Used to state using of the fastcall calling convention.
+		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention.
+		@fastcall - applicable to functions. Used to state using of the fastcall calling convention. Default convention.
 		@thiscall - applicable to functions. Used to state using of the thiscall calling convention. Default convention for methods.
 		@vectorcall - applicable to functions. Used to state using of the vectorcall calling convention.
 		@coldcall - applicable to functions. Used to state using of the llvm coldcall calling convention.
@@ -133,7 +133,7 @@ Consists of elements, where an elements is:
             Keyword const means that the variable is unmutable and cannot be changed.
             Keyword extern means that the variable is declared in an external library. Similar to native functions. Extern variables cannot be initialized.
                 Extern variables cannot be const.
-            -Type- is the type of a variable. It is necessary, but the keyword var can be used to automatically equate the type to that of the value.
+            -Type- is the type of a variable. It is necessary.
             -Name- is a necessary part of declaration of a variable. It is used to refer to the variable.
             After the -name-, there can be the sign = and an -expression- to initialize the variable with. It cannot be used with extern and must be used with const.
                 Otherwise, if there is none, the variable would be initialized with default value of the type if there is such, else there would be an error.

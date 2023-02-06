@@ -2,6 +2,7 @@
 #include <Utils/ErrorManager.h>
 #include "AST/AST.h"
 #include <Module/Module.h>
+#include "TypeParser.h"
 
 static Token _NO_TOK = Token();
 
@@ -43,24 +44,23 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 	Function* function = g_module->getFunction(alias);
 
 	// Arguments
-	std::vector<Argument> args;
-
 	consume(TokenType::LPAR);
 	if (!match(TokenType::RPAR)) {
 		do {
-			consume(TokenType::I32);
+			match(TokenType::CONST);
+			TypeParser(m_toks, m_pos).consumeType();
 			consume(TokenType::WORD);
-			args.push_back(Argument{ m_toks[m_pos - 1].data });
 		} while (match(TokenType::COMMA));
 
 		consume(TokenType::RPAR);
 	}
 
+	TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
 	if (function->qualities.isNative()) {
 		consume(TokenType::SEMICOLON);
 		return std::make_unique<FunctionDeclaration>(function, nullptr);
 	} else {
-		// Short function, like def a() int = 10;
+		// Short function, like def a() i32 = 10;
 		if (match(TokenType::EQ)) {
 			std::unique_ptr<Expression> expr = expression();
 			std::unique_ptr<Statement> body = std::make_unique<ReturnStatement>(std::move(expr));
@@ -76,7 +76,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 std::unique_ptr<Declaration> Parser::variableDeclaration() {
 	match(TokenType::CONST);
 	match(TokenType::EXTERN);
-	consume(TokenType::I32);
+	TypeParser(m_toks, m_pos).consumeType();
 
 	std::string alias = consume(TokenType::WORD).data;
 	Variable* variable = g_module->getVariable(alias);
@@ -142,9 +142,61 @@ std::unique_ptr<Expression> Parser::postfix() {
 }
 
 std::unique_ptr<Expression> Parser::primary() {
-	if (match(TokenType::NUMBERI32)) {
-		return std::make_unique<ValueExpr>(std::stol(peek(-1).data));
-	} if (match(TokenType::WORD)) {
+	// Literals
+	if (match(TokenType::NUMBERI8)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::I8, _ValueUnion((i64)std::stol(peek(-1).data))));
+	} if (match(TokenType::NUMBERI16)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::I16, _ValueUnion((i64)std::stol(peek(-1).data))));
+	} if (match(TokenType::NUMBERI32)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::I32, _ValueUnion((i64)std::stol(peek(-1).data))));
+	} if (match(TokenType::NUMBERI64)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::I64, _ValueUnion((i64)std::stol(peek(-1).data))));
+	} if (match(TokenType::NUMBERU8)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::U8, _ValueUnion((u64)std::stoull(peek(-1).data))));
+	} if (match(TokenType::NUMBERU16)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::U16, _ValueUnion((u64)std::stoull(peek(-1).data))));
+	} if (match(TokenType::NUMBERU32)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::U32, _ValueUnion((u64)std::stoull(peek(-1).data))));
+	} if (match(TokenType::NUMBERU64)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::U64, _ValueUnion((u64)std::stoull(peek(-1).data))));
+	} if (match(TokenType::NUMBERF32)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::F32, _ValueUnion((f64)std::stod(peek(-1).data))));
+	} if (match(TokenType::NUMBERF64)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::F64, _ValueUnion((f64)std::stod(peek(-1).data))));
+	} if (match(TokenType::FALSE)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::BOOL, _ValueUnion((u64)0)));
+	} if (match(TokenType::TRUE)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::BOOL, _ValueUnion((u64)1)));
+	} if (match(TokenType::LETTER8)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::C8, _ValueUnion((i64)peek(-1).data[0])));
+	} if (match(TokenType::LETTER16)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::C16, _ValueUnion((i64)*(i16*)&peek(-1).data[0])));
+	} if (match(TokenType::LETTER32)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::C32, _ValueUnion((i64)*(i32*)&peek(-1).data[0])));
+	} if (match(TokenType::TEXT8)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::STR8, _ValueUnion(peek(-1).data)));
+	} if (match(TokenType::TEXT16)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::STR16, _ValueUnion(peek(-1).data)));
+	} if (match(TokenType::TEXT32)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::STR32, _ValueUnion(peek(-1).data)));
+	} if (match(TokenType::NULLPTR)) {
+		return std::make_unique<ValueExpr>(Value(BasicType::POINTER, _ValueUnion()));
+	}
+
+	// Type conversion or array expression
+	if (auto type = TypeParser(m_toks, m_pos).parseType()) {
+		if (match(TokenType::LPAR)) { // type conversion/constructor
+			std::unique_ptr<Expression> expr = expression();
+			consume(TokenType::RPAR);
+			return std::make_unique<TypeConversionExpr>(std::move(expr), std::move(type));
+		} else if (match(TokenType::LBRACE)) { // array expression (like u8 {...})
+			// TODO: implement
+			consume(TokenType::RBRACE);
+		}
+	}
+	
+	// Identifier
+	if (match(TokenType::WORD)) {
 		std::string name = peek(-1).data;
 		std::string moduleName = "";
 		SymbolType symType = g_module->getSymbolType(name);

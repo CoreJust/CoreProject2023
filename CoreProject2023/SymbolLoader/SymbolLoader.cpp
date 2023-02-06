@@ -1,6 +1,7 @@
 #include "SymbolLoader.h"
 #include <set>
 #include <Utils/ErrorManager.h>
+#include <Parser/TypeParser.h>
 
 std::set<TokenType> DEFINABLE_OPERATORS = {
 	TokenType::IN, TokenType::IS, TokenType::EQ,
@@ -73,8 +74,8 @@ void SymbolLoader::loadFunction() {
 	FunctionQualities qualities;
 	qualities.setVisibility(m_qualities.getVisibility());
 	qualities.setSafety(m_qualities.getSafety());
-	qualities.setFunctionType(FunctionType::COMMON);
-	qualities.setCallingConvention(CallingConvention::CCALL);
+	qualities.setIsMethod(false);
+	qualities.setCallingConvention(CallingConvention::FASTCALL);
 	qualities.setMangling(true);
 
 	// read annotations
@@ -121,25 +122,30 @@ void SymbolLoader::loadFunction() {
 	consume(TokenType::LPAR);
 	if (!match(TokenType::RPAR)) {
 		do {
-			consume(TokenType::I32);
+			bool isConst = match(TokenType::CONST);
+			std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+			type->isConst = isConst;
+
 			consume(TokenType::WORD);
-			args.push_back(Argument{ m_toks[m_pos - 1].data });
+			args.push_back(Argument{ m_toks[m_pos - 1].data, std::move(type) });
 		} while (match(TokenType::COMMA));
 
 		consume(TokenType::RPAR);
 	}
 
+	std::unique_ptr<Type> returnType = TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
+
 	// Save results
 	switch (qualities.getVisibility()) {
 		case Visibility::LOCAL: break;
 		case Visibility::PUBLIC:
-			m_symbols.publicSymbols.addFunction(std::make_unique<FunctionPrototype>(alias, args), qualities);
+			m_symbols.publicSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args)), qualities);
 			break;
 		case Visibility::DIRECT_IMPORT:
-			m_symbols.publicOnceSymbols.addFunction(std::make_unique<FunctionPrototype>(alias, args), qualities);
+			m_symbols.publicOnceSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args)), qualities);
 			break;
 		case Visibility::PRIVATE:
-			m_symbols.privateSymbols.addFunction(std::make_unique<FunctionPrototype>(alias, args), qualities);
+			m_symbols.privateSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args)), qualities);
 			break;
 	default: break;
 	}
@@ -173,7 +179,11 @@ void SymbolLoader::loadVariable() {
 	if (match(TokenType::CONST)) qualities.setVariableType(VariableType::CONST);
 	else if (match(TokenType::EXTERN)) qualities.setVariableType(VariableType::EXTERN);
 
-	consume(TokenType::I32);
+	std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+	if (qualities.getVariableType() == VariableType::CONST) {
+		type->isConst = true;
+	}
+
 	consume(TokenType::WORD);
 	std::string alias = m_toks[m_pos - 1].data;
 
@@ -181,13 +191,13 @@ void SymbolLoader::loadVariable() {
 	switch (qualities.getVisibility()) {
 	case Visibility::LOCAL: break;
 	case Visibility::PUBLIC:
-		m_symbols.publicSymbols.addVariable(alias, qualities, nullptr);
+		m_symbols.publicSymbols.addVariable(alias, std::move(type), qualities, nullptr);
 		break;
 	case Visibility::DIRECT_IMPORT:
-		m_symbols.publicOnceSymbols.addVariable(alias, qualities, nullptr);
+		m_symbols.publicOnceSymbols.addVariable(alias, std::move(type), qualities, nullptr);
 		break;
 	case Visibility::PRIVATE:
-		m_symbols.privateSymbols.addVariable(alias, qualities, nullptr);
+		m_symbols.privateSymbols.addVariable(alias, std::move(type), qualities, nullptr);
 		break;
 	default: break;
 	}

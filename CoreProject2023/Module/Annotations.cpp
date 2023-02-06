@@ -32,6 +32,22 @@ void TypeQualities::setClassType(ClassType type) {
     m_data = (m_data & ~0b110000) | ((u8)type << 4);
 }
 
+bool TypeQualities::isMoveOnly() const {
+    return bool(m_data & (1 << 6));
+}
+
+void TypeQualities::setMoveOnly(bool isMoveOnly) {
+    m_data = (m_data & ~0b1000000) | (u8(isMoveOnly ? 1 : 0) << 6);
+}
+
+bool TypeQualities::isConst() const {
+    return bool(m_data & (1 << 7));
+}
+
+void TypeQualities::setConst(bool isConst) {
+    m_data = (m_data & ~0b10000000) | (u8(isConst ? 1 : 0) << 7);
+}
+
 VariableType VariableQualities::getVariableType() const {
     return VariableType((m_data >> 4) & 3);
 }
@@ -40,12 +56,12 @@ void VariableQualities::setVariableType(VariableType type) {
     m_data = (m_data & ~0b110000) | ((u8)type << 4);
 }
 
-FunctionType FunctionQualities::getFunctionType() const {
-    return FunctionType((m_data >> 4) & 1);
+bool FunctionQualities::isMethod() const {
+    return bool((m_data >> 4) & 1);
 }
 
-void FunctionQualities::setFunctionType(FunctionType type) {
-    m_data = (m_data & ~0b10000) | ((u8)type << 4);
+void FunctionQualities::setIsMethod(bool isMethod) {
+    m_data = (m_data & ~0b10000) | ((isMethod ? 1 : 0) << 4);
 }
 
 bool FunctionQualities::isNative() const {

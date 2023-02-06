@@ -6,5 +6,6 @@
 #include "States/ExpressionStatement.h"
 #include "Exprs/FunctionCallExpr.h"
 #include "Exprs/FunctionExpr.h"
+#include "Exprs/TypeConversionExpr.h"
 #include "Exprs/VariableExpr.h"
 #include "Exprs/ValueExpr.h"

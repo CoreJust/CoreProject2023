@@ -41,10 +41,18 @@ enum ErrorID : u32 {
 	// Parser errors
 	E2001_EXPRESSION_NOT_FOUND, // No expression where it is expected
 	E2002_UNEXPECTED_TOKEN, // Expected token not met
+	E2102_CANNOT_BE_CALLED, // Expression cannot be called through -expr-(...)
 
 	
 	// Type errors
-	E3001,
+	E3001_TYPE_NOT_SPECIFIED, // No type expression found where it is expected
+	E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE, // Expected token not met
+	E3003_NOT_A_TYPE, // The identifier is not a type (e.g. variable or function)
+	E3051_REFERENCE_TO_REFERENCE, // Tried to create a reference to a reference (like i32 & &&)
+	E3052_NEGATIVE_SIZE_ARRAY, // Tried to create an array of negative or zero size
+	E3101_CANNOT_BE_IMPLICITLY_CONVERTED, // Imposible implicit conversion of types
+	E3102_CANNOT_BE_EXPLICITLY_CONVERTED, // Imposible explicit conversion of types
+	E3103_CANNOT_CONVERT_TO_ONE, // Imposible to convert types to one
 
 
 	// Internal errors

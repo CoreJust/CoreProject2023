@@ -1,17 +1,16 @@
 #pragma once
 #include "Expression.h"
-#include <Module/Value.h>
 
 // Literals of integer, floating point, char, bool and string types as well as null
-class ValueExpr final : public Expression {
+class TypeConversionExpr final : public Expression {
 	FRIEND_CLASS_VISITORS
 
 public:
-	ValueExpr(Value val);
+	TypeConversionExpr(std::unique_ptr<Expression> expr, std::unique_ptr<Type> type);
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;
 
 private:
-	Value m_val;
+	std::unique_ptr<Expression> m_expr;
 };

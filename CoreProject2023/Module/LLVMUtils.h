@@ -1,0 +1,17 @@
+#pragma once
+#include "Variable.h"
+#include "Function.h"
+
+namespace llvm_utils {
+	llvm::Value* createGlobalVariable(Variable& var, llvm::Value* initializer);
+	llvm::Value* addGlobalVariableFromOtherModule(Variable& var, llvm::Module& module);
+
+	llvm::Constant* getDefaultValueOf(const std::unique_ptr<Type>& type);
+	llvm::Constant* getConstantInt(u64 value, u64 bit_width, bool isSigned = false);
+
+	// returns nullptr if conversion is impossible
+	llvm::Value* convertValueTo(const std::unique_ptr<Type>& to, const std::unique_ptr<Type>& from, llvm::Value* value);
+
+	llvm::Value* convertToString(const std::unique_ptr<Type>& from, llvm::Value* value, BasicType stringType);
+	llvm::Value* convertToBool(const std::unique_ptr<Type>& from, llvm::Value* value);
+}

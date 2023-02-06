@@ -54,4 +54,21 @@ Initial development
 	Fixed bug: program fails when freeing resources (somewhere in llvm destructors), used quick_exit(0)
 
 	Commited as "Some bug fixes, new llvm PassManager"
-	
+
+01.02.2023
+	Fixed bug with inability to use functions/variables, declared in imported modules
+	Fixed bug when global constructors were created for global variables, initialized with a constant
+	Started implementing type system
+	Created modules LLVMUtils, Type, TypeNode, BasicType
+
+02.02.2023
+	Created modules Value, TypeParser
+
+05.02.2023
+	Some progress on creating type system: type parsing
+	Note: typeof is parsed correctly, but only if the expression is a variable or a function
+	Created module TypeConversionExpr
+
+06.02.2023
+	Added tools for type conversion, type system is mostly ready, apart from user-defined types
+	Working type system

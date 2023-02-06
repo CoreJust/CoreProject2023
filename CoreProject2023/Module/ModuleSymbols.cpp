@@ -1,11 +1,20 @@
 #include "ModuleSymbols.h"
 
-void ModuleSymbolsUnit::addFunction(std::unique_ptr<FunctionPrototype> prototype, FunctionQualities qualities) {
-	m_functions.push_back(Function{ *prototype, qualities, prototype->generate(qualities.isNative()) });
+void ModuleSymbolsUnit::addType(TypeNode type) {
+	m_types.push_back(std::move(type));
 }
 
-void ModuleSymbolsUnit::addVariable(const std::string& name, VariableQualities qualities, llvm::Value* value) {
-	m_variables.push_back(Variable{ name, qualities, value });
+void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, FunctionQualities qualities) {
+	llvm::Function* funcVal = prototype.generate(qualities.isNative(), qualities.getCallingConvention());
+	m_functions.push_back(Function{ std::move(prototype), qualities, funcVal });
+}
+
+void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, FunctionQualities qualities, llvm::Function* value) {
+	m_functions.push_back(Function{ std::move(prototype), qualities, value });
+}
+
+void ModuleSymbolsUnit::addVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value) {
+	m_variables.push_back(Variable{ name, std::move(type), qualities, value });
 }
 
 SymbolType ModuleSymbolsUnit::getSymbolType(const std::string& name) const {
@@ -42,4 +51,22 @@ Variable* ModuleSymbolsUnit::getVariable(const std::string& name) {
 	}
 
 	return nullptr;
+}
+
+TypeNode* ModuleSymbolsUnit::getType(const std::string& name) {
+	for (auto& type : m_types) {
+		if (type.name == name) {
+			return &type;
+		}
+	}
+
+	return nullptr;
+}
+
+std::vector<Variable> ModuleSymbolsUnit::getVariables() {
+	return m_variables;
+}
+
+std::vector<Function> ModuleSymbolsUnit::getFunctions() {
+	return m_functions;
 }

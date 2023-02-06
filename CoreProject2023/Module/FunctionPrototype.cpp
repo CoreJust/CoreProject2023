@@ -3,12 +3,45 @@
 #include <Parser/AST/INode.h>
 #include <Module/Module.h>
 
-FunctionPrototype::FunctionPrototype(const std::string& name, std::vector<Argument> args)
-	: m_name(name), m_args(std::move(args)) {
+FunctionPrototype::FunctionPrototype(const std::string& name, std::unique_ptr<Type> returnType, std::vector<Argument> args)
+	: m_name(name), m_returnType(std::move(returnType)), m_args(std::move(args)) {
 
 }
 
-llvm::Function* FunctionPrototype::generate(bool is_native) const {
+FunctionPrototype::FunctionPrototype(FunctionPrototype& other)
+	: m_name(other.m_name), m_returnType(other.m_returnType->copy()) {
+	m_args.reserve(other.m_args.size());
+	for (auto& arg : other.m_args) {
+		m_args.push_back(Argument{ arg.name, arg.type->copy() });
+	}
+}
+
+FunctionPrototype::FunctionPrototype(FunctionPrototype&& other)
+	: m_name(std::move(other.m_name)), m_returnType(std::move(other.m_returnType)), m_args(std::move(other.m_args)) {
+
+}
+
+llvm::Function* FunctionPrototype::generate(bool is_native, CallingConvention conv) const {
+	std::vector<llvm::Type*> types;
+	for (auto& arg : m_args) {
+		types.push_back(arg.type->to_llvm());
+	}
+
+	llvm::FunctionType* ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(g_context), types, false);
+	llvm::Function* fun = llvm::Function::Create(ft,
+		llvm::Function::ExternalLinkage,
+		m_name,
+		g_module->getLLVMModule());
+
+	fun->setCallingConv(getCallingConvention(conv));
+	u32 index = 0;
+	for (auto& arg : fun->args())
+		arg.setName(m_args[index++].name);
+
+	return fun;
+}
+
+llvm::Function* FunctionPrototype::generateImportedFromOtherModule(llvm::Module& thisModule, CallingConvention conv) const {
 	std::vector<llvm::Type*> types;
 	for (auto& arg : m_args) {
 		types.push_back(llvm::Type::getInt32Ty(g_context));
@@ -18,8 +51,9 @@ llvm::Function* FunctionPrototype::generate(bool is_native) const {
 	llvm::Function* fun = llvm::Function::Create(ft,
 		llvm::Function::ExternalLinkage,
 		m_name,
-		g_module->getLLVMModule());
+		thisModule);
 
+	fun->setCallingConv(getCallingConvention(conv));
 	u32 index = 0;
 	for (auto& arg : fun->args())
 		arg.setName(m_args[index++].name);
@@ -35,6 +69,33 @@ void FunctionPrototype::setName(const std::string& s) {
 	m_name = s;
 }
 
+std::unique_ptr<FunctionType> FunctionPrototype::genType() const {
+	return std::make_unique<FunctionType>(std::unique_ptr<Type>(m_returnType->copy()), genArgumentTypes(), false);
+}
+
+std::vector<std::unique_ptr<Type>> FunctionPrototype::genArgumentTypes() const {
+	std::vector<std::unique_ptr<Type>> argTypes;
+	for (auto& arg : m_args) {
+		argTypes.push_back(std::unique_ptr<Type>(arg.type->copy()));
+	}
+
+	return argTypes;
+}
+
 std::vector<Argument>& FunctionPrototype::args() {
 	return m_args;
+}
+
+llvm::CallingConv::ID FunctionPrototype::getCallingConvention(CallingConvention conv) {
+	switch (conv) {
+	case CallingConvention::CCALL: return llvm::CallingConv::C;
+	case CallingConvention::STDCALL: return llvm::CallingConv::X86_StdCall;
+	case CallingConvention::FASTCALL: return llvm::CallingConv::Fast;
+	case CallingConvention::THISCALL: return llvm::CallingConv::X86_ThisCall;
+	case CallingConvention::VECTORCALL: return llvm::CallingConv::X86_VectorCall;
+	case CallingConvention::COLDCALL: return llvm::CallingConv::Cold;
+	case CallingConvention::TAILCALL: return llvm::CallingConv::Tail;
+	default:
+		break;
+	}
 }

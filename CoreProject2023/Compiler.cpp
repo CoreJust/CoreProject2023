@@ -46,6 +46,7 @@ void Compiler::initAll() {
 	ErrorManager::init(ErrorManager::CONSOLE);
 
 	initPasses();
+	initBasicTypeNodes();
 }
 
 void Compiler::initPasses(llvm::TargetMachine* machine) {
@@ -73,7 +74,9 @@ void Compiler::compileModule(const std::string& path) {
 	}
 
 	std::string currFilePath = Module::getModulePathWithoutName(path);
+	std::string currFileName = Module::getModuleNameFromPath(path);
 	g_currFilePath = currFilePath;
+	g_currFileName = currFileName;
 
 	// Lexer
 	ModuleQualities qualities;
@@ -109,6 +112,7 @@ void Compiler::compileModule(const std::string& path) {
 	}
 
 	g_currFilePath = currFilePath;
+	g_currFileName = currFileName;
 
 	// Parser
 	thisModule->loadSymbols();
@@ -135,17 +139,16 @@ void Compiler::compileLLVM() {
 
 	llvm::TargetMachine* targetMachine = target->createTargetMachine(targetTriple, "generic", "", options, RM);
 
-
 	// Compiling llvm modules
 	for (auto& module : g_moduleList.getModules()) {
 		llvm::Module& llvmModule = module.getLLVMModule();
 		llvmModule.setTargetTriple(targetTriple);
 
-		initPasses(targetMachine);
-		g_modulePassManager->run(llvmModule, *g_moduleAnalysisManager);
-
 		std::cout << module.getName() << ": \n";
 		llvmModule.print(llvm::errs(), nullptr);
+
+		initPasses(targetMachine);
+		g_modulePassManager->run(llvmModule, *g_moduleAnalysisManager);
 
 		std::error_code err_code;
 		std::string buildFilePath = genBuildFilePath(module.getPath(), ".o");

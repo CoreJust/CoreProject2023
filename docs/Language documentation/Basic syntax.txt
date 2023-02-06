@@ -1,5 +1,7 @@
 * - to be reviewed.
 
+* To consider: templates, big ints (like int<128>), void pointer
+
 !!!  Basic Syntax  !!!
 
 /////   COMMENTS   /////
@@ -26,10 +28,10 @@ Basic types are:
 Complex types are:
     1. Array: -type-[-size-] for an array of -size- number of -type- values. Complex type.
     2. Dynamic array: -type-[] for a dynamic array of -type- values. Has the .size property. Must be initialized in the safe code. Complex type.
-    3. Pointer: -type- [const]* for a pointer to a -type-. Cannot be used in safe code.
-    4. Reference: -type- [const]& for a reference to a -type-.
-	5. Rvalue reference: -type-&&. This type might be initialized only through move(rvalue).
-    6. Optional: -type-? for an optional of a type (either -type- or null). Method .resolve() must be called to get the item after checking for null.
+    3. Pointer: -type- [const]* for a pointer to a -type-. Cannot be used in safe code. -type- cannot be (rvalue) reference.
+    4. Reference: -type- [const]& for a reference to a -type-. Actually a pointer. -type- cannot be (rvalue) reference.
+	5. Rvalue reference: -type-&&. This type might be initialized only through move(rvalue). Actually it has the value type itself. -type- cannot be (rvalue) reference.
+    6. Optional: -type-? for an optional of a type (either -type- or null). operator * must be called to get the item after checking for null.
     7. Tuple: tuple<-types...-> for a tuple of -types...-.
     8. Function: func -return type- (-argument types...-). A function type with no return value nor arguments would be: func().
     
@@ -38,8 +40,8 @@ User defined types are:
     2. Structure
     3. Enum - implicit base type
     4. Union
-    
-    
+
+
     
     
 /////   TYPE CONVERSIONS   /////
@@ -49,9 +51,10 @@ Implicit type conversions:
     3. Integer types can be implicitly casted to floating point types (e.g. u64 -> f32).
     4. Floating point types can be implicitly casted to larger ones (f32 -> f64).
     5. Character types can be implicitly casted to larger ones (c8 -> c16, c16 -> c32)
-    6. Bool type can be implicitly casted to any number type (e.g. bool -> u64, bool -> f32). False would be 0 and true would be 1.
+    6. Bool type can be implicitly casted to any integer type (e.g. bool -> u64, bool -> u32). False would be 0 and true would be 1.
     7. Number, character, string, dynamic array and pointer types can be implicitly casted to bool.
         False if number is 0, character is '\00', string is "", dynamic array's size is 0 or pointer is null, else true.
+	8. Optional can be converted to bool. True if it has a value, otherwise false.
     
 Explicit type conversions:
     1. Integer types can be casted to another integer type (e.g. u8(i64)).
@@ -59,11 +62,11 @@ Explicit type conversions:
     3. Characters can be converted to smaller ones (c16(c32), c8(c16)).
     4. Strings can be converted to other strings (e.g. str16(str8)).
     5. Characters can be casted to string (e.g. str8(c8)).
-    6. Character and integers are mutually convertible (e.g. c8(u8), i32(c16)).
-    7. Pointers are convertible to integers (e.g. u64(i8*)).
-    8. Functions, strings, arrays (dynamic ones included), classes and optionals can be casted to pointers (e.g. u8*(func(), i32*(i32[8])).
-    9. Numbers, pointers, arrays, tuples and bool can be casted to string.
-    10. Boolean can be converted to character.
+    6. Character and numbers are mutually convertible (e.g. c8(u8), i32(c16)).
+    7. Pointers/functions/arrays are convertible to integers (e.g. u64(i8*)).
+    8. Functions, arrays, classes can be casted to each other (e.g. u8*(func(), i32*(i32[8])).
+    9. Numbers, pointers, arrays, tuples, bool and enums can be casted to string.
+    10. Bool can be converted to character and float.
     11. Structures can be casted to tuples.
     12. Enums convert according to their types.
 
@@ -242,6 +245,7 @@ safe statement:
 Variable declaration:
     [const] -type- -name- [= -expression-];
     The same as of a global variable, apart from that local variable cannot be extern nor have any annotations.
+	Also, local variable can be declared through var keyword, unlike global one.
     
 if -expression- -statement- [elif -expression- -statement-][else -statement-]
     If the first expression is true, the first statement if executed, else if the second expression is true, the second statement is executed.

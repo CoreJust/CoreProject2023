@@ -1,6 +1,7 @@
 #include "Module.h"
 #include <Utils/ErrorManager.h>
 #include <Parser/AST/INode.h>
+#include "LLVMUtils.h"
 
 ModuleList g_moduleList;
 ModuleRef g_module;
@@ -19,9 +20,7 @@ Module::Module(Module& other)
 void Module::loadSymbols() {
 	// Loading this module's symbols
 	auto& thisModule = g_symbolTable.getModuleSymbols(m_path);
-	addModuleSymbolsUnit("", &thisModule.privateSymbols);
-	addModuleSymbolsUnit("", &thisModule.publicOnceSymbols);
-	addModuleSymbolsUnit("", &thisModule.publicSymbols);
+	m_symbols[""] = { &thisModule.privateSymbols, &thisModule.publicOnceSymbols, &thisModule.publicSymbols };
 
 	for (auto& importedModulePath : m_importedModules) {
 		ModuleRef module = g_moduleList.getModule(importedModulePath);
@@ -125,6 +124,26 @@ Variable* Module::getVariable(const std::string& moduleAlias, const std::string&
 	return nullptr;
 }
 
+TypeNode* Module::getType(const std::string& name) {
+	for (ModuleSymbolsUnit* unit : m_symbols.at("")) {
+		if (auto type = unit->getType(name); type != nullptr) {
+			return type;
+		}
+	}
+
+	return nullptr;
+}
+
+TypeNode* Module::getType(const std::string& moduleAlias, const std::string& name) {
+	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleAlias)) {
+		if (auto type = unit->getType(name); type != nullptr) {
+			return type;
+		}
+	}
+
+	return nullptr;
+}
+
 const std::string& Module::getName() const noexcept {
 	return m_name;
 }
@@ -156,10 +175,26 @@ void Module::loadSymbolsIfNotLoaded() {
 }
 
 void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* unit) {
+	// Addind tp module's LLVM IR
+	ModuleSymbolsUnit *newUnit = new ModuleSymbolsUnit();
+	for (Variable& var : unit->getVariables()) {
+		newUnit->addVariable(var.name, std::unique_ptr<Type>(var.type->copy()),
+			var.qualities, llvm_utils::addGlobalVariableFromOtherModule(var, *m_llvmModule));
+	}
+
+	for (Function& func : unit->getFunctions()) {
+		newUnit->addFunction(
+				func.prototype,
+				func.qualities,
+				func.prototype.generateImportedFromOtherModule(*m_llvmModule, func.qualities.getCallingConvention())
+		);
+	}
+
+	// Adding to the module's symbols
 	if (m_symbols.contains(alias)) {
-		m_symbols[alias].push_back(unit);
+		m_symbols[alias].push_back(newUnit);
 	} else {
-		m_symbols[alias] = { unit };
+		m_symbols[alias] = { newUnit };
 	}
 }
 

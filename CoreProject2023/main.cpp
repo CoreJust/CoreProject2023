@@ -1,8 +1,8 @@
 #include <iostream>
 #include "Compiler.h"
 
-// TODO: add user-defined types, add expressions, add aliases, name mangling, safe/unsafe code, fix current
-// Long term TODO: project settings file, user-defined types
+// TODO: add user-defined types, add expressions, add aliases, name mangling, safe/unsafe code
+// Long term TODO: project settings file
 // To test: strings, format strings, str's convertions
 
 int main() {

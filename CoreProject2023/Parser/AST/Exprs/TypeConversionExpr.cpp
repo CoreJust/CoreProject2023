@@ -24,3 +24,8 @@ llvm::Value* TypeConversionExpr::generate() {
 
 	return llvm_utils::convertValueTo(m_type, m_expr->getType(), value);
 }
+
+llvm::Value* TypeConversionExpr::generateRValue() {
+	ErrorManager::parserError(ErrorID::E2103_NOT_A_REFERENCE, m_errLine, "converted value cannot be a reference");
+	return nullptr;
+}

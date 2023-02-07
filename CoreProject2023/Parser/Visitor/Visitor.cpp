@@ -37,6 +37,11 @@ void Visitor::visit(FunctionExpr* expr, std::unique_ptr<Expression>& node) {
 	
 }
 
+void Visitor::visit(AssignmentExpr* expr, std::unique_ptr<Expression>& node) {
+	expr->m_rval->accept(this, expr->m_rval);
+	expr->m_expr->accept(this, expr->m_expr);
+}
+
 void Visitor::visit(TypeConversionExpr* expr, std::unique_ptr<Expression>& node) {
 	expr->m_expr->accept(this, expr->m_expr);
 }

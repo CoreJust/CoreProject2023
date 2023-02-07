@@ -24,5 +24,5 @@ void VariableDefStatement::generate() {
 	auto alloc = llvm_utils::createLocalVariable(fun, m_variable.type, m_variable.name);
 
 	g_builder->CreateStore(val, alloc);
-	g_module->addLocalVariable(m_variable.name, m_variable.type->copy(), m_variable.qualities, val);
+	g_module->addLocalVariable(m_variable.name, m_variable.type->copy(), m_variable.qualities, alloc);
 }

@@ -26,6 +26,7 @@ private:
 	std::unique_ptr<Statement> variableDefStatement();
 
 	std::unique_ptr<Expression> expression();
+	std::unique_ptr<Expression> assignment();
 	std::unique_ptr<Expression> postfix();
 	std::unique_ptr<Expression> primary();
 

@@ -1,15 +1,16 @@
 import some_file;
 
-def reprint(const c8* question) {
-	some_file.puts(question);
-	some_file.getchar();
-	reprint(question);
-}
+i32 g_printer = 40;
 
 def main() i32 {
-	const var question = c8*(">>> ");
+	some_file.putchar(g_printer);
+	g_printer = 45;
+	some_file.putchar(g_printer);
+	var a = 10;
+	some_file.putchar(a);
+	a = 90;
+	some_file.putchar(a);
 	
-	some_file.puts(c8*("Hello world!\n"));
-	reprint(question);
+	some_file.getchar();
 	return 0;
 }

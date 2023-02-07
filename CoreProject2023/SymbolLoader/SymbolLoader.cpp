@@ -268,7 +268,7 @@ Token& SymbolLoader::peek(int rel) {
 }
 
 int SymbolLoader::getCurrLine() {
-	auto tok = peek();
+	auto& tok = peek();
 	if (tok.type == TokenType::NO_TOKEN)
 		return m_toks.back().errLine;
 

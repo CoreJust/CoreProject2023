@@ -76,6 +76,14 @@ Initial development
 	Commited as "Added type system (without user-defined types), literals"
 
 	Added function using function arguments in function body
+	Created module VariableDefStatement
 	Added local variables
 
 	Commited as "Added local variables"
+
+07.02.2023
+	Fixed local variables' bug (incorect handling)
+	Created module AssignmentExpr
+	Added rvalue generation to all expressions
+
+	Commited as "Added assignment"

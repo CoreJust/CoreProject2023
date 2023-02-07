@@ -11,7 +11,8 @@ void reprint(const char* q) {
 }
 
 int main() {
-	puts("Hello world!\n");
+	const char* hi = "Hello world!\n";
+	puts(hi);
 	reprint(">>> ");
 	return 0;
 }

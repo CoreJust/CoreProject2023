@@ -33,14 +33,6 @@ llvm::Function* FunctionPrototype::generate(bool is_native, CallingConvention co
 		m_name,
 		g_module->getLLVMModule());
 
-	// TODO: delete this block
-	if (m_name == "reprint") {
-		fun->addFnAttr(llvm::Attribute::NoInline);
-		fun->addFnAttr(llvm::Attribute::OptimizeNone);
-		fun->addFnAttr(llvm::Attribute::NoReturn);
-		fun->addFnAttr(llvm::Attribute::MustProgress);
-	}
-
 	fun->setCallingConv(getCallingConvention(conv));
 	u32 index = 0;
 	for (auto& arg : fun->args())

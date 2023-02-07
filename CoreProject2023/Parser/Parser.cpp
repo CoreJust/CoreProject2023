@@ -79,6 +79,9 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 			std::unique_ptr<Statement> body = stateOrBlock();
 			g_module->deleteBlock();
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
+		} else {
+			ErrorManager::parserError(ErrorID::E2104_FUNCTION_BODY_MISMATCHED, getCurrLine(), "function: " + alias);
+			return nullptr;
 		}
 	}
 }
@@ -162,7 +165,17 @@ std::unique_ptr<Statement> Parser::variableDefStatement() {
 }
 
 std::unique_ptr<Expression> Parser::expression() {
-	return postfix();
+	return assignment();
+}
+
+std::unique_ptr<Expression> Parser::assignment() {
+	std::unique_ptr<Expression> result = postfix();
+
+	if (match(TokenType::EQ)) {
+		return std::make_unique<AssignmentExpr>(std::move(result), assignment());
+	}
+
+	return result;
 }
 
 std::unique_ptr<Expression> Parser::postfix() {

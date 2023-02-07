@@ -61,8 +61,7 @@ llvm::Value* llvm_utils::genFunctionArgumentValue(Function* func, Argument& arg,
 }
 
 llvm::Value* llvm_utils::createLocalVariable(llvm::Function* func, const std::unique_ptr<Type>& type, const std::string& name) {
-	llvm::IRBuilder<> tmpBuilder(&func->getEntryBlock(),
-		func->getEntryBlock().begin());
+	llvm::IRBuilder<> tmpBuilder(&func->getEntryBlock(), func->getEntryBlock().begin());
 	return tmpBuilder.CreateAlloca(type->to_llvm(), 0, name);
 }
 

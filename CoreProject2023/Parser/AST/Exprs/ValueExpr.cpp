@@ -1,5 +1,6 @@
 #include "ValueExpr.h"
 #include <Parser/Visitor/Visitor.h>
+#include <Utils/ErrorManager.h>
 #include <Module/LLVMUtils.h>
 
 ValueExpr::ValueExpr(Value val)
@@ -70,5 +71,10 @@ llvm::Value* ValueExpr::generate() {
 		return llvm::ConstantPointerNull::get(llvm::Type::getInt8PtrTy(g_context));
 	}
 
+	return nullptr;
+}
+
+llvm::Value* ValueExpr::generateRValue() {
+	ErrorManager::parserError(ErrorID::E2103_NOT_A_REFERENCE, m_errLine, "literal cannot be a reference");
 	return nullptr;
 }

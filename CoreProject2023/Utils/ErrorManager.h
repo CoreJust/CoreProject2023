@@ -45,6 +45,8 @@ enum ErrorID : u32 {
 
 	E2101_VAR_HAS_NO_INIT, // Variable declared through var cannot deduce type without initial value
 	E2102_CANNOT_BE_CALLED, // Expression cannot be called through -expr-(...)
+	E2103_NOT_A_REFERENCE, // Expression expected to be of reference
+	E2104_FUNCTION_BODY_MISMATCHED, // Function has no body
 
 	
 	// Type errors

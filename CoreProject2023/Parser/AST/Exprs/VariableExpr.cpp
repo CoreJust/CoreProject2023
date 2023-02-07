@@ -15,5 +15,19 @@ llvm::Value* VariableExpr::generate() {
 	llvm::Value* varVal = g_module->getVariable(m_name)->value;
 	llvm::Value* result = g_builder->CreateLoad(m_type->to_llvm(), varVal);
 
+	if (m_type->basicType == BasicType::REFERENCE) {
+		result = g_builder->CreateLoad(((PointerType*)m_type.get())->elementType->to_llvm(), result);
+	}
+
+	return result;
+}
+
+llvm::Value* VariableExpr::generateRValue() {
+	llvm::Value* result = g_module->getVariable(m_name)->value;
+
+	if (m_type->basicType == BasicType::REFERENCE) {
+		result = g_builder->CreateLoad(result->getType(), result);
+	}
+
 	return result;
 }

@@ -272,6 +272,10 @@ bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 
 	BasicType bfrom = from->basicType;
 	BasicType bto = to->basicType;
+
+	if (bfrom == bto && bfrom <= BasicType::STR32) {
+		return true;
+	}
 	
 	if (isReference(from->basicType)) {
 		return isImplicitlyConverible(to, ((PointerType*)from.get())->elementType);

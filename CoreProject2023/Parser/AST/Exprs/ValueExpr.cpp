@@ -78,3 +78,7 @@ llvm::Value* ValueExpr::generateRValue() {
 	ErrorManager::parserError(ErrorID::E2103_NOT_A_REFERENCE, m_errLine, "literal cannot be a reference");
 	return nullptr;
 }
+
+bool ValueExpr::isCompileTime() const {
+	return true;
+}

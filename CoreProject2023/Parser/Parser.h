@@ -27,6 +27,14 @@ private:
 
 	std::unique_ptr<Expression> expression();
 	std::unique_ptr<Expression> assignment();
+	std::unique_ptr<Expression> logical();
+	std::unique_ptr<Expression> conditional();
+	std::unique_ptr<Expression> rangeAndAs();
+	std::unique_ptr<Expression> bitwise();
+	std::unique_ptr<Expression> additive();
+	std::unique_ptr<Expression> multiplicative();
+	std::unique_ptr<Expression> degree();
+	std::unique_ptr<Expression> unary();
 	std::unique_ptr<Expression> postfix();
 	std::unique_ptr<Expression> primary();
 

@@ -4,6 +4,8 @@
 #include <Module/Module.h>
 #include <Module/LLVMUtils.h>
 
+Function* g_function;
+
 FunctionDeclaration::FunctionDeclaration(Function* func, std::unique_ptr<Statement> body)
 	: m_function(func), m_body(std::move(body)) {
 
@@ -20,6 +22,7 @@ void FunctionDeclaration::generate() {
 		g_builder->SetInsertPoint(bb);
 
 		g_module->addBlock();
+		g_function = m_function;
 		size_t index = 0;
 		for (size_t i = 0; i < m_function->prototype.args().size(); i++) {
 			Argument& arg = m_function->prototype.args()[i];

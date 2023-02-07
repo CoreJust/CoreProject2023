@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <llvm/IR/Type.h>
+#include <llvm/IR/DerivedTypes.h>
 #include "Annotations.h"
 #include "BasicType.h"
 
@@ -91,6 +92,7 @@ public:
 
 	bool equals(const std::unique_ptr<Type>& other) const override;
 
+	llvm::FunctionType* to_llvmFunctionType() const;
 	llvm::Type* to_llvm() const override;
 	std::string toString() const override;
 
@@ -100,5 +102,9 @@ public:
 // TODO: user-defined types
 
 // TODO: add consideration of user-defined types
-bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to);
+bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to, bool isFromCompileTime = false);
 bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to);
+
+// Returns the type both types can be converted to, returns nullptr if cannot be converted
+std::unique_ptr<Type> findCommonType(const std::unique_ptr<Type>& first, const std::unique_ptr<Type>& second,
+	bool isFirstCompileTime = false, bool isSecondCompileTime = false);

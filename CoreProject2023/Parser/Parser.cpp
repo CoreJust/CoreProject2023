@@ -5,8 +5,12 @@
 #include "TypeParser.h"
 
 static Token _NO_TOK = Token();
+u64* g_errLine; // used in INode.cpp
 
-Parser::Parser(std::vector<Token> tokens) : m_toks(std::move(tokens)), m_pos(0) { }
+Parser::Parser(std::vector<Token> tokens)
+	: m_toks(std::move(tokens)), m_pos(0) {
+	g_errLine = &m_pos;
+}
 
 std::vector<std::unique_ptr<Declaration>> Parser::parse() {
 	std::vector<std::unique_ptr<Declaration>> result;
@@ -73,6 +77,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 			std::unique_ptr<Expression> expr = expression();
 			std::unique_ptr<Statement> body = std::make_unique<ReturnStatement>(std::move(expr));
 			g_module->deleteBlock();
+			consume(TokenType::SEMICOLON);
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		} else if (match(TokenType::LBRACE)) {
 			m_pos--;
@@ -169,13 +174,130 @@ std::unique_ptr<Expression> Parser::expression() {
 }
 
 std::unique_ptr<Expression> Parser::assignment() {
-	std::unique_ptr<Expression> result = postfix();
+	std::unique_ptr<Expression> result = logical();
 
 	if (match(TokenType::EQ)) {
 		return std::make_unique<AssignmentExpr>(std::move(result), assignment());
 	}
 
 	return result;
+}
+
+std::unique_ptr<Expression> Parser::logical() {
+	std::unique_ptr<Expression> result = conditional();
+
+	while (true) {
+		if (match(TokenType::ANDAND)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), conditional(), TokenType::ANDAND);
+			continue;
+		} if (match(TokenType::OROR)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), conditional(), TokenType::OROR);
+			continue;
+		}
+
+		break;
+	}
+
+	return result;
+}
+
+std::unique_ptr<Expression> Parser::conditional() {
+	// TODO: implement
+	return bitwise();
+}
+
+std::unique_ptr<Expression> Parser::rangeAndAs() {
+	// TODO: implement
+	return bitwise();
+}
+
+std::unique_ptr<Expression> Parser::bitwise() {
+	std::unique_ptr<Expression> result = additive();
+
+	while (true) {
+		if (match(TokenType::AND)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::AND);
+			continue;
+		} if (match(TokenType::OR)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::OR);
+			continue;
+		} if (match(TokenType::XOR)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::XOR);
+			continue;
+		} if (match(TokenType::LSHIFT)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::LSHIFT);
+			continue;
+		} if (match(TokenType::RSHIFT)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::RSHIFT);
+			continue;
+		}
+
+		break;
+	}
+
+	return result;
+}
+
+std::unique_ptr<Expression> Parser::additive() {
+	std::unique_ptr<Expression> result = multiplicative();
+
+	while (true) {
+		if (match(TokenType::PLUS)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), multiplicative(), TokenType::PLUS);
+			continue;
+		} if (match(TokenType::MINUS)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), multiplicative(), TokenType::MINUS);
+			continue;
+		}
+
+		break;
+	}
+
+	return result;
+}
+
+std::unique_ptr<Expression> Parser::multiplicative() {
+	std::unique_ptr<Expression> result = degree();
+
+	while (true) {
+		if (match(TokenType::STAR)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::STAR);
+			continue;
+		} if (match(TokenType::SLASH)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::SLASH);
+			continue;
+		} if (match(TokenType::DSLASH)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::DSLASH);
+			continue;
+		} if (match(TokenType::PERCENT)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::PERCENT);
+			continue;
+		}
+
+		break;
+	}
+
+	return result;
+}
+
+std::unique_ptr<Expression> Parser::degree() {
+	std::unique_ptr<Expression> result = unary();
+
+	while (true) {
+		if (match(TokenType::POWER)) {
+			result = std::make_unique<BinaryExpr>(std::move(result), unary(), TokenType::POWER);
+			continue;
+		}
+
+		break;
+	}
+
+	return result;
+}
+
+std::unique_ptr<Expression> Parser::unary() {
+	// TODO: implement
+	return postfix();
 }
 
 std::unique_ptr<Expression> Parser::postfix() {

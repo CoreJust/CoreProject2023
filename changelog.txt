@@ -87,3 +87,13 @@ Initial development
 	Added rvalue generation to all expressions
 
 	Commited as "Added assignment"
+
+	Fixed bug with return of value of type different from function's
+	Created module BinaryExpression
+	Added most arithmetical and bitwise operators, &&, ||
+	Fixed bug with function type variables (impossible to create)
+	Fixed bug with global variables' initialization (impossible to init if not with a constant)
+	Fixed bug when number literals could not be used as types lesser than default without stating type postfix
+		(e.g. i16 a = 10; caused an error, since 10 is i32, and i32 cannot be implicitly converted to i16)
+
+	Commited as "Added some binary expressions (arithmetic, bitwise...), bug fixes"

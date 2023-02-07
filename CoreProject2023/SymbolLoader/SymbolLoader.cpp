@@ -75,7 +75,7 @@ void SymbolLoader::loadFunction() {
 	qualities.setVisibility(m_qualities.getVisibility());
 	qualities.setSafety(m_qualities.getSafety());
 	qualities.setIsMethod(false);
-	qualities.setCallingConvention(CallingConvention::FASTCALL);
+	qualities.setCallingConvention(CallingConvention::CCALL);
 	qualities.setMangling(true);
 
 	// read annotations

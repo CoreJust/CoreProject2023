@@ -1,18 +1,9 @@
 extern "C"
-int puts(const char*);
+int puts(const char* str);
 
-extern "C"
-int getchar();
-
-void reprint(const char* q) {
-	puts(q);
-	getchar();
-	reprint(q);
-}
+int(*printer)(const char*) = puts;
 
 int main() {
-	const char* hi = "Hello world!\n";
-	puts(hi);
-	reprint(">>> ");
+	printer("Why?");
 	return 0;
 }

@@ -132,6 +132,9 @@
     <ClCompile Include="Parser\AST\Exprs\AssignmentExpr.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Parser\AST\Exprs\BinaryExpr.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h">
@@ -264,6 +267,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Parser\AST\Exprs\AssignmentExpr.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser\AST\Exprs\BinaryExpr.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

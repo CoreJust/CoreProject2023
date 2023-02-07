@@ -19,3 +19,7 @@ llvm::Value* FunctionExpr::generateRValue() {
     ErrorManager::parserError(ErrorID::E2103_NOT_A_REFERENCE, m_errLine, "function value cannot be reference");
     return nullptr;
 }
+
+bool FunctionExpr::isCompileTime() const {
+    return true;
+}

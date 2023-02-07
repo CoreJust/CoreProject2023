@@ -16,3 +16,5 @@ private:
 	Function* m_function;
 	std::unique_ptr<Statement> m_body;
 };
+
+extern Function* g_function;

@@ -1,4 +1,0 @@
-def native putchar(i32 val) i32;
-def native getchar() i32;
-
-def native puts(const c8* str) i32;

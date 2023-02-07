@@ -12,6 +12,8 @@ public:
 	llvm::Value* generate() override;
 	llvm::Value* generateRValue() override;
 
+	bool isCompileTime() const override;
+
 private:
 	Function* m_function;
 };

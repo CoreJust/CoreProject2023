@@ -241,13 +241,17 @@ bool FunctionType::equals(const std::unique_ptr<Type>& other) const {
 	return true;
 }
 
-llvm::Type* FunctionType::to_llvm() const {
+llvm::FunctionType* FunctionType::to_llvmFunctionType() const {
 	std::vector<llvm::Type*> llvmArgTypes;
 	for (auto& type : argTypes) {
 		llvmArgTypes.push_back(type->to_llvm());
 	}
 
 	return llvm::FunctionType::get(returnType->to_llvm(), llvmArgTypes, false);
+}
+
+llvm::Type* FunctionType::to_llvm() const {
+	return llvm::PointerType::get(to_llvmFunctionType(), 0);
 }
 
 std::string FunctionType::toString() const {
@@ -265,7 +269,11 @@ u64 FunctionType::getBitSize() const {
 	return 64; // pointer
 }
 
-bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to) {
+bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to, bool isFromCompileTime) {
+	if (to->basicType == BasicType::NO_TYPE) {
+		return true;
+	}
+
 	if (from->equals(to)) {
 		return true;
 	}
@@ -278,7 +286,9 @@ bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	}
 	
 	if (isReference(from->basicType)) {
-		return isImplicitlyConverible(to, ((PointerType*)from.get())->elementType);
+		return isImplicitlyConverible(((PointerType*)from.get())->elementType, to);
+	} else if (isReference(to->basicType)) {
+		return isImplicitlyConverible(from, ((PointerType*)to.get())->elementType, isFromCompileTime);
 	}
 
 	if (bto == BasicType::BOOL) {
@@ -289,13 +299,13 @@ bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 
 	if (isInteger(bfrom)) {
 		if (isInteger(bto)) {
-			return getBasicTypeSize(bfrom) < getBasicTypeSize(bto);
+			return getBasicTypeSize(bfrom) < getBasicTypeSize(bto) || isFromCompileTime;
 		} else if (isFloat(bto)) {
 			return true;
 		}
 	} else if (isFloat(bfrom)) {
 		if (isFloat(bto)) {
-			return getBasicTypeSize(bfrom) < getBasicTypeSize(bto);
+			return getBasicTypeSize(bfrom) < getBasicTypeSize(bto) || isFromCompileTime;
 		}
 	} else if (isChar(bfrom)) {
 		if (isChar(bto)) {
@@ -347,4 +357,29 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	}
 
 	return false;
+}
+
+std::unique_ptr<Type> findCommonType(const std::unique_ptr<Type>& first, const std::unique_ptr<Type>& second,
+									 bool isFirstCompileTime, bool isSecondCompileTime) {
+	if ((isInteger(first->basicType) && isInteger(second->basicType))
+			|| (isFloat(first->basicType) && isFloat(second->basicType))) {
+		if (isFirstCompileTime) {
+			return second->copy();
+		} else if (isSecondCompileTime) {
+			return first->copy();
+		}
+	}
+
+	if (first->basicType == BasicType::POINTER && isInteger(second->basicType)) {
+		return first->copy();
+	} if (second->basicType == BasicType::POINTER && isInteger(first->basicType)) {
+		return second->copy();
+	}
+	if (isImplicitlyConverible(second, first, isSecondCompileTime)) {
+		return first->copy();
+	} else if (isImplicitlyConverible(first, second, isFirstCompileTime)) {
+		return second->copy();
+	}
+
+	return nullptr;
 }

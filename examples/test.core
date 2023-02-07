@@ -1,16 +1,17 @@
-import some_file;
+import lib;
 
-i32 g_printer = 40;
+c8* g_buffer = c8*(lib.malloc(24u64));
+
+def print_str(str8 str) i32 = lib.puts(c8*(str));
+def print_int(i32 i) {
+	lib.puts(lib.itoa(i, g_buffer, 10));
+}
 
 def main() i32 {
-	some_file.putchar(g_printer);
-	g_printer = 45;
-	some_file.putchar(g_printer);
-	var a = 10;
-	some_file.putchar(a);
-	a = 90;
-	some_file.putchar(a);
+	i16 a = 16;
+	var b = a / 10;
+	print_int(i32(b * 10));
 	
-	some_file.getchar();
+	lib.getchar();
 	return 0;
 }

@@ -24,7 +24,7 @@ llvm::Value* FunctionCallExpr::generate() {
 		argValues.push_back(arg->generate());
 	}
 
-	llvm::Value* result = g_builder->CreateCall((llvm::FunctionType*)funcType->to_llvm(), funcVal, argValues);
+	llvm::Value* result = g_builder->CreateCall(funcType->to_llvmFunctionType(), funcVal, argValues);
 	if (m_type->basicType == BasicType::REFERENCE) {
 		llvm::Type* type = ((PointerType*)m_type.get())->elementType->to_llvm();
 		result = g_builder->CreateLoad(type, result);

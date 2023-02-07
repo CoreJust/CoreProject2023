@@ -3,16 +3,22 @@
 #include <llvm/Transforms/Utils/ModuleUtils.h>
 #include <Parser/AST/INode.h>
 #include "Module.h"
+#include <Utils/ErrorManager.h>
+#include <Parser/AST/Exprs/Expression.h>
 
-llvm::Value* llvm_utils::createGlobalVariable(Variable& var, llvm::Value* initializer) {
+llvm::Value* llvm_utils::createGlobalVariable(Variable& var, void* initializer) {
 	VariableType varType = var.qualities.getVariableType();
 	bool isConst = varType == VariableType::CONST;
 	bool isExternal = varType == VariableType::EXTERN;
 	bool isConstructorNeeded = false;
 
+	Expression* init = (Expression*)initializer;
+
 	llvm::Constant* defaultVal = nullptr;
-	if (initializer != nullptr && llvm::isa<llvm::Constant>(initializer)) {
-		defaultVal = (llvm::Constant*)initializer;
+	if (init != nullptr && init->isCompileTime()) {
+		defaultVal = (llvm::Constant*)init->generate();
+		defaultVal = (llvm::Constant*)llvm_utils::tryImplicitlyConvertTo(var.type, init->getType(),
+			defaultVal, init->getErrLine(), init->isCompileTime());
 	} else if (!isExternal) {
 		defaultVal = getDefaultValueOf(var.type);
 		isConstructorNeeded = true;
@@ -26,14 +32,17 @@ llvm::Value* llvm_utils::createGlobalVariable(Variable& var, llvm::Value* initia
 		varValue->addAttribute("dso_local");
 	}
 
-	if (!isExternal && initializer != nullptr && isConstructorNeeded) {
+	if (!isExternal && init != nullptr && isConstructorNeeded) {
 		llvm::FunctionType* initFuncType = llvm::FunctionType::get(llvm::Type::getVoidTy(g_context), false);
 		llvm::Function* initFunc = llvm::Function::Create(initFuncType, llvm::Function::ExternalLinkage,
 			"$init_" + var.name, g_module->getLLVMModule());
 		llvm::BasicBlock* bb = llvm::BasicBlock::Create(g_context, "entry", initFunc);
 		g_builder->SetInsertPoint(bb);
 
-		g_builder->CreateStore(initializer, varValue, var.qualities.getVisibility() != Visibility::PRIVATE);
+		llvm::Value* val = init->generate();
+		val = (llvm::Constant*)llvm_utils::tryImplicitlyConvertTo(var.type, init->getType(), val, init->getErrLine());
+
+		g_builder->CreateStore(val, varValue, var.qualities.getVisibility() != Visibility::PRIVATE);
 		g_builder->CreateRetVoid();
 
 		llvm::appendToGlobalCtors(g_module->getLLVMModule(), initFunc, 1);
@@ -146,15 +155,32 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 			// TODO: implement for user-defined types
 	default: break;
 	}
+
+	return nullptr;
 }
 
 llvm::Constant* llvm_utils::getConstantInt(u64 value, u64 bit_width, bool isSigned) {
 	return llvm::ConstantInt::get(g_context, llvm::APInt(bit_width, value, isSigned));
 }
 
+llvm::Value* llvm_utils::tryImplicitlyConvertTo(const std::unique_ptr<Type>& to, const std::unique_ptr<Type>& from,
+												llvm::Value* value, u64 errLine, bool isFromCompileTime) {
+	if (isImplicitlyConverible(from, to, isFromCompileTime)) {
+		return llvm_utils::convertValueTo(to, from, value);
+	} else {
+		ErrorManager::typeError(ErrorID::E3101_CANNOT_BE_IMPLICITLY_CONVERTED, errLine,
+			to->toString() + " to " + from->toString());
+		return nullptr;
+	}
+}
+
 llvm::Value* llvm_utils::convertValueTo(const std::unique_ptr<Type>& to, const std::unique_ptr<Type>& from, llvm::Value* value) {
 	BasicType bfrom = from->basicType;
 	BasicType bto = to->basicType;
+
+	if (bto == BasicType::NO_TYPE) {
+		return nullptr;
+	}
 
 	// TODO: user-defined types
 
@@ -251,4 +277,6 @@ llvm::Value* llvm_utils::convertToBool(const std::unique_ptr<Type>& from, llvm::
 		value = g_builder->CreateExtractValue(value, { 1 }); // getting .has
 		return g_builder->CreateICmpNE(value, getConstantInt(0, 64, false));
 	}
+
+	return nullptr;
 }

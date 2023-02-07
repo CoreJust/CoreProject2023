@@ -12,4 +12,5 @@ public:
 	virtual llvm::Value* generateRValue() = 0;
 
 	const std::unique_ptr<Type>& getType() const;
+	virtual bool isCompileTime() const;
 };

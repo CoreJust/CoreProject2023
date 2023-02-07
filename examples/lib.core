@@ -1,0 +1,8 @@
+def native putchar(i32 val) i32;
+def native getchar() i32;
+
+def native puts(const c8* str) i32;
+
+def native itoa(i32 value, c8* str, i32 base ) c8*;
+
+def native malloc(u64 size) u8*;

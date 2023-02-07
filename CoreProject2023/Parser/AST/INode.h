@@ -5,6 +5,7 @@
 #include <llvm/IR/Value.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Passes/PassBuilder.h>
+#include <Utils/Defs.h>
 
 #define FRIEND_CLASS_VISITORS \
 	friend class Visitor;
@@ -13,10 +14,12 @@ class Visitor;
 
 class INode {
 public:
+	INode();
 
+	u64 getErrLine() const;
 
 protected:
-	int m_errLine;
+	u64 m_errLine;
 };
 
 extern llvm::LLVMContext g_context;

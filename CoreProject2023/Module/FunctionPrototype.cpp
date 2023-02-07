@@ -34,6 +34,7 @@ llvm::Function* FunctionPrototype::generate(bool is_native, CallingConvention co
 		g_module->getLLVMModule());
 
 	fun->setCallingConv(getCallingConvention(conv));
+
 	u32 index = 0;
 	for (auto& arg : fun->args())
 		arg.setName(m_args[index++].name);
@@ -92,14 +93,13 @@ const std::unique_ptr<Type>& FunctionPrototype::getReturnType() const {
 
 llvm::CallingConv::ID FunctionPrototype::getCallingConvention(CallingConvention conv) {
 	switch (conv) {
-	case CallingConvention::CCALL: return llvm::CallingConv::C;
-	case CallingConvention::STDCALL: return llvm::CallingConv::X86_StdCall;
-	case CallingConvention::FASTCALL: return llvm::CallingConv::Fast;
-	case CallingConvention::THISCALL: return llvm::CallingConv::X86_ThisCall;
-	case CallingConvention::VECTORCALL: return llvm::CallingConv::X86_VectorCall;
-	case CallingConvention::COLDCALL: return llvm::CallingConv::Cold;
-	case CallingConvention::TAILCALL: return llvm::CallingConv::Tail;
-	default:
-		break;
+		case CallingConvention::CCALL: return llvm::CallingConv::C;
+		case CallingConvention::STDCALL: return llvm::CallingConv::X86_StdCall;
+		case CallingConvention::FASTCALL: return llvm::CallingConv::Fast;
+		case CallingConvention::THISCALL: return llvm::CallingConv::X86_ThisCall;
+		case CallingConvention::VECTORCALL: return llvm::CallingConv::X86_VectorCall;
+		case CallingConvention::COLDCALL: return llvm::CallingConv::Cold;
+		case CallingConvention::TAILCALL: return llvm::CallingConv::Tail;
+	default: return llvm::CallingConv::C;
 	}
 }

@@ -3,3 +3,7 @@
 const std::unique_ptr<Type>& Expression::getType() const {
     return m_type;
 }
+
+bool Expression::isCompileTime() const {
+    return false;
+}

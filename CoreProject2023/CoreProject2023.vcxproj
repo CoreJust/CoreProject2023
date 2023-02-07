@@ -365,6 +365,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Module\Variable.cpp" />
     <ClCompile Include="Parser\AST\Decls\VariableDeclaration.cpp" />
     <ClCompile Include="Parser\AST\Exprs\AssignmentExpr.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\BinaryExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\Expression.cpp" />
     <ClCompile Include="Parser\AST\Exprs\FunctionCallExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\FunctionExpr.cpp" />
@@ -408,6 +409,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Parser\AST\Decls\Declaration.h" />
     <ClInclude Include="Parser\AST\Decls\VariableDeclaration.h" />
     <ClInclude Include="Parser\AST\Exprs\AssignmentExpr.h" />
+    <ClInclude Include="Parser\AST\Exprs\BinaryExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\Expression.h" />
     <ClInclude Include="Parser\AST\Exprs\FunctionCallExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\FunctionExpr.h" />

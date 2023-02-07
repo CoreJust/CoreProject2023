@@ -12,10 +12,5 @@ void VariableDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>&
 }
 
 void VariableDeclaration::generate() {
-	llvm::Value* initializer = nullptr;
-	if (m_value) {
-		initializer = m_value->generate();
-	}
-
-	llvm_utils::createGlobalVariable(*m_variable, initializer);
+	llvm_utils::createGlobalVariable(*m_variable, m_value.get());
 }

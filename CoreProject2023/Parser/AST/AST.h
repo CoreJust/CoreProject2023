@@ -8,6 +8,7 @@
 #include "Exprs/FunctionCallExpr.h"
 #include "Exprs/FunctionExpr.h"
 #include "Exprs/AssignmentExpr.h"
+#include "Exprs/BinaryExpr.h"
 #include "Exprs/TypeConversionExpr.h"
 #include "Exprs/VariableExpr.h"
 #include "Exprs/ValueExpr.h"

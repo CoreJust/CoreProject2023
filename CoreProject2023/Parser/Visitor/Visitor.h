@@ -13,6 +13,7 @@ public:
 	virtual void visit(FunctionCallExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(FunctionExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(AssignmentExpr* expr, std::unique_ptr<Expression>& node);
+	virtual void visit(BinaryExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(TypeConversionExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(VariableExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(ValueExpr* expr, std::unique_ptr<Expression>& node);

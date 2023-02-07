@@ -262,13 +262,22 @@ void Lexer::tokenizeNumber() {
 		return m_toks.push_back(Token(TokenType::NUMBERF32, m_buffer, m_line));
 	}
 	
-	u64 num = std::stoull(m_buffer);
-	if (num <= INT32_MAX) {
-		return m_toks.push_back(Token(TokenType::NUMBERI32, m_buffer, m_line));
-	} else if (num <= INT64_MAX) {
-		return m_toks.push_back(Token(TokenType::NUMBERI64, m_buffer, m_line));
+	if (m_buffer[0] == '-') {
+		i64 num = std::stoll(m_buffer);
+		if (num <= INT32_MAX) {
+			return m_toks.push_back(Token(TokenType::NUMBERI32, m_buffer, m_line));
+		} else {
+			return m_toks.push_back(Token(TokenType::NUMBERI64, m_buffer, m_line));
+		}
 	} else {
-		return m_toks.push_back(Token(TokenType::NUMBERU64, m_buffer, m_line));
+		u64 num = std::stoull(m_buffer);
+		if (num <= INT32_MAX) {
+			return m_toks.push_back(Token(TokenType::NUMBERI32, m_buffer, m_line));
+		} else if (num <= INT64_MAX) {
+			return m_toks.push_back(Token(TokenType::NUMBERI64, m_buffer, m_line));
+		} else {
+			return m_toks.push_back(Token(TokenType::NUMBERU64, m_buffer, m_line));
+		}
 	}
 }
 

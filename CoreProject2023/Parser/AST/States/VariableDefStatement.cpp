@@ -2,6 +2,7 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Module/Module.h>
 #include <Module/LLVMUtils.h>
+#include <Utils/ErrorManager.h>
 
 VariableDefStatement::VariableDefStatement(Variable var, std::unique_ptr<Expression> expr)
 	: m_variable(std::move(var)), m_expr(std::move(expr)) {
@@ -16,6 +17,7 @@ void VariableDefStatement::generate() {
 	llvm::Value* val;
 	if (m_expr) {
 		val = m_expr->generate();
+		val = llvm_utils::tryImplicitlyConvertTo(m_variable.type, m_expr->getType(), val, m_errLine, m_expr->isCompileTime());
 	} else {
 		val = llvm_utils::getDefaultValueOf(m_variable.type);
 	}

@@ -97,8 +97,8 @@ Consists of elements, where an elements is:
 		@no_mangling - applicable to function. Turns off mangling (available if only the function is not overloaded).
 		
 		@stdcall - 	applicable to functions. Used to state using of the stdcall calling convention.
-		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention.
-		@fastcall - applicable to functions. Used to state using of the fastcall calling convention. Default convention.
+		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention. Default convention.
+		@fastcall - applicable to functions. Used to state using of the fastcall calling convention.
 		@thiscall - applicable to functions. Used to state using of the thiscall calling convention. Default convention for methods.
 		@vectorcall - applicable to functions. Used to state using of the vectorcall calling convention.
 		@coldcall - applicable to functions. Used to state using of the llvm coldcall calling convention.

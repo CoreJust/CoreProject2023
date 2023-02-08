@@ -14,6 +14,16 @@ void Visitor::visit(BlockStatement* state, std::unique_ptr<Statement>& node) {
 	}
 }
 
+void Visitor::visit(IfElseStatement* state, std::unique_ptr<Statement>& node) {
+	for (auto& s : state->m_bodies) {
+		s->accept(this, s);
+	}
+
+	for (auto& s : state->m_conditions) {
+		s->accept(this, s);
+	}
+}
+
 void Visitor::visit(VariableDefStatement* state, std::unique_ptr<Statement>& node) {
 	state->m_expr->accept(this, state->m_expr);
 }

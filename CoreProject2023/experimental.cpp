@@ -1,9 +1,10 @@
 extern "C"
 int puts(const char* str);
 
-int(*printer)(const char*) = puts;
+volatile bool b = true;
 
 int main() {
-	printer("Why?");
+	int a = b;
+	
 	return 0;
 }

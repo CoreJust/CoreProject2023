@@ -223,7 +223,7 @@ llvm::Value* llvm_utils::convertValueTo(const std::unique_ptr<Type>& to, const s
 		}
 	} else if (bfrom == BasicType::BOOL) {
 		if (isInteger(bto) || isChar(bto)) {
-			return g_builder->CreateIntCast(value, to->to_llvm(), isSigned(bto) || isChar(bto));
+			return g_builder->CreateZExt(value, to->to_llvm());
 		}
 	} else if (bfrom == BasicType::POINTER || bfrom == BasicType::FUNCTION || bfrom == BasicType::ARRAY) {
 		if (bto == BasicType::POINTER || bto == BasicType::FUNCTION || bto == BasicType::ARRAY) {

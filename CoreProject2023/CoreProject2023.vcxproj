@@ -377,6 +377,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Parser\AST\INode.cpp" />
     <ClCompile Include="Parser\AST\Exprs\ValueExpr.cpp" />
     <ClCompile Include="Module\FunctionPrototype.cpp" />
+    <ClCompile Include="Parser\AST\States\IfElseStatement.cpp" />
     <ClCompile Include="Parser\AST\States\ReturnStatement.cpp" />
     <ClCompile Include="Parser\AST\States\VariableDefStatement.cpp" />
     <ClCompile Include="Parser\Parser.cpp" />
@@ -419,6 +420,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Parser\AST\States\ExpressionStatement.h" />
     <ClInclude Include="Parser\AST\Decls\FunctionDeclaration.h" />
     <ClInclude Include="Parser\AST\INode.h" />
+    <ClInclude Include="Parser\AST\States\IfElseStatement.h" />
     <ClInclude Include="Parser\AST\States\ReturnStatement.h" />
     <ClInclude Include="Parser\AST\States\Statement.h" />
     <ClInclude Include="Parser\AST\Exprs\ValueExpr.h" />

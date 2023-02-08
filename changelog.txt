@@ -97,3 +97,9 @@ Initial development
 		(e.g. i16 a = 10; caused an error, since 10 is i32, and i32 cannot be implicitly converted to i16)
 
 	Commited as "Added some binary expressions (arithmetic, bitwise...), bug fixes"
+
+08.02.2023
+	Created module IfElseStatement
+	Fixed bug with incorrect bool to int conversion
+
+	Commited as "Added if-elif-else statement"

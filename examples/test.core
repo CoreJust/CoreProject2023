@@ -7,10 +7,19 @@ def print_int(i32 i) {
 	lib.puts(lib.itoa(i, g_buffer, 10));
 }
 
+def fn(i32 val) {
+	if val && val - 5 print_str("true\n");
+	elif 1 - bool(val - 5) print_str("secret\n\a");
+	else print_str("false\n");
+}
+
 def main() i32 {
-	i16 a = 16;
-	var b = a / 10;
-	print_int(i32(b * 10));
+	i32 a = bool(0 - 5);
+	i32 a = bool(0);
+	i32 a = bool(1);
+	fn(90);
+	fn(0);
+	fn(5);
 	
 	lib.getchar();
 	return 0;

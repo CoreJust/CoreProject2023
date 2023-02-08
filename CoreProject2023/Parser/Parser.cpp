@@ -124,12 +124,18 @@ std::unique_ptr<Statement> Parser::stateOrBlock() {
 }
 
 std::unique_ptr<Statement> Parser::statement() {
+	if (match(TokenType::IF)) {
+		return ifElseStatement();
+	} else if (peek().type == TokenType::LBRACE) {
+		return stateOrBlock();
+	} else if (peek().type == TokenType::VAR || peek().type == TokenType::CONST
+		|| TypeParser(m_toks, m_pos).isType()) {
+		return variableDefStatement();
+	}
+
 	std::unique_ptr<Statement> result;
 	if (match(TokenType::RETURN)) {
 		result = std::make_unique<ReturnStatement>(expression());
-	} else if (peek(0).type == TokenType::VAR || peek(0).type == TokenType::CONST
-		|| TypeParser(m_toks, m_pos).isType()) {
-		result = variableDefStatement();
 	} else {
 		result = std::make_unique<ExpressionStatement>(expression());
 	}
@@ -166,7 +172,36 @@ std::unique_ptr<Statement> Parser::variableDefStatement() {
 	g_module->addLocalVariable(alias, type->copy(), qualities, nullptr);
 	Variable variable(alias, std::move(type), qualities, nullptr);
 
+	consume(TokenType::SEMICOLON);
 	return std::make_unique<VariableDefStatement>(std::move(variable), std::move(expr));
+}
+
+std::unique_ptr<Statement> Parser::ifElseStatement() {
+	std::vector<std::unique_ptr<Expression>> conditions;
+	std::vector<std::unique_ptr<Statement>> bodies;
+
+	do {
+		if (conditions.size() && peek().type == TokenType::ELSE) {
+			m_pos += 2;
+		}
+
+		bool hasParen = match(TokenType::LPAR);
+		conditions.push_back(expression());
+		if (hasParen)
+			consume(TokenType::RPAR);
+
+		g_module->addBlock();
+		bodies.push_back(stateOrBlock());
+		g_module->deleteBlock();
+	} while (match(TokenType::ELIF) || (peek().type == TokenType::ELSE && peek(1).type == TokenType::IF));
+
+	if (match(TokenType::ELSE)) {
+		g_module->addBlock();
+		bodies.push_back(stateOrBlock());
+		g_module->deleteBlock();
+	}
+
+	return std::make_unique<IfElseStatement>(std::move(bodies), std::move(conditions));
 }
 
 std::unique_ptr<Expression> Parser::expression() {

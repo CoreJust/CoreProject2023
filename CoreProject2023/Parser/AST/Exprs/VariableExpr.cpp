@@ -5,6 +5,7 @@
 VariableExpr::VariableExpr(Variable* variable)
 	: m_name(variable->name) {
 	m_type = variable->type->copy();
+	m_isRVal = true;
 }
 
 void VariableExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
@@ -26,7 +27,7 @@ llvm::Value* VariableExpr::generateRValue() {
 	llvm::Value* result = g_module->getVariable(m_name)->value;
 
 	if (m_type->basicType == BasicType::REFERENCE) {
-		result = g_builder->CreateLoad(result->getType(), result);
+		result = g_builder->CreateLoad(m_type->to_llvm(), result);
 	}
 
 	return result;

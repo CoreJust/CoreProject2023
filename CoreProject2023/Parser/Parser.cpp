@@ -223,10 +223,10 @@ std::unique_ptr<Expression> Parser::logical() {
 
 	while (true) {
 		if (match(TokenType::ANDAND)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), conditional(), TokenType::ANDAND);
+			result = std::make_unique<BinaryExpr>(std::move(result), conditional(), BinaryExpr::LOGICAL_AND);
 			continue;
 		} if (match(TokenType::OROR)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), conditional(), TokenType::OROR);
+			result = std::make_unique<BinaryExpr>(std::move(result), conditional(), BinaryExpr::LOGICAL_OR);
 			continue;
 		}
 
@@ -251,19 +251,19 @@ std::unique_ptr<Expression> Parser::bitwise() {
 
 	while (true) {
 		if (match(TokenType::AND)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::AND);
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), BinaryExpr::AND);
 			continue;
 		} if (match(TokenType::OR)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::OR);
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), BinaryExpr::OR);
 			continue;
 		} if (match(TokenType::XOR)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::XOR);
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), BinaryExpr::XOR);
 			continue;
 		} if (match(TokenType::LSHIFT)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::LSHIFT);
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), BinaryExpr::LSHIFT);
 			continue;
 		} if (match(TokenType::RSHIFT)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), additive(), TokenType::RSHIFT);
+			result = std::make_unique<BinaryExpr>(std::move(result), additive(), BinaryExpr::RSHIFT);
 			continue;
 		}
 
@@ -278,10 +278,10 @@ std::unique_ptr<Expression> Parser::additive() {
 
 	while (true) {
 		if (match(TokenType::PLUS)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), multiplicative(), TokenType::PLUS);
+			result = std::make_unique<BinaryExpr>(std::move(result), multiplicative(), BinaryExpr::PLUS);
 			continue;
 		} if (match(TokenType::MINUS)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), multiplicative(), TokenType::MINUS);
+			result = std::make_unique<BinaryExpr>(std::move(result), multiplicative(), BinaryExpr::MINUS);
 			continue;
 		}
 
@@ -296,16 +296,16 @@ std::unique_ptr<Expression> Parser::multiplicative() {
 
 	while (true) {
 		if (match(TokenType::STAR)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::STAR);
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), BinaryExpr::MULT);
 			continue;
 		} if (match(TokenType::SLASH)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::SLASH);
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), BinaryExpr::DIV);
 			continue;
 		} if (match(TokenType::DSLASH)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::DSLASH);
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), BinaryExpr::IDIV);
 			continue;
 		} if (match(TokenType::PERCENT)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), degree(), TokenType::PERCENT);
+			result = std::make_unique<BinaryExpr>(std::move(result), degree(), BinaryExpr::MOD);
 			continue;
 		}
 
@@ -320,7 +320,7 @@ std::unique_ptr<Expression> Parser::degree() {
 
 	while (true) {
 		if (match(TokenType::POWER)) {
-			result = std::make_unique<BinaryExpr>(std::move(result), unary(), TokenType::POWER);
+			result = std::make_unique<BinaryExpr>(std::move(result), unary(), BinaryExpr::POWER);
 			continue;
 		}
 
@@ -331,7 +331,36 @@ std::unique_ptr<Expression> Parser::degree() {
 }
 
 std::unique_ptr<Expression> Parser::unary() {
-	// TODO: implement
+	while (true) {
+		if (match(TokenType::PLUS)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::PLUS);
+		} if (match(TokenType::MINUS)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::MINUS);
+		}if (match(TokenType::INCREMENT)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::PRE_INC);
+		} if (match(TokenType::DECREMENT)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::PRE_DEC);
+		} if (match(TokenType::EXCL)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::LOGICAL_NOT);
+		} if (match(TokenType::TILDE)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::NOT);
+		} if (match(TokenType::AND)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::ADRESS);
+		} if (match(TokenType::STAR)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::DEREF);
+		} if (match(TokenType::REF)) {
+			if (match(TokenType::CONST)) {
+				return std::make_unique<UnaryExpr>(unary(), UnaryExpr::REF_CONST);
+			} else {
+				return std::make_unique<UnaryExpr>(unary(), UnaryExpr::REF);
+			}
+		} if (match(TokenType::MOVE)) {
+			return std::make_unique<UnaryExpr>(unary(), UnaryExpr::MOVE);
+		}
+
+		break;
+	}
+
 	return postfix();
 }
 
@@ -349,6 +378,12 @@ std::unique_ptr<Expression> Parser::postfix() {
 
 			expr = std::make_unique<FunctionCallExpr>(std::move(expr), std::move(args));
 			continue;
+		} if (match(TokenType::INCREMENT)) {
+			expr = std::make_unique<UnaryExpr>(std::move(expr), UnaryExpr::POST_INC);
+			continue;
+		} if (match(TokenType::DECREMENT)) {
+			expr = std::make_unique<UnaryExpr>(std::move(expr), UnaryExpr::POST_DEC);
+			continue;
 		}
 
 		break;
@@ -358,6 +393,12 @@ std::unique_ptr<Expression> Parser::postfix() {
 }
 
 std::unique_ptr<Expression> Parser::primary() {
+	if (match(TokenType::LPAR)) {
+		std::unique_ptr<Expression> result = expression();
+		consume(TokenType::RPAR);
+		return result;
+	}
+
 	// Literals
 	if (match(TokenType::NUMBERI8)) {
 		return std::make_unique<ValueExpr>(Value(BasicType::I8, _ValueUnion((i64)std::stol(peek(-1).data))));

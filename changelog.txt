@@ -103,3 +103,9 @@ Initial development
 	Fixed bug with incorrect bool to int conversion
 
 	Commited as "Added if-elif-else statement"
+
+09.02.2023
+	Created module UnaryExpr
+	Added parens in expressions to state priority
+
+	Commited as "Added unary expressions"

@@ -105,7 +105,7 @@ Character literals:
     -Value- is the value. Format:
         A single character
         or an escape sequence (\n, \t, \r, \a, \b, \f, \v, \', \", \\)
-        or the code of a symbol \-code- with code in decimal formal and \x-code- with code in hexadecimal format.
+        or the code of a symbol \d-code- with code in decimal formal and \x-code- with code in hexadecimal format, \o-code- in octodecimal.
     -Type- is either c8, c16 or c32 for corresponding utf-ies. By default it is c8.
     
 String literals:

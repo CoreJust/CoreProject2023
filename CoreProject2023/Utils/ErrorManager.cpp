@@ -13,12 +13,14 @@ std::string ErrorIDStrings[] = {
 	"E1002: Statement has no ending semicolon (;)",
 	"E1003: Multiline comment has no ending (###)",
 	"E1004: No closing brace ({) found",
+
 	"E1051: Unknown annotation",
 	"E1052: Wrong annotation",
 	"E1053: Annotation's parameter unstated",
 	"E1054: Annotation's value unstated",
 	"E1055: Annotation's parameter is unknown",
 	"E1056: Annotation's value is unknown",
+
 	"E1101: Floating point number has improper postfix; f32/f64 are possible postfixes",
 	"E1102: Number has improper postfix; i/u/f32/64 or i/u8/16 are possible postfixes",
 	"E1103: String has improper postfix; str8/16/32 are possible postfixes",
@@ -30,6 +32,7 @@ std::string ErrorIDStrings[] = {
 		"(e.g. ascii string with characters which code is bigger than 255",
 	"E1111: Character literal has no closing apostrophe (')",
 
+
 	"E2001: No expression found where it is expected to be",
 	"E2002: Unexpected token",
 	"E2003: Unknown identifier; there is no such variable/function",
@@ -39,14 +42,23 @@ std::string ErrorIDStrings[] = {
 	"E2103: Expression is not a reference; cannot be modified",
 	"E2104: Function does not have a body",
 
+
 	"E3001: Type not specified; type expression expected",
 	"E3002: Unexpected token while parsing a type",
 	"E3003: Not a type; type expression expected",
+
 	"E3051: Reference to a reference; impossible syntax",
 	"E3052: Non-positive size array; array must have size bigger than 0",
+	"E3053: Cannot dereference; not a pointer",
+	"E3054: Cannot negate an unsigned int; value cannot be lesser then 0",
+	"E3055: Cannot get a reference from the value",
+	"E3056: Must be a reference",
+	"E3057: Value is const",
+
 	"E3101: Type cannot be implicitly converted",
 	"E3102: Type cannot be explicitly converted",
 	"E3103: Types cannot be converted to single type",
+
 
 	"E4001: String conversion error; cannot convert string from utf32 when its size is not multiple of 4",
 	"E4051: Loading module symbols twice; symbols of the module with such name were already loaded",
@@ -123,4 +135,7 @@ void ErrorManager::printError(const std::string& error, int line, const std::str
 		ASSERT(_file == nullptr, "");
 		(*_file) << text << std::endl;
 	}
+
+	system("pause");
+	quick_exit(0);
 }

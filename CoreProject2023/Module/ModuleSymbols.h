@@ -33,8 +33,8 @@ public:
 	Variable* getVariable(const std::string& name);
 	TypeNode* getType(const std::string& name);
 
-	std::vector<Variable> getVariables();
-	std::vector<Function> getFunctions();
+	std::vector<Variable>& getVariables();
+	std::vector<Function>& getFunctions();
 };
 
 struct ModuleSymbols {

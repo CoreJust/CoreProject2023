@@ -3,34 +3,34 @@
 #include <Utils/ErrorManager.h>
 #include <Module/LLVMUtils.h>
 
-BinaryExpr::BinaryExpr(std::unique_ptr<Expression> right, std::unique_ptr<Expression> left, TokenType op)
+BinaryExpr::BinaryExpr(std::unique_ptr<Expression> right, std::unique_ptr<Expression> left, BinaryOp op)
 	: m_right(std::move(right)), m_left(std::move(left)), m_op(op) {
 	auto& rightType = m_right->getType();
 	auto& leftType = m_left->getType();
 	switch (op) {
-		case TokenType::PLUS:
-		case TokenType::MINUS:
-		case TokenType::STAR:
-		case TokenType::PERCENT:
-		case TokenType::POWER:
-		case TokenType::AND:
-		case TokenType::OR:
-		case TokenType::XOR:
-		case TokenType::DSLASH:
+		case BinaryOp::PLUS:
+		case BinaryOp::MINUS:
+		case BinaryOp::MULT:
+		case BinaryOp::MOD:
+		case BinaryOp::POWER:
+		case BinaryOp::AND:
+		case BinaryOp::OR:
+		case BinaryOp::XOR:
+		case BinaryOp::IDIV:
 			m_type = findCommonType(rightType, leftType, m_right->isCompileTime(), m_left->isCompileTime());
 			break;
-		case TokenType::SLASH: {
+		case BinaryOp::DIV: {
 			m_type = findCommonType(rightType, leftType, m_right->isCompileTime(), m_left->isCompileTime());
 			if (isInteger(m_type->basicType)) {
 				m_type = std::make_unique<Type>(BasicType::F64);
 			}
 			}; break;
-		case TokenType::LSHIFT:
-		case TokenType::RSHIFT:
+		case BinaryOp::LSHIFT:
+		case BinaryOp::RSHIFT:
 			m_type = rightType->copy();
 			break;
-		case TokenType::ANDAND:
-		case TokenType::OROR:
+		case BinaryOp::LOGICAL_AND:
+		case BinaryOp::LOGICAL_OR:
 			m_type = std::make_unique<Type>(BasicType::BOOL);
 			break;
 	default:
@@ -41,6 +41,10 @@ BinaryExpr::BinaryExpr(std::unique_ptr<Expression> right, std::unique_ptr<Expres
 	if (!m_type) {
 		ErrorManager::typeError(ErrorID::E3103_CANNOT_CONVERT_TO_ONE, m_errLine,
 			rightType->toString() + " and " + leftType->toString());
+	} else if (!m_isRVal && isReference(m_type->basicType)) {
+		PointerType* ptrType = (PointerType*)m_type.get();
+		std::unique_ptr<Type> tmp = ptrType->elementType->copy();
+		m_type = std::move(tmp);
 	}
 }
 
@@ -57,11 +61,11 @@ llvm::Value* BinaryExpr::generate() {
 		left = llvm_utils::convertToBool(m_left->getType(), left);
 
 		switch(m_op) {
-			case TokenType::STAR: return g_builder->CreateMul(right, left);
-			case TokenType::AND:
-			case TokenType::ANDAND: return g_builder->CreateAnd(right, left);
-			case TokenType::OR:
-			case TokenType::OROR: return g_builder->CreateOr(right, left);
+			case BinaryOp::MULT: return g_builder->CreateMul(right, left);
+			case BinaryOp::AND:
+			case BinaryOp::LOGICAL_AND: return g_builder->CreateAnd(right, left);
+			case BinaryOp::OR:
+			case BinaryOp::LOGICAL_OR: return g_builder->CreateOr(right, left);
 		default:
 			ASSERT(false, "wrong operator");
 			break;
@@ -69,7 +73,7 @@ llvm::Value* BinaryExpr::generate() {
 	}
 
 	// Type conversion
-	if (m_op < TokenType::EXCLEQ) {
+	if (m_op < BinaryOp::LOGICAL_AND) {
 		if (m_type->basicType == BasicType::POINTER) {
 			std::unique_ptr<Type> uint64T = std::make_unique<Type>(BasicType::U64);
 			right = llvm_utils::convertValueTo(uint64T, m_right->getType(), right);
@@ -86,34 +90,34 @@ llvm::Value* BinaryExpr::generate() {
 
 	if (isInteger(m_type->basicType)) {
 		switch (m_op) {
-			case TokenType::PLUS: return g_builder->CreateAdd(right, left);
-			case TokenType::MINUS: return g_builder->CreateSub(right, left);
-			case TokenType::STAR: return g_builder->CreateMul(right, left);
-			case TokenType::PERCENT: return isSigned(m_type->basicType) ?
+			case BinaryOp::PLUS: return g_builder->CreateAdd(right, left);
+			case BinaryOp::MINUS: return g_builder->CreateSub(right, left);
+			case BinaryOp::MULT: return g_builder->CreateMul(right, left);
+			case BinaryOp::MOD: return isSigned(m_type->basicType) ?
 												g_builder->CreateSRem(right, left)
 												: g_builder->CreateURem(right, left);
-			case TokenType::POWER: // TODO: implement
-			case TokenType::AND: return g_builder->CreateAnd(right, left);
-			case TokenType::OR: return g_builder->CreateOr(right, left);
-			case TokenType::XOR: return g_builder->CreateXor(right, left);
-			case TokenType::DSLASH: return isSigned(m_type->basicType) ?
+			case BinaryOp::POWER: // TODO: implement
+			case BinaryOp::AND: return g_builder->CreateAnd(right, left);
+			case BinaryOp::OR: return g_builder->CreateOr(right, left);
+			case BinaryOp::XOR: return g_builder->CreateXor(right, left);
+			case BinaryOp::IDIV: return isSigned(m_type->basicType) ?
 												g_builder->CreateSDiv(right, left)
 												: g_builder->CreateUDiv(right, left);
-			case TokenType::LSHIFT: return g_builder->CreateShl(right, left);
-			case TokenType::RSHIFT: return g_builder->CreateLShr(right, left);
+			case BinaryOp::LSHIFT: return g_builder->CreateShl(right, left);
+			case BinaryOp::RSHIFT: return g_builder->CreateLShr(right, left);
 		default:
 			ASSERT(false, "unknown operator");
 			break;
 		}
 	} else if (isFloat(m_type->basicType)) {
 		switch (m_op) {
-			case TokenType::PLUS: return g_builder->CreateFAdd(right, left);
-			case TokenType::MINUS: return g_builder->CreateFSub(right, left);
-			case TokenType::STAR: return g_builder->CreateFMul(right, left);
-			case TokenType::PERCENT: // TODO: implement
-			case TokenType::POWER: // TODO: implement
-			case TokenType::DSLASH:
-			case TokenType::SLASH: return g_builder->CreateFDiv(right, left);
+			case BinaryOp::PLUS: return g_builder->CreateFAdd(right, left);
+			case BinaryOp::MINUS: return g_builder->CreateFSub(right, left);
+			case BinaryOp::MULT: return g_builder->CreateFMul(right, left);
+			case BinaryOp::MOD: // TODO: implement
+			case BinaryOp::POWER: // TODO: implement
+			case BinaryOp::IDIV:
+			case BinaryOp::DIV: return g_builder->CreateFDiv(right, left);
 		default:
 			ASSERT(false, "unknown operator");
 			break;
@@ -121,9 +125,16 @@ llvm::Value* BinaryExpr::generate() {
 	} else if (isString(m_type->basicType)) {
 		// TODO: implement
 	} else if (m_type->basicType == BasicType::POINTER) {
+		u64 typeSize = ((PointerType*)m_type.get())->elementType->getAlignment();
+		if (isInteger(m_right->getType()->basicType)) {
+			right = g_builder->CreateMul(right, llvm_utils::getConstantInt(typeSize, 64));
+		} else if (isInteger(m_left->getType()->basicType)) {
+			left = g_builder->CreateMul(left, llvm_utils::getConstantInt(typeSize, 64));
+		}
+
 		switch (m_op) {
-			case TokenType::PLUS: right = g_builder->CreateAdd(right, left); break;
-			case TokenType::MINUS: right = g_builder->CreateSub(right, left); break;
+			case BinaryOp::PLUS: right = g_builder->CreateAdd(right, left); break;
+			case BinaryOp::MINUS: right = g_builder->CreateSub(right, left); break;
 		default:
 			ASSERT(false, "unknown operator");
 			break;

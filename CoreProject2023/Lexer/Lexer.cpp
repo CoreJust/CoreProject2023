@@ -16,7 +16,7 @@ std::vector<std::string> KEY_WORDS{
 	"for", "while", "do",
 	"break", "continue",
 	"true", "false", "null",
-	"new", "delete", "in", "is", "as", "typeof",
+	"new", "delete", "in", "is", "as", "typeof", "ref", "move",
 	"bool", "c8", "c16", "c32", "str8", "str16", "str32", "i8", "i16", "i32", "i64",
 	"u8", "u16", "u32", "u64", "f32", "f64", "func"
 };
@@ -557,11 +557,6 @@ u32 Lexer::getSingleChar() {
 
 	if (c == '\\') {
 		char b = next();
-		if (isdigit(b)) {
-			loadNumber(10, false, false);
-			return u32(std::stoul(m_buffer));
-		}
-
 		switch (b) {
 			case '\'':
 				return '\'';
@@ -590,6 +585,13 @@ u32 Lexer::getSingleChar() {
 			case 'x':
 				loadNumber(16, false, false);
 				toDecimal(m_buffer, 16);
+				return u32(std::stoi(m_buffer));
+			case 'd':
+				loadNumber(10, false, false);
+				return u32(std::stoi(m_buffer));
+			case 'o':
+				loadNumber(8, false, false);
+				toDecimal(m_buffer, 8);
 				return u32(std::stoi(m_buffer));
 			default:
 				return b;

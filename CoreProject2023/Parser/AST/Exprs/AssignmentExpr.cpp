@@ -6,6 +6,11 @@
 AssignmentExpr::AssignmentExpr(std::unique_ptr<Expression> rval, std::unique_ptr<Expression> expr)
 	: m_rval(std::move(rval)), m_expr(std::move(expr)) {
 	m_type = std::make_unique<PointerType>(BasicType::REFERENCE, m_rval->getType()->copy());
+	m_isRVal = true;
+
+	if (m_rval->getType()->isConst) {
+		ErrorManager::typeError(ErrorID::E3057_IS_A_CONSTANT, m_errLine, "tried to assign a value to a constant");
+	}
 }
 
 void AssignmentExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {

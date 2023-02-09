@@ -6,7 +6,7 @@
 #include <Utils/ErrorManager.h>
 #include <Parser/AST/Exprs/Expression.h>
 
-llvm::Value* llvm_utils::createGlobalVariable(Variable& var, void* initializer) {
+llvm::Value* llvm_utils::createGlobalVariable(Variable& var, Expression* initializer) {
 	VariableType varType = var.qualities.getVariableType();
 	bool isConst = varType == VariableType::CONST;
 	bool isExternal = varType == VariableType::EXTERN;
@@ -185,12 +185,14 @@ llvm::Value* llvm_utils::convertValueTo(const std::unique_ptr<Type>& to, const s
 	// TODO: user-defined types
 
 	// For integral (non-user-defined) types
-	if (isReference(from->basicType)) {
-		if (from->basicType == BasicType::REFERENCE) {
+	if (isReference(bfrom)) {
+		/*if (from->basicType == BasicType::REFERENCE) {
 			value = g_builder->CreateLoad(from->to_llvm(), value);
-		}
+		}*/
 
 		return convertValueTo(to, ((PointerType*)from.get())->elementType, value);
+	} else if (isReference(bto)) {
+		return convertValueTo(((PointerType*)to.get())->elementType, from, value);
 	}
 
 	if (bto == BasicType::BOOL) {
@@ -210,6 +212,8 @@ llvm::Value* llvm_utils::convertValueTo(const std::unique_ptr<Type>& to, const s
 			} else {
 				return g_builder->CreateUIToFP(value, to->to_llvm());
 			}
+		} else if (bto == BasicType::POINTER || bto == BasicType::FUNCTION || bto == BasicType::ARRAY) {
+			return g_builder->CreateIntToPtr(value, to->to_llvm());
 		}
 	} else if (isFloat(bfrom)) {
 		if (isFloat(bto)) {
@@ -229,7 +233,7 @@ llvm::Value* llvm_utils::convertValueTo(const std::unique_ptr<Type>& to, const s
 		if (bto == BasicType::POINTER || bto == BasicType::FUNCTION || bto == BasicType::ARRAY) {
 			return g_builder->CreateBitCast(value, to->to_llvm());
 		} else if (isInteger(bto) || isChar(bto)) {
-			value = g_builder->CreateBitCast(value, llvm::Type::getInt64Ty(g_context));
+			value = g_builder->CreatePtrToInt(value, llvm::Type::getInt64Ty(g_context));
 			return g_builder->CreateIntCast(value, to->to_llvm(), isSigned(bto) || isChar(bto));
 		}
 	} else if (isString(bfrom)) {
@@ -254,9 +258,9 @@ llvm::Value* llvm_utils::convertToBool(const std::unique_ptr<Type>& from, llvm::
 	}
 
 	if (isReference(from->basicType)) {
-		if (from->basicType == BasicType::REFERENCE) {
+		/*if (from->basicType == BasicType::REFERENCE) {
 			value = g_builder->CreateLoad(from->to_llvm(), value);
-		}
+		}*/
 
 		return convertToBool(((PointerType*)from.get())->elementType, value);
 	}

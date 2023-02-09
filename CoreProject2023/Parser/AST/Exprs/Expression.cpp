@@ -7,3 +7,7 @@ const std::unique_ptr<Type>& Expression::getType() const {
 bool Expression::isCompileTime() const {
     return false;
 }
+
+bool Expression::isRVal() const {
+    return m_isRVal;
+}

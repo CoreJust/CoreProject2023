@@ -56,6 +56,11 @@ enum ErrorID : u32 {
 
 	E3051_REFERENCE_TO_REFERENCE, // Tried to create a reference to a reference (like i32 & &&)
 	E3052_NEGATIVE_SIZE_ARRAY, // Tried to create an array of negative or zero size
+	E3053_ONLY_POINTERS_CAN_BE_DEREFERENCED, // Tried to dereference (*a) not a pointer-type value
+	E3054_CANNOT_NEGATE_UNSIGNED_INT, // Tried to get a negative of unsigned int (-(uint<>))
+	E3055_CANNOT_GET_REFERENCE, // Tried to get a reference from a non-reference type (e.g. ref 5)
+	E3056_MUST_BE_A_REFERENCE, // A reference-type value expected
+	E3057_IS_A_CONSTANT, // A constant met where a mutable value was expected
 
 	E3101_CANNOT_BE_IMPLICITLY_CONVERTED, // Imposible implicit conversion of types
 	E3102_CANNOT_BE_EXPLICITLY_CONVERTED, // Imposible explicit conversion of types

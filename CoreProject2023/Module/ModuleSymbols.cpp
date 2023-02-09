@@ -63,10 +63,10 @@ TypeNode* ModuleSymbolsUnit::getType(const std::string& name) {
 	return nullptr;
 }
 
-std::vector<Variable> ModuleSymbolsUnit::getVariables() {
+std::vector<Variable>& ModuleSymbolsUnit::getVariables() {
 	return m_variables;
 }
 
-std::vector<Function> ModuleSymbolsUnit::getFunctions() {
+std::vector<Function>& ModuleSymbolsUnit::getFunctions() {
 	return m_functions;
 }

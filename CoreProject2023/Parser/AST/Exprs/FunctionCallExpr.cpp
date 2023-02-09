@@ -8,6 +8,9 @@ FunctionCallExpr::FunctionCallExpr(std::unique_ptr<Expression> func, std::vector
 		ErrorManager::parserError(ErrorID::E2102_CANNOT_BE_CALLED, m_errLine, "");
 	} else {
 		m_type = ((FunctionType*)m_funcExpr->getType().get())->returnType->copy();
+		if (isReference(m_type->basicType)) {
+			m_isRVal = true;
+		}
 	}
 }
 
@@ -22,7 +25,16 @@ llvm::Value* FunctionCallExpr::generate() {
 	std::vector<llvm::Value*> argValues;
 	for (auto& arg : m_argExprs) {
 		argValues.push_back(arg->generate());
+#if 0
+		argValues.back()->print(llvm::errs());
+		llvm::errs() << "\n";
+#endif
 	}
+
+#if 0
+	funcVal->print(llvm::errs());
+	llvm::errs() << "\n\n";
+#endif
 
 	llvm::Value* result = g_builder->CreateCall(funcType->to_llvmFunctionType(), funcVal, argValues);
 	if (m_type->basicType == BasicType::REFERENCE) {

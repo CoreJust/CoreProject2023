@@ -1,10 +1,14 @@
 extern "C"
 int puts(const char* str);
 
-volatile bool b = true;
+int fn(const int& a) {
+	return a + a * a;
+}
 
 int main() {
-	int a = b;
+	int a;
+	fn(5);
+	fn(a);
 	
 	return 0;
 }

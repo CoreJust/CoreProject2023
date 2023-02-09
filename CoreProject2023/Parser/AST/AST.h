@@ -10,6 +10,7 @@
 #include "Exprs/FunctionExpr.h"
 #include "Exprs/AssignmentExpr.h"
 #include "Exprs/BinaryExpr.h"
+#include "Exprs/UnaryExpr.h"
 #include "Exprs/TypeConversionExpr.h"
 #include "Exprs/VariableExpr.h"
 #include "Exprs/ValueExpr.h"

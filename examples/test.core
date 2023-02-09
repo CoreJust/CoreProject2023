@@ -1,25 +1,73 @@
 import lib;
 
-c8* g_buffer = c8*(lib.malloc(24u64));
-
-def print_str(str8 str) i32 = lib.puts(c8*(str));
-def print_int(i32 i) {
-	lib.puts(lib.itoa(i, g_buffer, 10));
+###
+def reverse(c8* str, u64 i, u64 j) {
+	if i <= j return;
+	
+	c8 tmp = *(str + i);
+	*(str + i) = *(str + j);
+	*(str + j) = tmp;
+	
+	reverse(str, i + 1, j - 1);
 }
 
-def fn(i32 val) {
-	if val && val - 5 print_str("true\n");
-	elif 1 - bool(val - 5) print_str("secret\n\a");
-	else print_str("false\n");
+def float2str(f64 x) c8* {
+	c8* result = c8*(lib.malloc(24u64));
+	u64 i = 0;
+	i64 whole = i64(x);
+	x = x - whole;
+	
+	while(whole) {
+		c8& symbol = *(result + i++);
+		symbol = c8(whole % 10 + i64('0'));
+		whole = whole // 10;
+	}
+	
+	reverse(result, 0, i - 1);
+	
+	*(result + i++) = '.';
+	while (x) {
+		x = x * 10;
+		whole = i64(x);
+		x = x - whole;
+		*(result + i++) = c8(whole + i64('0'));
+	}
+	
+	*(result + i) = '\0';
+	return result;
 }
+###
+
+def change(i32& x) {
+	x = x + !x;
+}
+
+def test1(i32&& x) i32 = x << 2;
+
+def test2(const i32& x) i32 = i32(&x);
 
 def main() i32 {
-	i32 a = bool(0 - 5);
-	i32 a = bool(0);
-	i32 a = bool(1);
-	fn(90);
-	fn(0);
-	fn(5);
+	#lib.print_str(float2str(2588.12223));
+	
+	c8* str = c8*(lib.malloc(10u64));
+	*str = 'H';
+	*(str + 1) = 'i';
+	*(str + 2) = '\0';
+	lib.puts(str);
+	
+	i32 i = -10;
+	lib.print_int(-i);
+	lib.print_int(~i);
+	
+	i32 b = 0;
+	change(ref b);
+	lib.print_int(b);
+	
+	lib.print_int(test1(move i));
+	lib.print_int(i);
+	
+	lib.print_int(test2(ref const i));
+	lib.print_int(test2(ref const 1));
 	
 	lib.getchar();
 	return 0;

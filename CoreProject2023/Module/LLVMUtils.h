@@ -2,8 +2,10 @@
 #include "Variable.h"
 #include "Function.h"
 
+class Expression;
+
 namespace llvm_utils {
-	llvm::Value* createGlobalVariable(Variable& var, void* initializer); // initializer is Expression*
+	llvm::Value* createGlobalVariable(Variable& var, Expression* initializer);
 	llvm::Value* addGlobalVariableFromOtherModule(Variable& var, llvm::Module& module);
 
 	llvm::Value* genFunctionArgumentValue(Function* func, Argument& arg, llvm::Argument* llvmArg);

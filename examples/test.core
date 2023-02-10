@@ -1,8 +1,24 @@
 import lib;
 
-###
+def lessOrEqual(u64 i, u64 j) bool {
+	u64 s = (1u64 << 63);
+	while (s) {
+		bool isI = bool(i & s);
+		bool isJ = bool(j & s);
+		
+		if isI && !isJ
+			return false;
+		elif !isI && isJ
+			return true;
+		
+		s = s >> 1;
+	}
+	
+	return true;
+}
+
 def reverse(c8* str, u64 i, u64 j) {
-	if i <= j return;
+	if lessOrEqual(j, i) return;
 	
 	c8 tmp = *(str + i);
 	*(str + i) = *(str + j);
@@ -11,63 +27,24 @@ def reverse(c8* str, u64 i, u64 j) {
 	reverse(str, i + 1, j - 1);
 }
 
-def float2str(f64 x) c8* {
+def int2str(i64 x) c8* {
 	c8* result = c8*(lib.malloc(24u64));
 	u64 i = 0;
-	i64 whole = i64(x);
-	x = x - whole;
 	
-	while(whole) {
+	while(x) {
 		c8& symbol = *(result + i++);
-		symbol = c8(whole % 10 + i64('0'));
-		whole = whole // 10;
+		symbol = c8(x % 10 + i64('0'));
+		x = x // 10;
 	}
 	
-	reverse(result, 0, i - 1);
-	
-	*(result + i++) = '.';
-	while (x) {
-		x = x * 10;
-		whole = i64(x);
-		x = x - whole;
-		*(result + i++) = c8(whole + i64('0'));
-	}
+	reverse(result, 0u64, i - 1);
 	
 	*(result + i) = '\0';
 	return result;
 }
-###
-
-def change(i32& x) {
-	x = x + !x;
-}
-
-def test1(i32&& x) i32 = x << 2;
-
-def test2(const i32& x) i32 = i32(&x);
 
 def main() i32 {
-	#lib.print_str(float2str(2588.12223));
-	
-	c8* str = c8*(lib.malloc(10u64));
-	*str = 'H';
-	*(str + 1) = 'i';
-	*(str + 2) = '\0';
-	lib.puts(str);
-	
-	i32 i = -10;
-	lib.print_int(-i);
-	lib.print_int(~i);
-	
-	i32 b = 0;
-	change(ref b);
-	lib.print_int(b);
-	
-	lib.print_int(test1(move i));
-	lib.print_int(i);
-	
-	lib.print_int(test2(ref const i));
-	lib.print_int(test2(ref const 1));
+	lib.puts(int2str(1u64 << 17));
 	
 	lib.getchar();
 	return 0;

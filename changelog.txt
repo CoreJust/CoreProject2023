@@ -109,3 +109,10 @@ Initial development
 	Added parens in expressions to state priority
 
 	Commited as "Added unary expressions"
+
+10.02.2023
+	Created modules CycleStatement, Cycles (partially copied from old project)
+	Fixed bug with terminators (return) in if's and while's (incorrect compiling)
+	Fixed bug with initializing reference-type variables
+
+	Commited as "Added while cycle, bug fixes"

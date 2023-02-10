@@ -42,8 +42,11 @@ void IfElseStatement::generate() {
 		g_builder->SetInsertPoint(thisBlock);
 
 		g_module->addBlock();
-		m_bodies[i]->generate();
-		g_builder->CreateBr(mergeBlock);
+
+		try {
+			m_bodies[i]->generate();
+			g_builder->CreateBr(mergeBlock);
+		} catch (TerminatorAdded*) {}
 
 		g_module->deleteBlock();
 
@@ -55,8 +58,10 @@ void IfElseStatement::generate() {
 	if (m_conditions.size() < m_bodies.size()) { // has else statement
 		g_module->addBlock();
 
-		m_bodies.back()->generate();
-		g_builder->CreateBr(mergeBlock);
+		try {
+			m_bodies.back()->generate();
+			g_builder->CreateBr(mergeBlock);
+		} catch (TerminatorAdded*) {}
 
 		g_module->deleteBlock();
 

@@ -32,4 +32,6 @@ void ReturnStatement::generate() {
 
 		g_builder->CreateRetVoid();
 	}
+
+	throw new TerminatorAdded;
 }

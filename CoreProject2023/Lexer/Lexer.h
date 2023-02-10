@@ -21,7 +21,7 @@ private:
 	std::string m_buffer;
 	u64 m_pos = 0;
 	u64 m_nextLine = 0;
-	u64 m_line = 0;
+	u64 m_line = 1;
 
 public:
 	Lexer(const std::string& text);

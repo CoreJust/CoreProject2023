@@ -22,6 +22,10 @@ protected:
 	u64 m_errLine;
 };
 
+struct TerminatorAdded {
+
+};
+
 extern llvm::LLVMContext g_context;
 extern std::unique_ptr<llvm::IRBuilder<>> g_builder;
 extern std::unique_ptr<llvm::FunctionPassManager> g_functionPassManager;

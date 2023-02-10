@@ -31,17 +31,18 @@ void FunctionDeclaration::generate() {
 				qualities.setVariableType(VariableType::CONST);
 			}
 
-			g_module->addLocalVariable(arg.name, arg.type->copy(), qualities, //m_function->functionValue->getArg(i));
+			g_module->addLocalVariable(arg.name, arg.type->copy(), qualities,
 				llvm_utils::genFunctionArgumentValue(m_function, arg, m_function->functionValue->getArg(i)));
 		}
+		
+		try {
+			m_body->generate();
+			if (m_function->prototype.getReturnType()->basicType == BasicType::NO_TYPE) {
+				g_builder->CreateRetVoid();
+			}
+		} catch (TerminatorAdded*) {}
 
-		m_body->generate();
 		g_module->deleteBlock();
-
-		if (m_function->prototype.getReturnType()->basicType == BasicType::NO_TYPE) {
-			g_builder->CreateRetVoid();
-		}
-
 		llvm::verifyFunction(*fun);
 		g_functionPassManager->run(*fun, *g_functionAnalysisManager);
 	}

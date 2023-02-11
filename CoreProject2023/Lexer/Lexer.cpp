@@ -304,12 +304,36 @@ void Lexer::tokenizeText() {
 	std::vector<size_t> fStringParts; // for formated strings: the tokens with strings between inserted code parts
 	if (m_text[m_pos] == 'f') {
 		isFString = true;
-		m_pos++;
+		next();
 	}
 
-	while (m_pos < m_text.size() - 1 && m_text[m_pos + 1] != '\"') {
+	bool isMultiline = false;
+	if (m_text[m_pos + 1] == '"' && m_text[m_pos + 2] == '"') {
+		isMultiline = true;
+		next();
+		next();
+	}
+
+	while (true) {
+		if (m_pos >= m_text.size() - 1) {
+			ErrorManager::lexerError(ErrorID::E1112_NO_CLOSING_QUOTE, m_line, "no closing quote till the end of file");
+			break;
+		}
+
+		if (!isMultiline && m_text[m_pos + 1] == '\n') {
+			ErrorManager::lexerError(ErrorID::E1112_NO_CLOSING_QUOTE, m_line, "no closing quote before the end of line");
+		} else if (m_text[m_pos + 1] == '"') {
+			if (!isMultiline) {
+				break;
+			} if (m_text[m_pos + 2] == '"' && m_text[m_pos + 3] == '"') {
+				next(); // skip first "
+				next(); // skip second ", the last is skipped after the cycle
+				break;
+			}
+		}
+
 		if (isFString && m_text[m_pos + 1] == '{') {
-			m_pos++;
+			next();
 			fStringParts.push_back(m_toks.size());
 			m_toks.push_back(Token(TokenType::FORMAT_TEXT8, m_buffer, m_line));
 
@@ -444,11 +468,16 @@ void Lexer::tokenizeComment() {
 		next();
 		next();
 		while (true) {
-			if (m_pos == m_text.size())
+			if (m_pos == m_text.size()) {
 				ErrorManager::lexerError(ErrorID::E1003_MULTILINE_COMMENT_IS_NOT_CLOSED, m_line, "");
+			}
+
+			if (m_text[m_pos] == '"') {
+				skipString();
+			}
 			
-			if (m_text[m_pos] == '\n' && m_pos < m_text.size() - 3) {
-				if (m_text[m_pos + 1] == '#' && m_text[m_pos + 2] == '#' && m_text[m_pos + 3] == '#') {
+			if (m_pos < m_text.size() - 2) {
+				if (m_text[m_pos] == '#' && m_text[m_pos + 1] == '#' && m_text[m_pos + 2] == '#') {
 					next();
 					next();
 					next();
@@ -607,6 +636,10 @@ void Lexer::skipWhitespaces(bool spacesOnly) {
 	else
 		while (m_pos < m_text.size() && allSpaces.find(m_text[m_pos]) != std::string::npos)
 			next(); // skip whitespaces
+}
+
+void Lexer::skipString() {
+	while (next() != '"');
 }
 
 void Lexer::printStringTranslationError(u32 errCode) {

@@ -36,6 +36,7 @@ enum ErrorID : u32 {
 	E1108_STRING_CONTAINS_CHARS_BIGGER_THAN_FORMAT_ALLOWS, // e.g. ascii string has character with code 1024
 
 	E1111_NO_CLOSING_APOSTROPHE, // Character literal has no closing '
+	E1112_NO_CLOSING_QUOTE, // String literal has no closing " or """
 
 
 	// Parser errors

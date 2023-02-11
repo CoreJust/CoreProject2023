@@ -131,3 +131,10 @@ Initial development
 	Fixed bug with global variables (cannot get its value by name if it is not in current module's namespace)
 
 	Commited as "Core standard library's cstdio and cstdlib, va_args (...) as function argument"
+
+	Fixed multiline comments (the closing ### must be on a new line)
+	Added multiline string ("""..."""), usual string cannot be used as such anymore
+	
+	Commited as "Fixed mutliline comments, added multiline string literals"
+	
+	

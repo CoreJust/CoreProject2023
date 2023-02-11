@@ -109,22 +109,20 @@ Character literals:
     -Type- is either c8, c16 or c32 for corresponding utf-ies. By default it is c8.
     
 String literals:
-    [f]"-value-"[-type-]
+    [f]"-value-"[-type-] or [f]"""-multiline text-"""[-type-]
     
-    F means format. It is used if the literal is a string template.
+    f means format. It is used if the literal is a string template.
     -Value- is the string itself, where each character has the same format as of character literal.
         But if it is a template, then characters { and } must be used with \ before them.
         Parts of template strings which are in {} are compiled as an expression and then their values are put into the string.
     -Type- is the string type: str8, str16 or str32. By default it is str8.
     
-    Note: string literals in core language can be multiline.
-    
     Examples:
         "\tAlert!!!\a\n"str16
         f"a + b is {a + b}" - the resulting string would be "a + b is 32" for example.
-        "a
+        """a
         
-        b" - same as "a\n\n\t\tb"
+        b""" - same as "a\n\n\t\tb"
     
 Array literals:
     [-type-[-size-]]{ -values...- }

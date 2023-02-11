@@ -57,6 +57,7 @@ private:
 	u32 getSingleChar();
 	
 	void skipWhitespaces(bool spacesOnly);
+	void skipString();
 	void printStringTranslationError(u32 errCode);
 
 	int isKeyWord(std::string& s);

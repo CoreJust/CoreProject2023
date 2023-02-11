@@ -2,6 +2,14 @@ import core.crt.cstdio;
 import core.crt.cstdlib;
 
 def main() i32 {
+	cstdio.puts(c8*(
+	"""
+		
+		Some multiline string...
+		
+	"""));
+	
+	###
 	u32 num = 1;
 	while num {
 		cstdio.fprintf(cstdio.stdout, c8*("\nEnter the seed: "));
@@ -9,7 +17,8 @@ def main() i32 {
 		cstdlib.srand(num);
 		cstdio.printf(c8*("\nThe random number is: %d"), cstdlib.rand());
 	}
+	###
 	
-	cstdio.getchar();
+	cstdlib.system(c8*("pause"));
 	return 0;
 }

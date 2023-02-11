@@ -30,7 +30,9 @@ std::string ErrorIDStrings[] = {
 	"E1107: Inconsistent hexadecimal number; using both upper and lower cases is forbidden",
 	"E1108: String contains character(s) that are not allowed by its format "\
 		"(e.g. ascii string with characters which code is bigger than 255",
+
 	"E1111: Character literal has no closing apostrophe (')",
+	"E1112: String literal has no closing quote (\"/\"\"\")",
 
 
 	"E2001: No expression found where it is expected to be",

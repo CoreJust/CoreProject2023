@@ -20,10 +20,10 @@ private:
 
 public:
 	void addType(TypeNode type);
-	void addFunction(FunctionPrototype prototype, FunctionQualities qualities);
+	void addFunction(FunctionPrototype prototype);
 
 	// Intended for adding function duplicates to modules importing the function
-	void addFunction(FunctionPrototype prototype, FunctionQualities qualities, llvm::Function* value);
+	void addFunction(FunctionPrototype prototype, llvm::Function* value);
 
 	void addVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value);
 

@@ -84,9 +84,10 @@ class FunctionType : public Type {
 public:
 	std::unique_ptr<Type> returnType;
 	std::vector<std::unique_ptr<Type>> argTypes;
+	bool isVaArgs;
 
 public:
-	FunctionType(std::unique_ptr<Type> returnType, std::vector<std::unique_ptr<Type>> argTypes, bool isConst = false);
+	FunctionType(std::unique_ptr<Type> returnType, std::vector<std::unique_ptr<Type>> argTypes, bool isVaArgs, bool isConst = false);
 
 	std::unique_ptr<Type> copy() const override;
 

@@ -9,7 +9,7 @@ ModuleRef g_module;
 Module::Module(const std::string& name, const std::string& path, ModuleQualities qualities, std::vector<std::string> imports) 
 	: m_name(name), m_path(path), m_qualities(qualities), m_importedModules(std::move(imports)),
 		m_llvmModule(std::make_unique<llvm::Module>(name, g_context)) {
-
+	m_symbols[""] = {};
 }
 
 Module::Module(Module& other) 
@@ -232,8 +232,7 @@ void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* u
 	for (Function& func : unit->getFunctions()) {
 		newUnit->addFunction(
 				func.prototype,
-				func.qualities,
-				func.prototype.generateImportedFromOtherModule(*m_llvmModule, func.qualities.getCallingConvention())
+				func.prototype.generateImportedFromOtherModule(*m_llvmModule)
 		);
 	}
 

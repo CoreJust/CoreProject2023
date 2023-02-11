@@ -1,51 +1,15 @@
-import lib;
-
-def lessOrEqual(u64 i, u64 j) bool {
-	u64 s = (1u64 << 63);
-	while (s) {
-		bool isI = bool(i & s);
-		bool isJ = bool(j & s);
-		
-		if isI && !isJ
-			return false;
-		elif !isI && isJ
-			return true;
-		
-		s = s >> 1;
-	}
-	
-	return true;
-}
-
-def reverse(c8* str, u64 i, u64 j) {
-	if lessOrEqual(j, i) return;
-	
-	c8 tmp = *(str + i);
-	*(str + i) = *(str + j);
-	*(str + j) = tmp;
-	
-	reverse(str, i + 1, j - 1);
-}
-
-def int2str(i64 x) c8* {
-	c8* result = c8*(lib.malloc(24u64));
-	u64 i = 0;
-	
-	while(x) {
-		c8& symbol = *(result + i++);
-		symbol = c8(x % 10 + i64('0'));
-		x = x // 10;
-	}
-	
-	reverse(result, 0u64, i - 1);
-	
-	*(result + i) = '\0';
-	return result;
-}
+import core.crt.cstdio;
+import core.crt.cstdlib;
 
 def main() i32 {
-	lib.puts(int2str(1u64 << 17));
+	u32 num = 1;
+	while num {
+		cstdio.fprintf(cstdio.stdout, c8*("\nEnter the seed: "));
+		cstdio.scanf(c8*("%u"), &num);
+		cstdlib.srand(num);
+		cstdio.printf(c8*("\nThe random number is: %d"), cstdlib.rand());
+	}
 	
-	lib.getchar();
+	cstdio.getchar();
 	return 0;
 }

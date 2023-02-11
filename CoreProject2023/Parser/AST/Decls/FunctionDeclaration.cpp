@@ -16,7 +16,7 @@ void FunctionDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>&
 }
 
 void FunctionDeclaration::generate() {
-	if (!m_function->qualities.isNative()) {
+	if (!m_function->prototype.getQualities().isNative()) {
 		llvm::Function* fun = m_function->functionValue;
 		llvm::BasicBlock* bb = llvm::BasicBlock::Create(g_context, "entry", fun);
 		g_builder->SetInsertPoint(bb);

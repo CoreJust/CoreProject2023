@@ -76,7 +76,9 @@ void SymbolLoader::loadFunction() {
 	qualities.setSafety(m_qualities.getSafety());
 	qualities.setIsMethod(false);
 	qualities.setCallingConvention(CallingConvention::CCALL);
-	qualities.setMangling(true);
+	qualities.setMangling(m_qualities.isManglingOn());
+	qualities.setNoReturn(false);
+	qualities.setNoExcept(false);
 
 	// read annotations
 	for (auto& a : m_annots) {
@@ -95,7 +97,10 @@ void SymbolLoader::loadFunction() {
 		else if (a[0] == "vectorcall")		qualities.setCallingConvention(CallingConvention::VECTORCALL);
 		else if (a[0] == "coldcall")		qualities.setCallingConvention(CallingConvention::COLDCALL);
 		else if (a[0] == "tailcall")		qualities.setCallingConvention(CallingConvention::TAILCALL);
-		else if (a[0] == "no_mangling")		qualities.setMangling(false);
+		else if (a[0] == "nomangle")		qualities.setMangling(false);
+		else if (a[0] == "mangle")			qualities.setMangling(true);
+		else if (a[0] == "noreturn")		qualities.setNoReturn(true);
+		else if (a[0] == "noexcept")		qualities.setNoExcept(true);
 		else ErrorManager::lexerError(ErrorID::E1051_UNKNOWN_ANNOTATION, getCurrLine(),
 			"unknown function annotation: " + a[0]);
 	}
@@ -118,16 +123,26 @@ void SymbolLoader::loadFunction() {
 
 	// Arguments
 	std::vector<Argument> args;
+	bool isVaArgs = false;
 
 	consume(TokenType::LPAR);
 	if (!match(TokenType::RPAR)) {
 		do {
-			bool isConst = match(TokenType::CONST);
-			std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
-			type->isConst = isConst;
+			if (match(TokenType::ETCETERA)) {
+				if (peek().type != TokenType::RPAR) {
+					ErrorManager::parserError(ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT, getCurrLine(),
+						"incorrect va_args while parsing function " + alias);
+				}
 
-			consume(TokenType::WORD);
-			args.push_back(Argument{ m_toks[m_pos - 1].data, std::move(type) });
+				isVaArgs = true;
+			} else {
+				bool isConst = match(TokenType::CONST);
+				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+				type->isConst = isConst;
+
+				consume(TokenType::WORD);
+				args.push_back(Argument{ m_toks[m_pos - 1].data, std::move(type) });
+			}
 		} while (match(TokenType::COMMA));
 
 		consume(TokenType::RPAR);
@@ -139,13 +154,13 @@ void SymbolLoader::loadFunction() {
 	switch (qualities.getVisibility()) {
 		case Visibility::LOCAL: break;
 		case Visibility::PUBLIC:
-			m_symbols.publicSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args)), qualities);
+			m_symbols.publicSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs));
 			break;
 		case Visibility::DIRECT_IMPORT:
-			m_symbols.publicOnceSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args)), qualities);
+			m_symbols.publicOnceSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs));
 			break;
 		case Visibility::PRIVATE:
-			m_symbols.privateSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args)), qualities);
+			m_symbols.privateSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs));
 			break;
 	default: break;
 	}

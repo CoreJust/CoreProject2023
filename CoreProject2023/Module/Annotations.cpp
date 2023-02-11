@@ -16,12 +16,12 @@ void CommonQualities::setSafety(Safety visibility) {
     m_data = (m_data & ~12) | ((u8)visibility << 2);
 }
 
-ProgramType ModuleQualities::getProgramType() const {
-    return ProgramType((m_data >> 4) & 3);
+bool ModuleQualities::isManglingOn() const {
+    return bool(m_data & (1 << 4));
 }
 
-void ModuleQualities::setProgramType(ProgramType type) {
-    m_data = (m_data & ~0b110000) | ((u8)type << 4);
+void ModuleQualities::setMangling(bool isToMangle) {
+    m_data = (m_data & ~0b10000) | (u8(isToMangle ? 1 : 0) << 4);
 }
 
 ClassType TypeQualities::getClassType() const {
@@ -110,4 +110,20 @@ bool FunctionQualities::isManglingOn() const {
 
 void FunctionQualities::setMangling(bool isToMangle) {
     m_additionalData = (m_additionalData & ~0b100000) | ((isToMangle ? 1 : 0) << 5);
+}
+
+bool FunctionQualities::isNoReturn() const {
+    return bool((m_additionalData >> 6) & 1);
+}
+
+void FunctionQualities::setNoReturn(bool isNoReturn) {
+    m_additionalData = (m_additionalData & ~0b1000000) | ((isNoReturn ? 1 : 0) << 6);
+}
+
+bool FunctionQualities::isNoExcept() const {
+    return bool((m_additionalData >> 7) & 1);
+}
+
+void FunctionQualities::setNoExcept(bool isNoExcept) {
+    m_additionalData = (m_additionalData & ~0b10000000) | ((isNoExcept ? 1 : 0) << 7);
 }

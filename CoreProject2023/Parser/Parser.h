@@ -41,10 +41,13 @@ private:
 	std::unique_ptr<Expression> primary();
 
 private:
+	void skipAnnotation();
+
 	Token& consume(TokenType type);
 	bool match(TokenType type);
 	bool matchRange(TokenType from, TokenType to);
 	Token& next();
 	Token& peek(int rel = 0);
+
 	int getCurrLine();
 };

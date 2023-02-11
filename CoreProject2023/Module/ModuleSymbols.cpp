@@ -4,13 +4,13 @@ void ModuleSymbolsUnit::addType(TypeNode type) {
 	m_types.push_back(std::move(type));
 }
 
-void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, FunctionQualities qualities) {
-	llvm::Function* funcVal = prototype.generate(qualities.isNative(), qualities.getCallingConvention());
-	m_functions.push_back(Function{ std::move(prototype), qualities, funcVal });
+void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype) {
+	llvm::Function* funcVal = prototype.generate();
+	m_functions.push_back(Function{ std::move(prototype), funcVal });
 }
 
-void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, FunctionQualities qualities, llvm::Function* value) {
-	m_functions.push_back(Function{ std::move(prototype), qualities, value });
+void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, llvm::Function* value) {
+	m_functions.push_back(Function{ std::move(prototype), value });
 }
 
 void ModuleSymbolsUnit::addVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value) {

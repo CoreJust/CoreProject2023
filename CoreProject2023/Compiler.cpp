@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include <Utils/File.h>
+#include <Lexer/ImportsHandler.h>
 #include <Lexer/Lexer.h>
 #include <SymbolLoader/SymbolLoader.h>
 #include <Parser/Parser.h>
@@ -19,6 +20,7 @@
 
 Compiler::Compiler(Project& project) 
 	: m_project(project) {
+	g_importPaths = m_project.getImportedPaths();
 	initAll();
 }
 
@@ -28,7 +30,7 @@ void Compiler::buildProject() {
 }
 
 void Compiler::linkProject() {
-	std::string linkCommand = "clang++.exe -o build/prog.exe" + m_filesToLink;
+	std::string linkCommand = "clang++.exe -o build/prog.exe" + m_filesToLink + m_project.getAdditionalLinkDirectoriesString();
 	system(linkCommand.c_str());
 }
 

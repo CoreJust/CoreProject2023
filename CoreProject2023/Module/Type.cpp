@@ -207,8 +207,8 @@ u64 TupleType::getBitSize() const {
 	return result;
 }
 
-FunctionType::FunctionType(std::unique_ptr<Type> returnType, std::vector<std::unique_ptr<Type>> argTypes, bool isConst)
-	: returnType(std::move(returnType)), argTypes(std::move(argTypes)), Type(BasicType::FUNCTION, isConst) {
+FunctionType::FunctionType(std::unique_ptr<Type> returnType, std::vector<std::unique_ptr<Type>> argTypes, bool isVaArgs, bool isConst)
+	: returnType(std::move(returnType)), argTypes(std::move(argTypes)), isVaArgs(isVaArgs), Type(BasicType::FUNCTION, isConst) {
 	
 }
 
@@ -219,13 +219,15 @@ std::unique_ptr<Type> FunctionType::copy() const {
 		argTypesCopy.push_back(std::unique_ptr<Type>(argType->copy()));
 	}
 
-	return std::make_unique<FunctionType>(returnType->copy(), std::move(argTypesCopy), isConst);
+	return std::make_unique<FunctionType>(returnType->copy(), std::move(argTypesCopy), isVaArgs, isConst);
 }
 
 bool FunctionType::equals(const std::unique_ptr<Type>& other) const {
 	if (!Type::equals(other)) return false;
 
 	const FunctionType* funcType = (FunctionType*)other.get();
+	if (isVaArgs != funcType->isVaArgs) return false;
+
 	if (argTypes.size() != funcType->argTypes.size())
 		return false;
 
@@ -247,7 +249,7 @@ llvm::FunctionType* FunctionType::to_llvmFunctionType() const {
 		llvmArgTypes.push_back(type->to_llvm());
 	}
 
-	return llvm::FunctionType::get(returnType->to_llvm(), llvmArgTypes, false);
+	return llvm::FunctionType::get(returnType->to_llvm(), llvmArgTypes, isVaArgs);
 }
 
 llvm::Type* FunctionType::to_llvm() const {
@@ -261,7 +263,12 @@ std::string FunctionType::toString() const {
 	}
 
 	result.pop_back();
-	result.back() = ')';
+	result.pop_back();
+	if (isVaArgs) {
+		result += ", ...";
+	}
+
+	result += ')';
 	return result;
 }
 
@@ -282,6 +289,11 @@ bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	BasicType bto = to->basicType;
 
 	if (bfrom == bto && bfrom <= BasicType::STR32) {
+		return true;
+	}
+
+	if (bfrom == BasicType::POINTER && isFromCompileTime
+		&& (bto == BasicType::POINTER || bto == BasicType::FUNCTION || bto == BasicType::OPTIONAL)) {
 		return true;
 	}
 	

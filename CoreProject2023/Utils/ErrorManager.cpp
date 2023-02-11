@@ -41,6 +41,7 @@ std::string ErrorIDStrings[] = {
 	"E2102: Expression cannot be called; no operator () defined",
 	"E2103: Expression is not a reference; cannot be modified",
 	"E2104: Function does not have a body",
+	"E2105: Varying arguments (...) can only be the last argument of a function",
 
 
 	"E3001: Type not specified; type expression expected",

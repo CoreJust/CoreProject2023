@@ -4,6 +4,5 @@
 
 struct Function {
 	FunctionPrototype prototype;
-	FunctionQualities qualities;
 	llvm::Function* functionValue;
 };

@@ -28,13 +28,10 @@ Format:
 			safe_only - all the symbols (functions, variables, etc) can only use safe code and thus are safe (default value).
 			unsafe - all the symbols (functions, variables, etc) can use unsafe code and thus are unsafe.
             
-        program_type (default program) - shows whether the file is a common program or something else. If the flag is not in the file that is originally compiled (through a direct 
-            call to the compiler), it is ignored.
+        mangling (default mangle) - sets the default mangling of symbols within code.
         Values:
-            program - starts from the main function, all the symbols that are not called from there in any way are omitted. An executable is created.
-            object - all the symbols are compiled. .obj would be the compilation result.
-            dynamic_library - all the symbols are compiled. .dll library would be the compilation result.
-            static_library - all the symbols are compiled. .lib library would be the compilation result.
+            mangle - turns on C++-like mangling.
+            nomangle - turns off mangling.
 
 
 /////   IMPORT   /////
@@ -94,7 +91,10 @@ Consists of elements, where an elements is:
         @implicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion implicit.
 		
 		@prefer - applicable to functions. Used to make the overloaded function preferable when possible.
-		@no_mangling - applicable to function. Turns off mangling (available if only the function is not overloaded).
+		@nomangle - applicable to function. Turns off mangling (available if only the function is not overloaded).
+		@mangle - applicable to function. Turns on mangling (default value).
+		@noreturn - applicable to function. States that function never returns.
+		@noexcept - applicable to function. States that function never throws exceptions.
 		
 		@stdcall - 	applicable to functions. Used to state using of the stdcall calling convention.
 		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention. Default convention.

@@ -2,8 +2,8 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Module/Module.h>
 
-VariableExpr::VariableExpr(Variable* variable)
-	: m_name(variable->name) {
+VariableExpr::VariableExpr(std::string moduleName, Variable* variable)
+	: m_moduleName(std::move(moduleName)), m_name(variable->name) {
 	m_type = variable->type->copy();
 	m_isRVal = true;
 }
@@ -13,7 +13,7 @@ void VariableExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
 }
 
 llvm::Value* VariableExpr::generate() {
-	llvm::Value* varVal = g_module->getVariable(m_name)->value;
+	llvm::Value* varVal = g_module->getVariable(m_moduleName, m_name)->value;
 	llvm::Value* result = g_builder->CreateLoad(m_type->to_llvm(), varVal);
 
 	if (m_type->basicType == BasicType::REFERENCE) {

@@ -22,6 +22,10 @@ std::vector<std::unique_ptr<Declaration>> Parser::parse() {
 }
 
 std::unique_ptr<Declaration> Parser::declaration() {
+	while (match(TokenType::AT)) {
+		skipAnnotation();
+	}
+
 	if (match(TokenType::DEF)) {
 		return functionDeclaration();
 	} else {
@@ -52,23 +56,25 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 	consume(TokenType::LPAR);
 	if (!match(TokenType::RPAR)) {
 		do {
-			VariableQualities qualities;
-			bool isConst = match(TokenType::CONST);
-			std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
-			type->isConst = isConst;
-			if (isConst) {
-				qualities.setVariableType(VariableType::CONST);
-			}
+			if (!match(TokenType::ETCETERA))  {
+				VariableQualities qualities;
+				bool isConst = match(TokenType::CONST);
+				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+				type->isConst = isConst;
+				if (isConst) {
+					qualities.setVariableType(VariableType::CONST);
+				}
 
-			std::string name = consume(TokenType::WORD).data;
-			g_module->addLocalVariable(name, std::move(type), qualities, nullptr);
+				std::string name = consume(TokenType::WORD).data;
+				g_module->addLocalVariable(name, std::move(type), qualities, nullptr);
+			}
 		} while (match(TokenType::COMMA));
 
 		consume(TokenType::RPAR);
 	}
 
 	TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
-	if (function->qualities.isNative()) {
+	if (function->prototype.getQualities().isNative()) {
 		consume(TokenType::SEMICOLON);
 		return std::make_unique<FunctionDeclaration>(function, nullptr);
 	} else {
@@ -463,7 +469,7 @@ std::unique_ptr<Expression> Parser::primary() {
 	}
 
 	// Type conversion or array expression
-	if (auto type = TypeParser(m_toks, m_pos).parseType()) {
+	if (auto type = TypeParser(m_toks, m_pos).tryParseType()) {
 		if (match(TokenType::LPAR)) { // type conversion/constructor
 			std::unique_ptr<Expression> expr = expression();
 			consume(TokenType::RPAR);
@@ -488,7 +494,7 @@ std::unique_ptr<Expression> Parser::primary() {
 
 		if (symType == SymbolType::VARIABLE) {
 			Variable* variable = g_module->getVariable(moduleName, name);
-			return std::make_unique<VariableExpr>(variable);
+			return std::make_unique<VariableExpr>(std::move(moduleName), variable);
 		} else if (symType == SymbolType::FUNCTION) {
 			Function* function = g_module->getFunction(moduleName, name);
 			return std::make_unique<FunctionExpr>(function);
@@ -500,6 +506,10 @@ std::unique_ptr<Expression> Parser::primary() {
 
 	ErrorManager::parserError(ErrorID::E2001_EXPRESSION_NOT_FOUND, getCurrLine(), "No expression found");
 	return nullptr;
+}
+
+void Parser::skipAnnotation() {
+	m_pos++;
 }
 
 Token& Parser::consume(TokenType type) {

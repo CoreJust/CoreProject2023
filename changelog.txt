@@ -116,3 +116,18 @@ Initial development
 	Fixed bug with initializing reference-type variables
 
 	Commited as "Added while cycle, bug fixes"
+
+	Added va_args (only as argument ...)
+	Fixed bug with null being inconvertible implicitly to other pointer-types
+	Started to create an interface for C standard library functions (core.crt.stdio),
+		created all the other modules of CRT that could be (partially) implemented
+
+11.02.2023
+	Added noexcept and noreturn annotations, added @set mangling (mangle/nomangle) module annotation
+	Mostly implemented core.crt.cstdlib
+	Fixed bug with impossibility to state function-type's argument as const
+	Fixed several bugs with type parsing
+	Fixed bug with incorrect function annotations parsing in some cases
+	Fixed bug with global variables (cannot get its value by name if it is not in current module's namespace)
+
+	Commited as "Core standard library's cstdio and cstdlib, va_args (...) as function argument"

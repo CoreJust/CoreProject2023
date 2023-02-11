@@ -169,7 +169,7 @@ llvm::Value* llvm_utils::tryImplicitlyConvertTo(const std::unique_ptr<Type>& to,
 		return llvm_utils::convertValueTo(to, from, value);
 	} else {
 		ErrorManager::typeError(ErrorID::E3101_CANNOT_BE_IMPLICITLY_CONVERTED, errLine,
-			to->toString() + " to " + from->toString());
+			from->toString() + " to " + to->toString());
 		return nullptr;
 	}
 }

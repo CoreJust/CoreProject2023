@@ -107,7 +107,7 @@ ModuleQualities Lexer::handleModuleQualities() {
 	ModuleQualities result;
 	result.setVisibility(Visibility::PUBLIC);
 	result.setSafety(Safety::SAFE_ONLY);
-	result.setProgramType(ProgramType::PROGRAM);
+	result.setMangling(true);
 
 	// read annotations
 	while (m_pos < m_text.size()) {
@@ -150,12 +150,10 @@ ModuleQualities Lexer::handleModuleQualities() {
 			else if (m_buffer == "unsafe") result.setSafety(Safety::UNSAFE);
 			else if (m_buffer == "safe_only") result.setSafety(Safety::SAFE_ONLY);
 			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set safety " + m_buffer);
-		} else if (parameter == "program_type") {
-			if (m_buffer == "program") result.setProgramType(ProgramType::PROGRAM);
-			else if (m_buffer == "object") result.setProgramType(ProgramType::OBJECT);
-			else if (m_buffer == "dynamic_library") result.setProgramType(ProgramType::DYNAMIC_LIBRARY);
-			else if (m_buffer == "static_library") result.setProgramType(ProgramType::STATIC_LIBRARY);
-			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set program_type " + m_buffer);
+		} else if (parameter == "mangling") {
+			if (m_buffer == "mangle") result.setMangling(true);
+			else if (m_buffer == "nomangle") result.setMangling(false);
+			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set mangling " + m_buffer);
 		} else {
 			ErrorManager::lexerError(ErrorID::E1055_UNKNOWN_ANNOTATION_PARAMETER, m_line, "@set " + m_buffer);
 		}

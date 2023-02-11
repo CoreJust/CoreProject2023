@@ -47,6 +47,7 @@ enum ErrorID : u32 {
 	E2102_CANNOT_BE_CALLED, // Expression cannot be called through -expr-(...)
 	E2103_NOT_A_REFERENCE, // Expression expected to be of reference
 	E2104_FUNCTION_BODY_MISMATCHED, // Function has no body
+	E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT, // There are arguments coming after va_args (...)
 
 	
 	// Type errors

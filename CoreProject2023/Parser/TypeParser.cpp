@@ -5,8 +5,7 @@
 static Token _NO_TOK = Token();
 
 TypeParser::TypeParser(std::vector<Token>& toks, u64& pos)
-	: m_toks(toks), m_pos(pos), m_originalPos(pos) {
-
+	: m_toks(toks), m_pos(pos) {
 }
 
 std::unique_ptr<Type> TypeParser::consumeType() {
@@ -19,11 +18,23 @@ std::unique_ptr<Type> TypeParser::consumeType() {
 }
 
 std::unique_ptr<Type> TypeParser::parseTypeOrGetNoType() {
+	savePos();
 	if (auto type = parseType()) {
 		return std::move(type);
 	}
 
+	loadPos();
 	return std::make_unique<Type>();
+}
+
+std::unique_ptr<Type> TypeParser::tryParseType() {
+	savePos();
+	if (auto type = parseType()) {
+		return std::move(type);
+	}
+
+	loadPos();
+	return nullptr;
 }
 
 std::unique_ptr<Type> TypeParser::parseType() {
@@ -53,15 +64,28 @@ std::unique_ptr<Type> TypeParser::parseType() {
 		case TokenType::FUNC: {
 			std::unique_ptr<Type> returnType = parseTypeOrGetNoType();
 			std::vector<std::unique_ptr<Type>> argTypes;
+			bool isVaArgs = false;
+
 			consume(TokenType::LPAR);
 			if (!match(TokenType::RPAR)) {
 				do {
-					argTypes.push_back(consumeType());
+					if (match(TokenType::ETCETERA)) {
+						if (peek().type != TokenType::RPAR) {
+							ErrorManager::parserError(ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT, getCurrLine(), 
+								"incorrect va_args while parsing a function-type");
+						}
+
+						isVaArgs = true;
+					} else {
+						bool isConst = match(TokenType::CONST);
+						argTypes.push_back(consumeType());
+						argTypes.back()->isConst = isConst;
+					}
 				} while (match(TokenType::COMMA));
 				consume(TokenType::RPAR);
 			}
 
-			return std::make_unique<FunctionType>(std::move(returnType), std::move(argTypes), false);
+			return std::make_unique<FunctionType>(std::move(returnType), std::move(argTypes), isVaArgs, false);
 		}; break;
 		case TokenType::TUPLE: {
 			std::vector<std::unique_ptr<Type>> subTypes;
@@ -92,7 +116,6 @@ std::unique_ptr<Type> TypeParser::parseType() {
 					m_pos -= 2;
 				}
 
-				m_pos = m_originalPos;
 				return nullptr;
 			} else {
 				// TODO: add generics/user-defined types support
@@ -122,7 +145,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				consume(TokenType::RPAR);
 			}
 		}; break;
-	default: m_pos--; m_pos = m_originalPos; return nullptr;
+	default: m_pos--; return nullptr;
 	}
 
 	// second type: modificators
@@ -165,6 +188,15 @@ std::unique_ptr<Type> TypeParser::parseType() {
 
 			result = std::make_unique<PointerType>(BasicType::POINTER, std::move(result), isConst);
 			continue;
+		} else if (match(TokenType::POWER)) { // pointer to pointer
+			if (isReference(result->basicType)) {
+				ErrorManager::typeError(ErrorID::E3051_REFERENCE_TO_REFERENCE, getCurrLine(), "pointer to a reference");
+				break;
+			}
+
+			result = std::make_unique<PointerType>(BasicType::POINTER, std::move(result), isConst);
+			result = std::make_unique<PointerType>(BasicType::POINTER, std::move(result), false);
+			continue;
 		} else if (match(TokenType::AND)) { // reference
 			if (isReference(result->basicType)) {
 				ErrorManager::typeError(ErrorID::E3051_REFERENCE_TO_REFERENCE, getCurrLine(), "");
@@ -178,19 +210,17 @@ std::unique_ptr<Type> TypeParser::parseType() {
 		break;
 	}
 
-	if (!result) {
-		m_pos = m_originalPos;
-	}
-
 	return result;
 }
 
 bool TypeParser::isType() {
+	savePos();
 	if (parseType()) {
-		m_pos = m_originalPos;
+		loadPos();
 		return true;
 	}
 
+	loadPos();
 	return false;
 }
 
@@ -239,4 +269,13 @@ int TypeParser::getCurrLine() {
 		return m_toks.back().errLine;
 
 	return tok.errLine;
+}
+
+void TypeParser::savePos() {
+	m_posHistory.push_back(m_pos);
+}
+
+void TypeParser::loadPos() {
+	m_pos = m_posHistory.back();
+	m_posHistory.pop_back();
 }

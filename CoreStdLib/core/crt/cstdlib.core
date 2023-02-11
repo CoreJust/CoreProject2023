@@ -1,0 +1,113 @@
+# stdio.core - the standard core library module that is an interface with C stdio functions.
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+# After user-defined types are presented: add div_t, ldiv_t, etc
+# TODO: add constants (macros in original C header file)
+
+
+# Conversion functions
+def native atof(const c8* nptr) f64;
+def native atoi(const c8* nptr) i32;
+def native atol(const c8* nptr) i64;
+def native atoll(const c8* nptr) i64; # c++17
+def native strtod(const c8* nptr, c8** endptr) f64;
+def native strtof(const c8* nptr, c8** endptr) f32;
+def native strtold(const c8* nptr, c8** endptr) f64;
+def native strtol(const c8* nptr, c8** endptr, i32 base) i64;
+def native strtoll(const c8* nptr, c8** endptr, i32 base) i64; # c++17
+def native strtoul(const c8* nptr, c8** endptr, i32 base) u64;
+def native strtoull(const c8* nptr, c8** endptr, i32 base) u64; # c++17
+
+
+# Random generation
+def native rand() i32;
+def native srand(u32 seed);
+
+
+# Dynamic memory
+def native aligned_alloc(u64 alignment, u64 size) u8*; # c++17
+def native calloc(u64 nmemb, u64 size) u8*;
+def native free(u8* ptr);
+def native malloc(u64 size) u8*;
+def native realloc(u8* ptr, u64 size) u8*;
+
+
+# Environment
+@noreturn
+@noexcept
+def native abort();
+
+@noexcept
+def native atexit(func() fun) i32;
+
+@noexcept
+def native atexit(func() fun) i32;
+
+@noexcept
+def native at_quick_exit(func() fun) i32; # c++11
+
+@noreturn
+@noexcept
+def native at_quick_exit(func() fun) i32; # c++11
+  
+@noreturn
+def native exit(i32 status);
+
+@noreturn
+@noexcept
+def native _Exit(i32 status);
+
+@noreturn
+@noexcept
+def native quick_exit(i32 status); # c++11
+  
+def native getenv(const c8* name) c8*;
+def native system(const c8* string) i32;
+
+
+# Algorithms
+def native bsearch(const u8* key, const u8* base, u64 nmemb, u64 size,
+                func i32(const u8*, const u8*) compar) u8*;
+def native qsort(u8* base, u64 nmemb, u64 size, func i32(const u8*, const u8*) compar);
+
+
+# Integer arithmetics (must be ct)
+def native abs(i32 j) i32;
+
+###
+@mangle
+def native abs(i64 j) i64;
+
+@mangle
+def native abs(i64 j) i64;
+
+@mangle
+def native abs(f32 j) f32;
+
+@mangle
+def native abs(f64 j) f64;
+
+@mangle
+def native abs(f64 j) f64;
+###
+ 
+def native labs(i64 j) i64;
+def native llabs(i64 j) i64; # c++11
+
+###
+def native div(i32 numer, i32 denom) div_t;
+def native div(i64 numer, i64 denom) ldiv_t;
+def native div(i64 numer, i64 denom) lldiv_t;
+def native ldiv(i64 numer, i64 denom) ldiv_t;
+def native lldiv(i64 numer, i64 denom) lldiv_t; # c++11
+###
+
+
+# Multibyte characters
+def native mblen(const u8* s, u64 n) i32;
+def native mbtowc(c16* pwc, const u8* s, u64 n) i32;
+def native wctomb(u8* s, c16 wchar) i32;
+def native mbstowcs(c16* pwcs, const u8* s, u64 n) u64;
+def native wcstombs(u8* s, const c16* pwcs, u64 n) u64;

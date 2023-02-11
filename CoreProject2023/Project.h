@@ -11,4 +11,7 @@ public:
 	Project(); // temporary
 
 	std::string getMainFilePath();
+	std::vector<std::string> getImportedPaths();
+
+	std::string getAdditionalLinkDirectoriesString() const;
 };

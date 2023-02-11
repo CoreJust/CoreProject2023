@@ -31,21 +31,14 @@ public:
 	void setSafety(Safety visibility);
 };
 
-enum class ProgramType : u8 {
-	PROGRAM = 0,
-	OBJECT,
-	DYNAMIC_LIBRARY,
-	STATIC_LIBRARY
-};
-
 /*
 * bits starting from common qualities' last one:
-*	4-5: program type
+*	4: is nomangling
 */
 class ModuleQualities final : public CommonQualities {
 public:
-	ProgramType getProgramType() const;
-	void setProgramType(ProgramType type);
+	bool isManglingOn() const;
+	void setMangling(bool isToMangle);
 };
 
 enum class ClassType : u8 {
@@ -115,6 +108,8 @@ enum class CallingConvention : u8 {
 *	9: is explicit(0) or implicit(1) (if type cast function)
 *	10-12: calling convention (default ccall)
 *	13: is mangling on
+*	14: is noreturn
+*	15: is noexcept
 */
 class FunctionQualities final : public CommonQualities {
 	u8 m_additionalData = 0;
@@ -140,4 +135,10 @@ public:
 
 	bool isManglingOn() const;
 	void setMangling(bool isToMangle);
+
+	bool isNoReturn() const;
+	void setNoReturn(bool isNoReturn);
+
+	bool isNoExcept() const;
+	void setNoExcept(bool isNoExcept);
 };

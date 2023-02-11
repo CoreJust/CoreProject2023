@@ -2,9 +2,17 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Utils/ErrorManager.h>
 #include <Module/LLVMUtils.h>
+#include <Module/LLVMGlobals.h>
 
-BinaryExpr::BinaryExpr(std::unique_ptr<Expression> right, std::unique_ptr<Expression> left, BinaryOp op)
-	: m_right(std::move(right)), m_left(std::move(left)), m_op(op) {
+BinaryExpr::BinaryExpr(
+	std::unique_ptr<Expression> right, 
+	std::unique_ptr<Expression> left, 
+	BinaryOp op
+) : 
+	m_right(std::move(right)), 
+	m_left(std::move(left)), 
+	m_op(op) 
+{
 	auto& rightType = m_right->getType();
 	auto& leftType = m_left->getType();
 	switch (op) {
@@ -39,8 +47,11 @@ BinaryExpr::BinaryExpr(std::unique_ptr<Expression> right, std::unique_ptr<Expres
 	}
 
 	if (!m_type) {
-		ErrorManager::typeError(ErrorID::E3103_CANNOT_CONVERT_TO_ONE, m_errLine,
-			rightType->toString() + " and " + leftType->toString());
+		ErrorManager::typeError(
+			ErrorID::E3103_CANNOT_CONVERT_TO_ONE, 
+			m_errLine,
+			rightType->toString() + " and " + leftType->toString()
+		);
 	} else if (!m_isRVal && isReference(m_type->basicType)) {
 		PointerType* ptrType = (PointerType*)m_type.get();
 		std::unique_ptr<Type> tmp = ptrType->elementType->copy();
@@ -83,7 +94,13 @@ llvm::Value* BinaryExpr::generate() {
 			left = llvm_utils::convertValueTo(m_type, m_left->getType(), left);
 		}
 	} else {
-		std::unique_ptr<Type> commonType = findCommonType(m_right->getType(), m_left->getType(), m_right->isCompileTime(), m_left->isCompileTime());
+		std::unique_ptr<Type> commonType = findCommonType(
+			m_right->getType(), 
+			m_left->getType(), 
+			m_right->isCompileTime(),
+			m_left->isCompileTime()
+		);
+
 		right = llvm_utils::convertValueTo(commonType, m_right->getType(), right);
 		left = llvm_utils::convertValueTo(commonType, m_left->getType(), left);
 	}
@@ -127,9 +144,15 @@ llvm::Value* BinaryExpr::generate() {
 	} else if (m_type->basicType == BasicType::POINTER) {
 		u64 typeSize = ((PointerType*)m_type.get())->elementType->getAlignment();
 		if (isInteger(m_right->getType()->basicType)) {
-			right = g_builder->CreateMul(right, llvm_utils::getConstantInt(typeSize, 64));
+			right = g_builder->CreateMul(
+				right, 
+				llvm_utils::getConstantInt(typeSize, 64)
+			);
 		} else if (isInteger(m_left->getType()->basicType)) {
-			left = g_builder->CreateMul(left, llvm_utils::getConstantInt(typeSize, 64));
+			left = g_builder->CreateMul(
+				left, 
+				llvm_utils::getConstantInt(typeSize, 64)
+			);
 		}
 
 		switch (m_op) {
@@ -148,6 +171,11 @@ llvm::Value* BinaryExpr::generate() {
 }
 
 llvm::Value* BinaryExpr::generateRValue() {
-	ErrorManager::parserError(ErrorID::E2103_NOT_A_REFERENCE, m_errLine, "binary operator cannot return a reference");
+	ErrorManager::parserError(
+		ErrorID::E2103_NOT_A_REFERENCE, 
+		m_errLine, 
+		"binary operator cannot return a reference"
+	);
+
 	return nullptr;
 }

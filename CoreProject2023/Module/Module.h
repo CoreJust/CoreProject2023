@@ -7,25 +7,42 @@ private:
 	std::string m_name;
 	std::string m_path;
 	ModuleQualities m_qualities;
+	std::unique_ptr<llvm::Module> m_llvmModule;
 	std::vector<std::string> m_importedModules;
 
 	// key "" means accessible without stating any module/namespace
 	std::map<std::string, std::vector<ModuleSymbolsUnit*>> m_symbols;
-	std::map<std::string, ModuleSymbols*> m_allTheImportedModules; // needed to get symbols from imports in imported modules
-	std::unique_ptr<llvm::Module> m_llvmModule;
+
+	// needed to get symbols from imports in imported modules
+	std::map<std::string, ModuleSymbols*> m_allTheImportedModules; 
 
 	std::vector<Variable> m_localVariables;
 
 public:
-	Module(const std::string& name, const std::string& path, ModuleQualities qualities, std::vector<std::string> imports);
+	Module(
+		const std::string& name,
+		const std::string& path, 
+		ModuleQualities qualities, 
+		std::vector<std::string> imports
+	);
+
 	Module(Module& other);
 	Module(Module&& other) = default;
 
 	void loadSymbols();
-	void addModuleAlias(const std::string& moduleName, const std::string& alias);
+	void addModuleAlias(
+		const std::string& moduleName, 
+		const std::string& alias
+	);
 
 	void addBlock();
-	void addLocalVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value);
+	void addLocalVariable(
+		const std::string& name, 
+		std::unique_ptr<Type> type, 
+		VariableQualities qualities, 
+		llvm::Value* value
+	);
+
 	void deleteBlock();
 
 	SymbolType getSymbolType(const std::string& name) const;
@@ -56,6 +73,7 @@ public:
 };
 
 
+// This class is used to replace Module* so that it wouldn't break once g_modules' memory is reallocated
 class ModuleRef final {
 public:
 	size_t index;

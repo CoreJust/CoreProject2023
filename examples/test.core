@@ -1,23 +1,13 @@
 import core.crt.cstdio;
 import core.crt.cstdlib;
 
+def putch(c8 c) i32 = cstdio.putchar(i32(c));
+
 def main() i32 {
-	cstdio.puts(c8*(
-	"""
-		
-		Some multiline string...
-		
-	"""));
-	
-	###
-	u32 num = 1;
-	while num {
-		cstdio.fprintf(cstdio.stdout, c8*("\nEnter the seed: "));
-		cstdio.scanf(c8*("%u"), &num);
-		cstdlib.srand(num);
-		cstdio.printf(c8*("\nThe random number is: %d"), cstdlib.rand());
-	}
-	###
+	c8* str = c8*("some string");
+	putch(*(str++));
+	putch(*(++str));
+	putch(*(--str));
 	
 	cstdlib.system(c8*("pause"));
 	return 0;

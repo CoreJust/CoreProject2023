@@ -1,4 +1,5 @@
 #include "ModuleSymbols.h"
+#include <Module/LLVMGlobals.h>
 
 void ModuleSymbolsUnit::addType(TypeNode type) {
 	m_types.push_back(std::move(type));
@@ -13,7 +14,12 @@ void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, llvm::Function*
 	m_functions.push_back(Function{ std::move(prototype), value });
 }
 
-void ModuleSymbolsUnit::addVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value) {
+void ModuleSymbolsUnit::addVariable(
+	const std::string& name, 
+	std::unique_ptr<Type> type, 
+	VariableQualities qualities, 
+	llvm::Value* value
+) {
 	m_variables.push_back(Variable{ name, std::move(type), qualities, value });
 }
 

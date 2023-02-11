@@ -1,11 +1,21 @@
 #include "FunctionCallExpr.h"
 #include <Parser/Visitor/Visitor.h>
 #include <Utils/ErrorManager.h>
+#include <Module/LLVMGlobals.h>
 
-FunctionCallExpr::FunctionCallExpr(std::unique_ptr<Expression> func, std::vector<std::unique_ptr<Expression>> args)
-	: m_funcExpr(std::move(func)), m_argExprs(std::move(args)) {
+FunctionCallExpr::FunctionCallExpr(
+	std::unique_ptr<Expression> func, 
+	std::vector<std::unique_ptr<Expression>> args
+) : 
+	m_funcExpr(std::move(func)), 
+	m_argExprs(std::move(args)) 
+{
 	if (m_funcExpr->getType()->basicType != BasicType::FUNCTION) {
-		ErrorManager::parserError(ErrorID::E2102_CANNOT_BE_CALLED, m_errLine, "");
+		ErrorManager::parserError(
+			ErrorID::E2102_CANNOT_BE_CALLED, 
+			m_errLine, 
+			""
+		);
 	} else {
 		m_type = ((FunctionType*)m_funcExpr->getType().get())->returnType->copy();
 		if (isReference(m_type->basicType)) {
@@ -36,7 +46,12 @@ llvm::Value* FunctionCallExpr::generate() {
 	llvm::errs() << "\n\n";
 #endif
 
-	llvm::Value* result = g_builder->CreateCall(funcType->to_llvmFunctionType(), funcVal, argValues);
+	llvm::Value* result = g_builder->CreateCall(
+		funcType->to_llvmFunctionType(), 
+		funcVal,
+		argValues
+	);
+
 	if (m_type->basicType == BasicType::REFERENCE) {
 		llvm::Type* type = ((PointerType*)m_type.get())->elementType->to_llvm();
 		result = g_builder->CreateLoad(type, result);
@@ -47,7 +62,11 @@ llvm::Value* FunctionCallExpr::generate() {
 
 llvm::Value* FunctionCallExpr::generateRValue() {
 	if (m_type->basicType != BasicType::REFERENCE) {
-		ErrorManager::parserError(ErrorID::E2103_NOT_A_REFERENCE, m_errLine, "function does not return a reference");
+		ErrorManager::parserError(
+			ErrorID::E2103_NOT_A_REFERENCE, 
+			m_errLine, 
+			"function does not return a reference"
+		);
 	}
 
 	llvm::Function* funcVal = (llvm::Function*)m_funcExpr->generate();
@@ -58,5 +77,9 @@ llvm::Value* FunctionCallExpr::generateRValue() {
 		argValues.push_back(arg->generate());
 	}
 
-	return g_builder->CreateCall((llvm::FunctionType*)funcType->to_llvm(), funcVal, argValues);
+	return g_builder->CreateCall(
+		(llvm::FunctionType*)funcType->to_llvm(), 
+		funcVal, 
+		argValues
+	);
 }

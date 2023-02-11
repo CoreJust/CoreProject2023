@@ -17,11 +17,20 @@ static std::string TOKEN_NAMES[] = {
 	"NO_TOKEN"
 };
 
-Token::Token() : data(""), type(TokenType::NO_TOKEN), errLine(-1) {}
+Token::Token()
+	: data(""), type(TokenType::NO_TOKEN), errLine(-1) {
 
-Token::Token(TokenType type, int errLine) : data(""), type(type), errLine(errLine) {}
+}
 
-Token::Token(TokenType type, const std::string& data, int errLine) : data(data), type(type), errLine(errLine) {}
+Token::Token(TokenType type, int errLine) 
+	: data(""), type(type), errLine(errLine) {
+
+}
+
+Token::Token(TokenType type, const std::string& data, int errLine) 
+	: data(data), type(type), errLine(errLine) {
+
+}
 
 std::string Token::toString() {
 	return TOKEN_NAMES[+type] + " \"" + data + "\" line " + std::to_string(errLine + 1);

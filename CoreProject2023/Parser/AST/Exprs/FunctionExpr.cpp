@@ -1,6 +1,7 @@
 #include "FunctionExpr.h"
 #include <Parser/Visitor/Visitor.h>
 #include <Utils/ErrorManager.h>
+#include <Module/LLVMGlobals.h>
 
 FunctionExpr::FunctionExpr(Function* func)
     : m_function(func) {
@@ -16,7 +17,12 @@ llvm::Value* FunctionExpr::generate() {
 }
 
 llvm::Value* FunctionExpr::generateRValue() {
-    ErrorManager::parserError(ErrorID::E2103_NOT_A_REFERENCE, m_errLine, "function value cannot be reference");
+    ErrorManager::parserError(
+        ErrorID::E2103_NOT_A_REFERENCE, 
+        m_errLine, 
+        "function value cannot be reference"
+    );
+
     return nullptr;
 }
 

@@ -1,7 +1,7 @@
 #include "FunctionPrototype.h"
 #include <Utils/Defs.h>
-#include <Parser/AST/INode.h>
 #include <Module/Module.h>
+#include <Module/LLVMGlobals.h>
 
 FunctionPrototype::FunctionPrototype(const std::string& name, std::unique_ptr<Type> returnType, std::vector<Argument> args,
 	FunctionQualities qualities, bool isVaArgs)

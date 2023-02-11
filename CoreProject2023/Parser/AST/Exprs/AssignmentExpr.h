@@ -5,7 +5,10 @@ class AssignmentExpr final : public Expression {
 	FRIEND_CLASS_VISITORS
 
 public:
-	AssignmentExpr(std::unique_ptr<Expression> rval, std::unique_ptr<Expression> expr);
+	AssignmentExpr(
+		std::unique_ptr<Expression> rval, 
+		std::unique_ptr<Expression> expr
+	);
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;

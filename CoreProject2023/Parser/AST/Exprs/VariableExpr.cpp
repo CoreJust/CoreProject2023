@@ -1,6 +1,7 @@
 #include "VariableExpr.h"
 #include <Parser/Visitor/Visitor.h>
 #include <Module/Module.h>
+#include <Module/LLVMGlobals.h>
 
 VariableExpr::VariableExpr(std::string moduleName, Variable* variable)
 	: m_moduleName(std::move(moduleName)), m_name(variable->name) {

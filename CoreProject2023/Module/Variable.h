@@ -10,7 +10,13 @@ struct Variable {
 	VariableQualities qualities;
 	llvm::Value* value;
 
-	Variable(std::string name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value);
+	Variable(
+		std::string name, 
+		std::unique_ptr<Type> type, 
+		VariableQualities qualities, 
+		llvm::Value* value
+	);
+
 	Variable(Variable&&) = default;
 	Variable(Variable& other);
 };

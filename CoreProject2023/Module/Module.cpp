@@ -2,13 +2,24 @@
 #include <Utils/ErrorManager.h>
 #include <Parser/AST/INode.h>
 #include "LLVMUtils.h"
+#include "LLVMGlobals.h"
 
 ModuleList g_moduleList;
 ModuleRef g_module;
 
-Module::Module(const std::string& name, const std::string& path, ModuleQualities qualities, std::vector<std::string> imports) 
-	: m_name(name), m_path(path), m_qualities(qualities), m_importedModules(std::move(imports)),
-		m_llvmModule(std::make_unique<llvm::Module>(name, g_context)) {
+
+Module::Module(
+	const std::string& name, 
+	const std::string& path, 
+	ModuleQualities qualities, 
+	std::vector<std::string> imports
+) : 
+	m_name(name),
+	m_path(path), 
+	m_qualities(qualities), 
+	m_importedModules(std::move(imports)),
+	m_llvmModule(std::make_unique<llvm::Module>(name, g_context)) 
+{
 	m_symbols[""] = {};
 }
 
@@ -20,7 +31,11 @@ Module::Module(Module& other)
 void Module::loadSymbols() {
 	// Loading this module's symbols
 	auto& thisModule = g_symbolTable.getModuleSymbols(m_path);
-	m_symbols[""] = { &thisModule.privateSymbols, &thisModule.publicOnceSymbols, &thisModule.publicSymbols };
+	m_symbols[""] = { 
+		&thisModule.privateSymbols, 
+		&thisModule.publicOnceSymbols, 
+		&thisModule.publicSymbols 
+	};
 
 	for (auto& importedModulePath : m_importedModules) {
 		ModuleRef module = g_moduleList.getModule(importedModulePath);
@@ -34,12 +49,14 @@ void Module::loadSymbols() {
 		// Loading indirectly imported module's symbols
 		module->loadSymbolsIfNotLoaded();
 		const auto& subimportedModules = module->getAllTheImportedModules();
+
 		for (auto& subimportedModule : subimportedModules) {
 			if (!m_allTheImportedModules.contains(subimportedModule.first)) {
 				m_allTheImportedModules[subimportedModule.first] = subimportedModule.second;
 				addModuleSymbolsUnit(
 					g_moduleList.getModule(subimportedModule.first)->getName(),
-					&subimportedModule.second->publicSymbols);
+					&subimportedModule.second->publicSymbols
+				);
 			}
 		}
 	}
@@ -51,7 +68,11 @@ void Module::addModuleAlias(const std::string& moduleName, const std::string& al
 		m_symbols[alias] = m_symbols[moduleName];
 	} else {
 		auto& insertedSymbols = m_symbols[moduleName];
-		m_symbols[alias].insert(m_symbols[alias].end(), insertedSymbols.begin(), insertedSymbols.end());
+		m_symbols[alias].insert(
+			m_symbols[alias].end(), 
+			insertedSymbols.begin(), 
+			insertedSymbols.end()
+		);
 	}
 }
 
@@ -59,7 +80,12 @@ void Module::addBlock() {
 	m_localVariables.push_back(Variable{ "", nullptr, VariableQualities(), nullptr });
 }
 
-void Module::addLocalVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value) {
+void Module::addLocalVariable(
+	const std::string& name, 
+	std::unique_ptr<Type> type, 
+	VariableQualities qualities, 
+	llvm::Value* value
+) {
 	m_localVariables.push_back(Variable{ name, std::move(type), qualities, value });
 }
 
@@ -96,7 +122,9 @@ SymbolType Module::getSymbolType(const std::string& name) const {
 
 SymbolType Module::getSymbolType(const std::string& moduleAlias, const std::string& name) const {
 	if (!m_symbols.contains(moduleAlias)) {
-		ErrorManager::internalError(ErrorID::E4052_NO_MODULE_FOUND_BY_ALIAS, -1, "alias is: " + moduleAlias + ", symbol: " + name);
+		ErrorManager::internalError(ErrorID::E4052_NO_MODULE_FOUND_BY_ALIAS, -1,
+			"alias is: " + moduleAlias + ", symbol: " + name);
+
 		return SymbolType::MODULE;
 	}
 
@@ -222,7 +250,7 @@ void Module::loadSymbolsIfNotLoaded() {
 }
 
 void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* unit) {
-	// Addind tp module's LLVM IR
+	// Addind to module's LLVM IR
 	ModuleSymbolsUnit *newUnit = new ModuleSymbolsUnit();
 	for (Variable& var : unit->getVariables()) {
 		newUnit->addVariable(var.name, std::unique_ptr<Type>(var.type->copy()),

@@ -1,4 +1,5 @@
 #include "BasicType.h"
+#include "LLVMGlobals.h"
 
 std::strong_ordering operator<=>(BasicType left, BasicType right) {
     return u8(left) <=> u8(right);
@@ -52,6 +53,10 @@ bool isPointer(BasicType type) {
     return type >= BasicType::DYN_ARRAY && type <= BasicType::OPTIONAL;
 }
 
+bool isTruePointer(BasicType type) {
+    return type == BasicType::ARRAY || type == BasicType::POINTER || type == BasicType::FUNCTION;
+}
+
 int getBasicTypeSize(BasicType type) {
     static int TYPE_SIZE[] = {
         0, 8, 16, 32, 64, 8, 16, 32, 64,
@@ -63,4 +68,52 @@ int getBasicTypeSize(BasicType type) {
     };
 
     return TYPE_SIZE[u8(type)];
+}
+
+llvm::Type* basicTypeToLLVM(BasicType type) {
+    switch (type) {
+        case BasicType::NO_TYPE: return llvm::Type::getVoidTy(g_context);
+        case BasicType::I8: return llvm::Type::getInt8Ty(g_context);
+        case BasicType::I16: return llvm::Type::getInt16Ty(g_context);
+        case BasicType::I32: return llvm::Type::getInt32Ty(g_context);
+        case BasicType::I64: return llvm::Type::getInt64Ty(g_context);
+        case BasicType::U8: return llvm::Type::getInt8Ty(g_context);
+        case BasicType::U16: return llvm::Type::getInt16Ty(g_context);
+        case BasicType::U32: return llvm::Type::getInt32Ty(g_context);
+        case BasicType::U64: return llvm::Type::getInt64Ty(g_context);
+        case BasicType::F32: return llvm::Type::getFloatTy(g_context);
+        case BasicType::F64: return llvm::Type::getDoubleTy(g_context);
+        case BasicType::BOOL: return llvm::Type::getInt1Ty(g_context);
+        case BasicType::C8: return llvm::Type::getInt8Ty(g_context);
+        case BasicType::C16: return llvm::Type::getInt16Ty(g_context);
+        case BasicType::C32: return llvm::Type::getInt32Ty(g_context);
+        case BasicType::STR8:
+            return llvm::StructType::get(
+                g_context, 
+                { 
+                    llvm::Type::getInt8PtrTy(g_context), // .data
+                    llvm::Type::getInt64Ty(g_context) // .size
+                }, 
+                true // is packed
+            );
+        case BasicType::STR16:
+            return llvm::StructType::get(
+                g_context,
+                { 
+                    llvm::Type::getInt16PtrTy(g_context), // .data
+                    llvm::Type::getInt64Ty(g_context) // .size
+                }, 
+                true // is packed
+            );
+        case BasicType::STR32:
+            return llvm::StructType::get(
+                g_context,
+                { 
+                    llvm::Type::getInt32PtrTy(g_context), // .data
+                    llvm::Type::getInt64Ty(g_context) // .size
+                }, 
+                true // is packed
+            );
+    default: return nullptr;
+    }
 }

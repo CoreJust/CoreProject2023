@@ -2,6 +2,10 @@
 #include "../INode.h"
 #include <Module/Type.h>
 
+namespace llvm {
+	class Value;
+};
+
 class Expression : public INode {
 protected:
 	std::unique_ptr<Type> m_type;

@@ -78,36 +78,21 @@ std::map<std::string, TokenType> OPERATORS = {
 const std::string OP_CHARS = "=+-*/%&|^<>~!(){}[],.?:;@";
 
 
-Lexer::Lexer(const std::string& text) : m_text(text) {}
+Lexer::Lexer(const std::string& text) 
+	: m_text(text) {
+
+}
 
 std::vector<Token> Lexer::tokenize() {
 	while (m_pos < m_text.size()) {
-		if (isdigit(m_text[m_pos]))
-			tokenizeNumber();
-		else if (isalpha(m_text[m_pos]) || m_text[m_pos] == '_')
-			tokenizeWord();
-		else if (m_text[m_pos] == '\'')
-			tokenizeCharacter();
-		else if (m_text[m_pos] == '\"' ||
-			(m_pos < m_text.size() - 1 && m_text[m_pos] == 'f' && m_text[m_pos + 1] == '\"'))
-			tokenizeText();
-		else if (m_text[m_pos] == '#')
-			tokenizeComment();
-		else if (isOperator(m_text[m_pos]))
-			tokenizeOperator();
-		else
-			next();
+		nextToken();
 	}
 
 	return std::move(m_toks);
 }
 
 ModuleQualities Lexer::handleModuleQualities() {
-	// set default values
 	ModuleQualities result;
-	result.setVisibility(Visibility::PUBLIC);
-	result.setSafety(Safety::SAFE_ONLY);
-	result.setMangling(true);
 
 	// read annotations
 	while (m_pos < m_text.size()) {
@@ -120,42 +105,81 @@ ModuleQualities Lexer::handleModuleQualities() {
 		if (m_pos >= m_text.size() - 3 || m_text[m_pos] != '@'
 			|| m_text[m_pos + 1] != 's' || m_text[m_pos + 2] != 'e' || m_text[m_pos + 3] != 't') break;
 
-		next(); // skip @set
+		// skip @set
+		next();
 		next();
 		next();
 		next();
 
 		skipWhitespaces(true);
 		if (m_pos >= m_text.size() || !(isalnum(m_text[m_pos]) || m_text[m_pos] == '_' || m_text[m_pos] == '&'))
-			ErrorManager::lexerError(ErrorID::E1053_ANNOTATION_PARAMETER_UNSTATED, m_line, "the parameter of @set is unstated");
+			ErrorManager::lexerError(
+				ErrorID::E1053_ANNOTATION_PARAMETER_UNSTATED, 
+				m_line, 
+				"the parameter of @set is unstated"
+			);
 
 		std::string parameter;
 		loadIdentifier(parameter);
 
 		skipWhitespaces(true);
 		if (m_pos >= m_text.size() || !(isalnum(m_text[m_pos]) || m_text[m_pos] == '_' || m_text[m_pos] == '&'))
-			ErrorManager::lexerError(ErrorID::E1054_ANNOTATION_VALUE_UNSTATED, m_line, "the value of @set is unstated");
+			ErrorManager::lexerError(
+				ErrorID::E1054_ANNOTATION_VALUE_UNSTATED, 
+				m_line, 
+				"the value of @set is unstated"
+			);
 
 		m_buffer.clear();
 		loadIdentifier(m_buffer);
 
 		// parse the annotation
 		if (parameter == "visibility") {
-			if (m_buffer == "public") result.setVisibility(Visibility::PUBLIC);
-			else if (m_buffer == "private") result.setVisibility(Visibility::PRIVATE);
-			else if (m_buffer == "direct_import") result.setVisibility(Visibility::DIRECT_IMPORT);
-			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set visibility " + m_buffer);
+			if (m_buffer == "public") {
+				result.setVisibility(Visibility::PUBLIC);
+			} else if (m_buffer == "private") {
+				result.setVisibility(Visibility::PRIVATE);
+			} else if (m_buffer == "direct_import") {
+				result.setVisibility(Visibility::DIRECT_IMPORT);
+			} else {
+				ErrorManager::lexerError(
+					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE,
+					m_line,
+					"@set visibility " + m_buffer
+				);
+			}
 		} else if (parameter == "safety") {
-			if (m_buffer == "safe") result.setSafety(Safety::SAFE);
-			else if (m_buffer == "unsafe") result.setSafety(Safety::UNSAFE);
-			else if (m_buffer == "safe_only") result.setSafety(Safety::SAFE_ONLY);
-			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set safety " + m_buffer);
+			if (m_buffer == "safe") {
+				result.setSafety(Safety::SAFE);
+			} else if (m_buffer == "unsafe") {
+				result.setSafety(Safety::UNSAFE);
+			} else if (m_buffer == "safe_only") {
+				result.setSafety(Safety::SAFE_ONLY);
+			} else {
+				ErrorManager::lexerError(
+					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, 
+					m_line, 
+					"@set safety " + m_buffer
+				);
+			}
 		} else if (parameter == "mangling") {
-			if (m_buffer == "mangle") result.setMangling(true);
-			else if (m_buffer == "nomangle") result.setMangling(false);
-			else ErrorManager::lexerError(ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, m_line, "@set mangling " + m_buffer);
+			if (m_buffer == "mangle") {
+				result.setMangling(true);
+			} else if (m_buffer == "nomangle") {
+				result.setMangling(false);
+			} else {
+				ErrorManager::lexerError(
+					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, 
+					m_line, 
+					"@set mangling " + m_buffer
+				);
+			}
 		} else {
-			ErrorManager::lexerError(ErrorID::E1055_UNKNOWN_ANNOTATION_PARAMETER, m_line, "@set " + m_buffer);
+			ErrorManager::lexerError(
+				ErrorID::E1055_UNKNOWN_ANNOTATION_PARAMETER, 
+				m_line, 
+				"@set " + m_buffer
+			);
 		}
 	}
 
@@ -184,8 +208,13 @@ std::vector<std::string> Lexer::handleImports() {
 			skipWhitespaces(true);
 
 			while (m_pos < m_text.size() && m_text[m_pos] != ';') {
-				if (m_text[m_pos] == '\n')
-					ErrorManager::lexerError(ErrorID::E1002_NO_ENDING_SEMICOLON, m_line, "import " + m_buffer);
+				if (m_text[m_pos] == '\n') {
+					ErrorManager::lexerError(
+						ErrorID::E1002_NO_ENDING_SEMICOLON, 
+						m_line, 
+						"import " + m_buffer
+					);
+				}
 
 				m_buffer += m_text[m_pos]; // read the module to import
 				next();
@@ -203,6 +232,25 @@ std::vector<std::string> Lexer::handleImports() {
 	return imports.getImportedFiles();
 }
 
+void Lexer::nextToken() {
+	if (isdigit(m_text[m_pos])) {
+		tokenizeNumber();
+	} else if (isalpha(m_text[m_pos]) || m_text[m_pos] == '_') {
+		tokenizeWord();
+	} else if (m_text[m_pos] == '\'') {
+		tokenizeCharacter();
+	} else if (m_text[m_pos] == '\"' ||
+		(m_pos < m_text.size() - 1 && m_text[m_pos] == 'f' && m_text[m_pos + 1] == '\"')) {
+		tokenizeText();
+	} else if (m_text[m_pos] == '#') {
+		tokenizeComment();
+	} else if (isOperator(m_text[m_pos])) {
+		tokenizeOperator();
+	} else {
+		next();
+	}
+}
+
 void Lexer::tokenizeNumber() {
 	char c = m_text[m_pos];
 
@@ -214,13 +262,14 @@ void Lexer::tokenizeNumber() {
 			case 'x': number_system = 16; break;
 			case 'o': number_system = 8; break;
 			case 'b': number_system = 2; break;
-			default: break;
+		default: break;
 		}
 
-		if (number_system != 10)
+		if (number_system != 10) {
 			c = next();
-		else
+		} else {
 			c = m_text[--m_pos];
+		}
 	}
 
 	loadNumber(number_system, true, true);
@@ -228,8 +277,13 @@ void Lexer::tokenizeNumber() {
 		std::string type;
 		loadIdentifier(type);
 
-		if (m_buffer.find('.') != std::string::npos && type[0] != 'f')
-			ErrorManager::lexerError(ErrorID::E1101_FLOAT_LITERAL_IMPROPER_POSTFIX, m_line, "postfix: " + type);
+		if (m_buffer.find('.') != std::string::npos && type[0] != 'f') {
+			ErrorManager::lexerError(
+				ErrorID::E1101_FLOAT_LITERAL_IMPROPER_POSTFIX,
+				m_line, 
+				"postfix: " + type
+			);
+		}
 
 		if (type == "f32") {
 			return m_toks.push_back(Token(TokenType::NUMBERF32, m_buffer, m_line));
@@ -252,7 +306,11 @@ void Lexer::tokenizeNumber() {
 		} else if (type == "u64") {
 			return m_toks.push_back(Token(TokenType::NUMBERU64, m_buffer, m_line));
 		} else {
-			ErrorManager::lexerError(ErrorID::E1102_NUMBER_LITERAL_IMPROPER_POSTFIX, m_line, m_buffer + " " + type);
+			ErrorManager::lexerError(
+				ErrorID::E1102_NUMBER_LITERAL_IMPROPER_POSTFIX, 
+				m_line, 
+				m_buffer + " " + type
+			);
 		}
 	}
 
@@ -300,8 +358,12 @@ void Lexer::tokenizeOperator() {
 void Lexer::tokenizeText() {
 	m_buffer.clear();
 
-	bool isFString = false; // f"...{code}...", tokens are: FORMAT_TEXT, code tokens, FORMAT_TEXT, ..., FORMAT_STRING_END
-	std::vector<size_t> fStringParts; // for formated strings: the tokens with strings between inserted code parts
+	// f"...{code}...", tokens are: FORMAT_TEXT, code tokens, FORMAT_TEXT, ..., FORMAT_STRING_END
+	bool isFString = false;
+
+	// for formated strings: the tokens with strings between inserted code parts
+	std::vector<size_t> fStringParts;
+
 	if (m_text[m_pos] == 'f') {
 		isFString = true;
 		next();
@@ -316,12 +378,21 @@ void Lexer::tokenizeText() {
 
 	while (true) {
 		if (m_pos >= m_text.size() - 1) {
-			ErrorManager::lexerError(ErrorID::E1112_NO_CLOSING_QUOTE, m_line, "no closing quote till the end of file");
+			ErrorManager::lexerError(
+				ErrorID::E1112_NO_CLOSING_QUOTE, 
+				m_line, 
+				"no closing quote till the end of file"
+			);
+
 			break;
 		}
 
 		if (!isMultiline && m_text[m_pos + 1] == '\n') {
-			ErrorManager::lexerError(ErrorID::E1112_NO_CLOSING_QUOTE, m_line, "no closing quote before the end of line");
+			ErrorManager::lexerError(
+				ErrorID::E1112_NO_CLOSING_QUOTE, 
+				m_line, 
+				"no closing quote before the end of line"
+			);
 		} else if (m_text[m_pos + 1] == '"') {
 			if (!isMultiline) {
 				break;
@@ -339,21 +410,7 @@ void Lexer::tokenizeText() {
 
 			// Note: Copied from tokenize() function
 			while (m_pos < m_text.size() - 1 && m_text[m_pos] != '}') {
-				if (isdigit(m_text[m_pos]))
-					tokenizeNumber();
-				else if (isalpha(m_text[m_pos]) || m_text[m_pos] == '_')
-					tokenizeWord();
-				else if (m_text[m_pos] == '\'')
-					tokenizeCharacter();
-				else if (m_text[m_pos] == '\"' ||
-					(m_pos < m_text.size() - 1 && m_text[m_pos] == 'f' && m_text[m_pos + 1] == '\"'))
-					tokenizeText();
-				else if (m_text[m_pos] == '#')
-					tokenizeComment();
-				else if (isOperator(m_text[m_pos]))
-					tokenizeOperator();
-				else
-					next();
+				nextToken();
 			}
 
 			m_buffer.clear();
@@ -367,38 +424,61 @@ void Lexer::tokenizeText() {
 	next(); // skip closing "
 
 	std::function<u32(std::string&)> convertFunc = utf32ToASCII;
-	TokenType tok_type = isFString ? TokenType::FORMAT_TEXT8 : TokenType::TEXT8;
+	TokenType tok_type = isFString ?
+		TokenType::FORMAT_TEXT8
+		: TokenType::TEXT8;
+
 	if (m_text[m_pos] == 's') {
 		std::string type;
 		loadIdentifier(type);
+
 		if (type == "str8") {
 			convertFunc = utf32ToASCII;
-			tok_type = isFString ? TokenType::FORMAT_TEXT8 : TokenType::TEXT8;
+			tok_type = isFString ?
+				TokenType::FORMAT_TEXT8
+				: TokenType::TEXT8;
 		} else if (type == "str16") {
 			convertFunc = utf32ToUtf16;
-			tok_type = isFString ? TokenType::FORMAT_TEXT16 : TokenType::TEXT16;
+			tok_type = isFString ?
+				TokenType::FORMAT_TEXT16
+				: TokenType::TEXT16;
 		} else if (type == "str32") {
 			convertFunc = [](std::string& str) -> u32 { return 0; };
-			tok_type = isFString ? TokenType::FORMAT_TEXT32 : TokenType::TEXT32;
+			tok_type = isFString ?
+				TokenType::FORMAT_TEXT32
+				: TokenType::TEXT32;
 		} else {
-			ErrorManager::lexerError(ErrorID::E1103_STRING_IMPROPER_POSTFIX, m_line, "postfix: " + type);
+			ErrorManager::lexerError(
+				ErrorID::E1103_STRING_IMPROPER_POSTFIX, 
+				m_line, 
+				"postfix: " + type
+			);
 		}
 	}
 
 	if (isFString) {
 		for (size_t pos : fStringParts) {
-			if (auto errCode = convertFunc(m_toks[pos].data)) printStringTranslationError(errCode);
+			if (auto errCode = convertFunc(m_toks[pos].data)) {
+				printStringTranslationError(errCode);
+			}
+
 			m_toks[pos].type = tok_type;
 		}
 
 		if (m_buffer.size()) {
-			if (auto errCode = convertFunc(m_buffer)) printStringTranslationError(errCode);
+			if (auto errCode = convertFunc(m_buffer)) {
+				printStringTranslationError(errCode);
+			}
+
 			m_toks.push_back(Token(tok_type, m_buffer, m_line));
 		}
 
 		m_toks.push_back(Token(TokenType::FORMAT_STRING_END, m_line));
 	} else {
-		if (auto errCode = convertFunc(m_buffer)) printStringTranslationError(errCode);
+		if (auto errCode = convertFunc(m_buffer)) {
+			printStringTranslationError(errCode);
+		}
+
 		m_toks.push_back(Token(tok_type, m_buffer, m_line));
 	}
 }
@@ -407,8 +487,13 @@ void Lexer::tokenizeCharacter() {
 	m_buffer.clear();
 
 	addUtf32(m_buffer, getSingleChar());
-	if (next() != '\'')
-		ErrorManager::lexerError(ErrorID::E1111_NO_CLOSING_APOSTROPHE, m_line, "");
+	if (next() != '\'') {
+		ErrorManager::lexerError(
+			ErrorID::E1111_NO_CLOSING_APOSTROPHE, 
+			m_line, 
+			""
+		);
+	}
 
 	next(); // skip closing '
 
@@ -416,19 +501,32 @@ void Lexer::tokenizeCharacter() {
 		std::string type;
 		loadIdentifier(type);
 		if (type == "c8") {
-			if (auto errCode = utf32ToASCII(m_buffer)) printStringTranslationError(errCode);
+			if (auto errCode = utf32ToASCII(m_buffer)) {
+				printStringTranslationError(errCode);
+			}
+
 			return m_toks.push_back(Token(TokenType::LETTER8, m_buffer, m_line));
 		} else if (type == "c16") {
-			if (auto errCode = utf32ToUtf16(m_buffer)) printStringTranslationError(errCode);
+			if (auto errCode = utf32ToUtf16(m_buffer)) {
+				printStringTranslationError(errCode);
+			}
+
 			return m_toks.push_back(Token(TokenType::LETTER16, m_buffer, m_line));
 		} else if (type == "c32") {
 			return m_toks.push_back(Token(TokenType::LETTER32, m_buffer, m_line));
 		} else {
-			ErrorManager::lexerError(ErrorID::E1104_CHARACTER_IMPROPER_POSTFIX, m_line, "unknown character postfix: " + type);
+			ErrorManager::lexerError(
+				ErrorID::E1104_CHARACTER_IMPROPER_POSTFIX, 
+				m_line, 
+				"unknown character postfix: " + type
+			);
 		}
 	}
 
-	if (auto errCode = utf32ToASCII(m_buffer)) printStringTranslationError(errCode);
+	if (auto errCode = utf32ToASCII(m_buffer)) {
+		printStringTranslationError(errCode);
+	}
+
 	return m_toks.push_back(Token(TokenType::LETTER8, m_buffer, m_line));
 }
 
@@ -469,7 +567,11 @@ void Lexer::tokenizeComment() {
 		next();
 		while (true) {
 			if (m_pos == m_text.size()) {
-				ErrorManager::lexerError(ErrorID::E1003_MULTILINE_COMMENT_IS_NOT_CLOSED, m_line, "");
+				ErrorManager::lexerError(
+					ErrorID::E1003_MULTILINE_COMMENT_IS_NOT_CLOSED, 
+					m_line, 
+					""
+				);
 			}
 
 			if (m_text[m_pos] == '"') {
@@ -530,8 +632,12 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 		case 8: isDigit = octIsDigit; break;
 		case 10: isDigit = decIsDigit; break;
 		case 16: isDigit = hexIsDigit; break;
-		default: ErrorManager::lexerError(ErrorID::E1105_NUMBER_HAS_UNKNOWN_NUMERIC_SYSTEM, m_line,
-			"numeric system : " + std::to_string(base));
+		default:
+			ErrorManager::lexerError(
+				ErrorID::E1105_NUMBER_HAS_UNKNOWN_NUMERIC_SYSTEM, 
+				m_line,
+				"numeric system : " + std::to_string(base)
+			);
 	}
 
 	m_buffer.clear();
@@ -540,7 +646,11 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 		if (c != '\'') {
 			m_buffer += c;
 		} else if (!allowDelimiter) {
-			ErrorManager::lexerError(ErrorID::E1106_NUMBER_DELIMITER_FORBIDDEN, m_line, "");
+			ErrorManager::lexerError(
+				ErrorID::E1106_NUMBER_DELIMITER_FORBIDDEN, 
+				m_line, 
+				""
+			);
 		}
 
 		c = next();
@@ -554,7 +664,11 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 			if (c != '\'') {
 				m_buffer += c;
 			} else if (!allowDelimiter) {
-				ErrorManager::lexerError(ErrorID::E1106_NUMBER_DELIMITER_FORBIDDEN, m_line, "");
+				ErrorManager::lexerError(
+					ErrorID::E1106_NUMBER_DELIMITER_FORBIDDEN, 
+					m_line, 
+					""
+				);
 			}
 
 			c = next();
@@ -565,14 +679,18 @@ void Lexer::loadNumber(int base, bool allowFloating, bool allowDelimiter) {
 	if (base == 16) {
 		if (m_buffer.size() > 3 && m_buffer[m_buffer.size() - 3] == 'f'
 			&& ((m_buffer[m_buffer.size() - 2] == '3' && m_buffer[m_buffer.size() - 1] == '2')
-			|| (m_buffer[m_buffer.size() - 2] == '6' && m_buffer[m_buffer.size() - 1] == '4'))) {
+			|| (m_buffer[m_buffer.size() - 2] == '6' && m_buffer[m_buffer.size() - 1] == '4'))
+		) {
 			m_buffer.resize(m_buffer.size() - 3); // erase the type ending from value section
 			m_pos -= 3;
 		}
 
 		if (firstWrongCase != -1 && firstWrongCase < m_pos) {
-			ErrorManager::lexerError(ErrorID::E1107_INCONSISTENT_HEX_NUMBER, m_line, 
-										  m_buffer);
+			ErrorManager::lexerError(
+				ErrorID::E1107_INCONSISTENT_HEX_NUMBER, 
+				m_line, 
+				m_buffer
+			);
 		}
 	}
 
@@ -630,12 +748,15 @@ u32 Lexer::getSingleChar() {
 
 void Lexer::skipWhitespaces(bool spacesOnly) {
 	static std::string allSpaces = " \t\n\r\f\v";
-	if (spacesOnly)
-		while (m_pos < m_text.size() && (m_text[m_pos] == ' ' || m_text[m_pos] == '\t'))
+	if (spacesOnly) {
+		while (m_pos < m_text.size() && (m_text[m_pos] == ' ' || m_text[m_pos] == '\t')) {
 			next(); // skip whitespaces
-	else
-		while (m_pos < m_text.size() && allSpaces.find(m_text[m_pos]) != std::string::npos)
+		}
+	} else {
+		while (m_pos < m_text.size() && allSpaces.find(m_text[m_pos]) != std::string::npos) {
 			next(); // skip whitespaces
+		}
+	}
 }
 
 void Lexer::skipString() {
@@ -644,38 +765,51 @@ void Lexer::skipString() {
 
 void Lexer::printStringTranslationError(u32 errCode) {
 	if (errCode == 1) {
-		ErrorManager::internalError(ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE, m_line, "wrong string type: cannot convert");
+		ErrorManager::internalError(
+			ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE, 
+			m_line, 
+			"wrong string type: cannot convert"
+		);
 	} else {
-		ErrorManager::lexerError(ErrorID::E1108_STRING_CONTAINS_CHARS_BIGGER_THAN_FORMAT_ALLOWS, m_line,
-									  "cannot cast the character to shorter code: " + std::to_string(errCode));
+		ErrorManager::lexerError(
+			ErrorID::E1108_STRING_CONTAINS_CHARS_BIGGER_THAN_FORMAT_ALLOWS, 
+			m_line,
+			"cannot cast the character to shorter code: " + std::to_string(errCode)
+		);
 	}
 }
 
 int Lexer::isKeyWord(std::string& s) {
-	for (int i = 0; i < KEY_WORDS.size(); i++)
-		if (s == KEY_WORDS[i])
+	for (int i = 0; i < KEY_WORDS.size(); i++) {
+		if (s == KEY_WORDS[i]) {
 			return i;
+		}
+	}
 
 	return -1;
 }
 
 bool Lexer::isOperator(char ch) {
-	for (auto c : OP_CHARS)
-		if (ch == c)
+	for (auto c : OP_CHARS) {
+		if (ch == c) {
 			return true;
+		}
+	}
 
 	return false;
 }
 
 char Lexer::next() {
 	m_pos++;
-	if (m_line < m_nextLine)
+	if (m_line < m_nextLine) {
 		m_line = m_nextLine;
+	}
 
 	if (m_pos < m_text.size()) {
 		char r = m_text[m_pos];
-		if (r == '\n')
+		if (r == '\n') {
 			m_nextLine++;
+		}
 
 		return r;
 	} else {

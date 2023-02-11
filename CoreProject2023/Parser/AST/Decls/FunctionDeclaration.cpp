@@ -3,6 +3,7 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Module/Module.h>
 #include <Module/LLVMUtils.h>
+#include <Module/LLVMGlobals.h>
 
 Function* g_function;
 
@@ -31,8 +32,16 @@ void FunctionDeclaration::generate() {
 				qualities.setVariableType(VariableType::CONST);
 			}
 
-			g_module->addLocalVariable(arg.name, arg.type->copy(), qualities,
-				llvm_utils::genFunctionArgumentValue(m_function, arg, m_function->functionValue->getArg(i)));
+			g_module->addLocalVariable(
+				arg.name, 
+				arg.type->copy(), 
+				qualities,
+				llvm_utils::genFunctionArgumentValue(
+					m_function, 
+					arg, 
+					m_function->functionValue->getArg(i)
+				)
+			);
 		}
 		
 		try {

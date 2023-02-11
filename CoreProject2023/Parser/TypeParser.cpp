@@ -6,6 +6,7 @@ static Token _NO_TOK = Token();
 
 TypeParser::TypeParser(std::vector<Token>& toks, u64& pos)
 	: m_toks(toks), m_pos(pos) {
+
 }
 
 std::unique_ptr<Type> TypeParser::consumeType() {
@@ -13,7 +14,12 @@ std::unique_ptr<Type> TypeParser::consumeType() {
 		return std::move(type);
 	}
 
-	ErrorManager::typeError(ErrorID::E3001_TYPE_NOT_SPECIFIED, getCurrLine(), "");
+	ErrorManager::typeError(
+		ErrorID::E3001_TYPE_NOT_SPECIFIED,
+		getCurrLine(), 
+		""
+	);
+
 	return nullptr;
 }
 
@@ -71,8 +77,11 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				do {
 					if (match(TokenType::ETCETERA)) {
 						if (peek().type != TokenType::RPAR) {
-							ErrorManager::parserError(ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT, getCurrLine(), 
-								"incorrect va_args while parsing a function-type");
+							ErrorManager::parserError(
+								ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT,
+								getCurrLine(), 
+								"incorrect va_args while parsing a function-type"
+							);
 						}
 
 						isVaArgs = true;
@@ -156,9 +165,17 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				continue;
 			} else { // static array
 				if (!matchRange(TokenType::NUMBERI8, TokenType::NUMBERU64)) {
-					ErrorManager::typeError(ErrorID::E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE, getCurrLine(), "expected number");
+					ErrorManager::typeError(
+						ErrorID::E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE,
+						getCurrLine(),
+						"expected a number"
+					);
 				} else if (peek(-1).data[0] == '-' || peek(-1).data == "0") {
-					ErrorManager::typeError(ErrorID::E3052_NEGATIVE_SIZE_ARRAY, getCurrLine(), "array size: " + peek(-1).data);
+					ErrorManager::typeError(
+						ErrorID::E3052_NEGATIVE_SIZE_ARRAY,
+						getCurrLine(),
+						"array size: " + peek(-1).data
+					);
 				} else {
 					u64 size = std::stoull(peek(-1).data);
 					consume(TokenType::RBRACKET);
@@ -171,7 +188,12 @@ std::unique_ptr<Type> TypeParser::parseType() {
 			continue;
 		} else if (match(TokenType::ANDAND)) { // rvalue reference
 			if (isReference(result->basicType)) {
-				ErrorManager::typeError(ErrorID::E3051_REFERENCE_TO_REFERENCE, getCurrLine(), "rvalue reference to a reference");
+				ErrorManager::typeError(
+					ErrorID::E3051_REFERENCE_TO_REFERENCE,
+					getCurrLine(),
+					"rvalue reference to a reference"
+				);
+
 				break;
 			}
 
@@ -182,7 +204,12 @@ std::unique_ptr<Type> TypeParser::parseType() {
 		bool isConst = match(TokenType::CONST);
 		if (match(TokenType::STAR)) { // pointer
 			if (isReference(result->basicType)) {
-				ErrorManager::typeError(ErrorID::E3051_REFERENCE_TO_REFERENCE, getCurrLine(), "pointer to a reference");
+				ErrorManager::typeError(
+					ErrorID::E3051_REFERENCE_TO_REFERENCE,
+					getCurrLine(),
+					"pointer to a reference"
+				);
+
 				break;
 			}
 
@@ -190,7 +217,12 @@ std::unique_ptr<Type> TypeParser::parseType() {
 			continue;
 		} else if (match(TokenType::POWER)) { // pointer to pointer
 			if (isReference(result->basicType)) {
-				ErrorManager::typeError(ErrorID::E3051_REFERENCE_TO_REFERENCE, getCurrLine(), "pointer to a reference");
+				ErrorManager::typeError(
+					ErrorID::E3051_REFERENCE_TO_REFERENCE,
+					getCurrLine(),
+					"pointer to a reference"
+				);
+
 				break;
 			}
 
@@ -199,7 +231,12 @@ std::unique_ptr<Type> TypeParser::parseType() {
 			continue;
 		} else if (match(TokenType::AND)) { // reference
 			if (isReference(result->basicType)) {
-				ErrorManager::typeError(ErrorID::E3051_REFERENCE_TO_REFERENCE, getCurrLine(), "");
+				ErrorManager::typeError(
+					ErrorID::E3051_REFERENCE_TO_REFERENCE,
+					getCurrLine(),
+					""
+				);
+
 				break;
 			}
 
@@ -225,48 +262,58 @@ bool TypeParser::isType() {
 }
 
 Token& TypeParser::consume(TokenType type) {
-	if (!match(type))
-		ErrorManager::typeError(ErrorID::E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE, getCurrLine(), "expected " + Token::toString(type));
+	if (!match(type)) {
+		ErrorManager::typeError(
+			ErrorID::E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE,
+			getCurrLine(),
+			"expected " + Token::toString(type)
+		);
+	}
 
 	return peek(-1);
 }
 
 bool TypeParser::match(TokenType type) {
-	if (peek().type != type)
+	if (peek().type != type) {
 		return false;
+	}
 
 	m_pos++;
 	return true;
 }
 
 bool TypeParser::matchRange(TokenType from, TokenType to) {
-	auto type = peek().type;
-	if (type < from || type > to)
+	TokenType type = peek().type;
+	if (type < from || type > to) {
 		return false;
+	}
 
 	m_pos++;
 	return true;
 }
 
 Token& TypeParser::next() {
-	if (m_pos >= m_toks.size())
+	if (m_pos >= m_toks.size()) {
 		return _NO_TOK;
+	}
 
 	return m_toks[m_pos++];
 }
 
 Token& TypeParser::peek(int rel) {
 	u64 pos = m_pos + rel;
-	if (pos >= m_toks.size())
+	if (pos >= m_toks.size()) {
 		return _NO_TOK;
+	}
 
 	return m_toks[pos];
 }
 
 int TypeParser::getCurrLine() {
-	auto& tok = peek();
-	if (tok.type == TokenType::NO_TOKEN)
+	Token& tok = peek();
+	if (tok.type == TokenType::NO_TOKEN) {
 		return m_toks.back().errLine;
+	}
 
 	return tok.errLine;
 }

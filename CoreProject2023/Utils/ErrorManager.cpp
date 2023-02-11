@@ -95,27 +95,39 @@ void ErrorManager::clear() {
 }
 
 void ErrorManager::lexerError(ErrorID id, int line, const std::string& data) {
-	ASSERT(id >= ErrorID::E1001_NO_SUCH_MODULE_FOUND && id < ErrorID::E2001_EXPRESSION_NOT_FOUND, "Not a lexer error");
+	ASSERT(id >= ErrorID::E1001_NO_SUCH_MODULE_FOUND
+		&& id < ErrorID::E2001_EXPRESSION_NOT_FOUND,
+		"Not a lexer error");
+
 	printError("Lexer error " + errorIDToString(id), line, data);
 }
 
 void ErrorManager::parserError(ErrorID id, int line, const std::string& data) {
-	ASSERT(id >= ErrorID::E2001_EXPRESSION_NOT_FOUND && id < ErrorID::E3001_TYPE_NOT_SPECIFIED, "Not a parser error");
+	ASSERT(id >= ErrorID::E2001_EXPRESSION_NOT_FOUND
+		&& id < ErrorID::E3001_TYPE_NOT_SPECIFIED,
+		"Not a parser error");
+
 	printError("Parser error " + errorIDToString(id), line, data);
 }
 
 void ErrorManager::typeError(ErrorID id, int line, const std::string& data) {
-	ASSERT(id >= ErrorID::E3001_TYPE_NOT_SPECIFIED && id < ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE, "Not a type error");
+	ASSERT(id >= ErrorID::E3001_TYPE_NOT_SPECIFIED
+		&& id < ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE,
+		"Not a type error");
+
 	printError("Type error " + errorIDToString(id), line, data);
 }
 
 void ErrorManager::internalError(ErrorID id, int line, const std::string& data) {
-	ASSERT(id >= ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE, "Not an internal error");
+	ASSERT(id >= ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE,
+		"Not an internal error");
+
 	printError("Internal error " + errorIDToString(id), line, data);
 }
 
 void ErrorManager::warning(ErrorID id, const std::string& data) {
 	ASSERT(id < ErrorID::E1001_NO_SUCH_MODULE_FOUND, "Not a warning");
+
 	std::string text = "\a";
 	text.append("Warning " + errorIDToString(id) + " in " + g_currFileName + ": " + data);
 

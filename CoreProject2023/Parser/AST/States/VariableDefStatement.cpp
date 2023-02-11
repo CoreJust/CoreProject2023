@@ -2,6 +2,7 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Module/Module.h>
 #include <Module/LLVMUtils.h>
+#include <Module/LLVMGlobals.h>
 #include <Utils/ErrorManager.h>
 
 VariableDefStatement::VariableDefStatement(Variable var, std::unique_ptr<Expression> expr)
@@ -20,7 +21,13 @@ void VariableDefStatement::generate() {
 			val = m_expr->generateRValue();
 		} else {
 			val = m_expr->generate();
-			val = llvm_utils::tryImplicitlyConvertTo(m_variable.type, m_expr->getType(), val, m_errLine, m_expr->isCompileTime());
+			val = llvm_utils::tryImplicitlyConvertTo(
+				m_variable.type,
+				m_expr->getType(),
+				val,
+				m_errLine,
+				m_expr->isCompileTime()
+			);
 		}
 	} else {
 		val = llvm_utils::getDefaultValueOf(m_variable.type);
@@ -30,5 +37,10 @@ void VariableDefStatement::generate() {
 	auto alloc = llvm_utils::createLocalVariable(fun, m_variable.type, m_variable.name);
 
 	g_builder->CreateStore(val, alloc);
-	g_module->addLocalVariable(m_variable.name, m_variable.type->copy(), m_variable.qualities, alloc);
+	g_module->addLocalVariable(
+		m_variable.name,
+		m_variable.type->copy(),
+		m_variable.qualities,
+		alloc
+	);
 }

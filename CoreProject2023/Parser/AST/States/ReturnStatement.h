@@ -12,5 +12,5 @@ public:
 	void generate() override;
 
 private:
-	std::unique_ptr<Expression> m_expression;
+	std::unique_ptr<Expression> m_expr;
 };

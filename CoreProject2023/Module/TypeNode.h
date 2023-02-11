@@ -15,8 +15,16 @@ struct TypeNode {
 	std::vector<Function> methods;
 	std::vector<std::unique_ptr<TypeNode>> internalTypes;
 
-	TypeNode(std::string name, TypeQualities qualities, std::unique_ptr<Type> type, llvm::Type* llvmType,
-		std::vector<Variable> fields, std::vector<Function> methods, std::vector<std::unique_ptr<TypeNode>> internalTypes);
+	TypeNode(
+		std::string name, 
+		TypeQualities qualities, 
+		std::unique_ptr<Type> type, 
+		llvm::Type* llvmType,
+		std::vector<Variable> fields = { },
+		std::vector<Function> methods = { },
+		std::vector<std::unique_ptr<TypeNode>> internalTypes = { }
+	);
+
 	TypeNode(TypeNode& other);
 	TypeNode(TypeNode&& other);
 

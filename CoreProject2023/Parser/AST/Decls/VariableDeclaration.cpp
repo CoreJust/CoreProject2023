@@ -1,6 +1,7 @@
 #include "VariableDeclaration.h"
 #include <Parser/Visitor/Visitor.h>
 #include <Module/LLVMUtils.h>
+#include <Module/LLVMGlobals.h>
 
 VariableDeclaration::VariableDeclaration(Variable* var, std::unique_ptr<Expression> value) 
 	: m_variable(var), m_value(std::move(value)) {

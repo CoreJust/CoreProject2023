@@ -6,8 +6,14 @@
 
 class FunctionPrototype final {
 public:
-	FunctionPrototype(const std::string& name, std::unique_ptr<Type> returnType, std::vector<Argument> args, 
-		FunctionQualities qualities, bool isVaArgs);
+	FunctionPrototype(
+		const std::string& name, 
+		std::unique_ptr<Type> returnType, 
+		std::vector<Argument> args, 
+		FunctionQualities qualities, 
+		bool isVaArgs
+	);
+
 	FunctionPrototype(FunctionPrototype& other);
 	FunctionPrototype(FunctionPrototype&& other) noexcept;
 

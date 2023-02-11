@@ -137,4 +137,7 @@ Initial development
 	
 	Commited as "Fixed mutliline comments, added multiline string literals"
 	
-	
+	Added @thread_local for global variables
+	Some refactoring
+
+	Commited as "Refactoring, @thread_local annotation"

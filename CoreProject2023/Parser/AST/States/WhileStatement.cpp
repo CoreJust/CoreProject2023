@@ -2,6 +2,7 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Module/Module.h>
 #include <Module/LLVMUtils.h>
+#include <Module/LLVMGlobals.h>
 #include "../Cycles.h"
 
 WhileStatement::WhileStatement(std::unique_ptr<Expression> condition, std::unique_ptr<Statement> body)

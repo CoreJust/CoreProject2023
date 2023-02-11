@@ -13,7 +13,11 @@ private:
 	size_t m_pos = 0;
 
 public:
-	SymbolLoader(std::vector<Token>& toks, ModuleQualities qualities, const std::string& path);
+	SymbolLoader(
+		std::vector<Token>& toks,
+		ModuleQualities qualities,
+		const std::string& path
+	);
 
 	void loadSymbols();
 

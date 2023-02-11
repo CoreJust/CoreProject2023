@@ -6,6 +6,7 @@
 #include <Lexer/Lexer.h>
 #include <SymbolLoader/SymbolLoader.h>
 #include <Parser/Parser.h>
+#include <Module/LLVMGlobals.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Type.h>
@@ -30,12 +31,15 @@ void Compiler::buildProject() {
 }
 
 void Compiler::linkProject() {
-	std::string linkCommand = "clang++.exe -o build/prog.exe" + m_filesToLink + m_project.getAdditionalLinkDirectoriesString();
+	std::string linkCommand = "clang++.exe -o build/prog.exe"
+		+ m_filesToLink
+		+ m_project.getAdditionalLinkDirectoriesString();
+
 	system(linkCommand.c_str());
 }
 
 void Compiler::runProject() {
-	//system("build/prog.exe");
+	system("C:/Users/egor2/source/repos/CoreProject2023/CoreProject2023/build/prog.exe");
 }
 
 void Compiler::initAll() {
@@ -59,7 +63,12 @@ void Compiler::initPasses(llvm::TargetMachine* machine) {
 	pb.registerCGSCCAnalyses(*g_cgsccAnalysisManager);
 	pb.registerFunctionAnalyses(*g_functionAnalysisManager);
 	pb.registerLoopAnalyses(*g_loopAnalysisManager);
-	pb.crossRegisterProxies(*g_loopAnalysisManager, *g_functionAnalysisManager, *g_cgsccAnalysisManager, *g_moduleAnalysisManager);
+	pb.crossRegisterProxies(
+		*g_loopAnalysisManager,
+		*g_functionAnalysisManager,
+		*g_cgsccAnalysisManager,
+		*g_moduleAnalysisManager
+	);
 
 	g_modulePassManager = std::make_unique<llvm::ModulePassManager>(pb.buildPerModuleDefaultPipeline(optLevel));
 }
@@ -158,15 +167,17 @@ void Compiler::compileLLVM() {
 		std::error_code err_code;
 		std::string buildFilePath = genBuildFilePath(module.getPath(), ".o");
 		llvm::raw_fd_ostream dest(buildFilePath, err_code, llvm::sys::fs::OF_None);
-		if (err_code)
+		if (err_code) {
 			std::cout << "cannot open file: " << err_code.message();
+		}
 
 		m_filesToLink.append(" " + buildFilePath);
 
 		llvmModule.setDataLayout(targetMachine->createDataLayout());
 		llvm::legacy::PassManager pass;
-		if (targetMachine->addPassesToEmitFile(pass, dest, nullptr, llvm::CGFT_ObjectFile))
+		if (targetMachine->addPassesToEmitFile(pass, dest, nullptr, llvm::CGFT_ObjectFile)) {
 			std::cout << "targetMachine can't emit a file of this type";
+		}
 
 		pass.run(llvmModule);
 		dest.flush();
@@ -196,7 +207,6 @@ std::string Compiler::genBuildFilePath(const std::string& modulePath, const std:
 		generatedName = "build/" + moduleName + extension;
 	}
 
-	//createFileIfNotExists(generatedName);
 	s_generatedNames.insert(generatedName);
 	return generatedName;
 }

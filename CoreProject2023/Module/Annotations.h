@@ -37,6 +37,8 @@ public:
 */
 class ModuleQualities final : public CommonQualities {
 public:
+	ModuleQualities();
+
 	bool isManglingOn() const;
 	void setMangling(bool isToMangle);
 };
@@ -55,6 +57,8 @@ enum class ClassType : u8 {
 */
 class TypeQualities final : public CommonQualities {
 public:
+	TypeQualities();
+
 	ClassType getClassType() const;
 	void setClassType(ClassType type);
 
@@ -75,11 +79,17 @@ enum class VariableType : u8 {
 /*
 * bits starting from common qualities' last one:
 *	4-5: variable type
+*	6: is thread-local
 */
 class VariableQualities final : public CommonQualities {
 public:
+	VariableQualities();
+
 	VariableType getVariableType() const;
 	void setVariableType(VariableType type);
+
+	bool isThreadLocal() const;
+	void setThreadLocal(bool isThreadLocal);
 };
 
 enum class MethodType : u8 {
@@ -115,6 +125,8 @@ class FunctionQualities final : public CommonQualities {
 	u8 m_additionalData = 0;
 
 public:
+	FunctionQualities();
+
 	bool isMethod() const;
 	void setIsMethod(bool isMethod);
 

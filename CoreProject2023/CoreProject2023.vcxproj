@@ -355,6 +355,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Module\BasicType.cpp" />
     <ClCompile Include="Module\FunctionArgument.cpp" />
+    <ClCompile Include="Module\LLVMGlobals.cpp" />
     <ClCompile Include="Module\LLVMUtils.cpp" />
     <ClCompile Include="Module\Module.cpp" />
     <ClCompile Include="Module\ModuleSymbols.cpp" />
@@ -401,6 +402,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Module\BasicType.h" />
     <ClInclude Include="Module\Function.h" />
     <ClInclude Include="Module\FunctionArgument.h" />
+    <ClInclude Include="Module\LLVMGlobals.h" />
     <ClInclude Include="Module\LLVMUtils.h" />
     <ClInclude Include="Module\Module.h" />
     <ClInclude Include="Module\ModuleSymbols.h" />

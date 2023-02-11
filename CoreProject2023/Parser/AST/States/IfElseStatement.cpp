@@ -2,9 +2,15 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Module/Module.h>
 #include <Module/LLVMUtils.h>
+#include <Module/LLVMGlobals.h>
 
-IfElseStatement::IfElseStatement(std::vector<std::unique_ptr<Statement>> bodies, std::vector<std::unique_ptr<Expression>> conditions)
-	: m_bodies(std::move(bodies)), m_conditions(std::move(conditions)) {
+IfElseStatement::IfElseStatement(
+	std::vector<std::unique_ptr<Statement>> bodies,
+	std::vector<std::unique_ptr<Expression>> conditions
+) : 
+	m_bodies(std::move(bodies)),
+	m_conditions(std::move(conditions)) 
+{
 	ASSERT(m_conditions.size() && m_conditions.size() <= m_bodies.size(), "Wrong if statement");
 }
 

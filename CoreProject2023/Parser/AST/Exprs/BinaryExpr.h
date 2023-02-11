@@ -27,7 +27,11 @@ public:
 	};
 
 public:
-	BinaryExpr(std::unique_ptr<Expression> right, std::unique_ptr<Expression> left, BinaryOp op);
+	BinaryExpr(
+		std::unique_ptr<Expression> right, 
+		std::unique_ptr<Expression> left, 
+		BinaryOp op
+	);
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;

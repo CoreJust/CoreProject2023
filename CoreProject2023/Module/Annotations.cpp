@@ -16,12 +16,26 @@ void CommonQualities::setSafety(Safety visibility) {
     m_data = (m_data & ~12) | ((u8)visibility << 2);
 }
 
+ModuleQualities::ModuleQualities() {
+    setVisibility(Visibility::PUBLIC);
+    setSafety(Safety::SAFE_ONLY);
+    setMangling(true);
+}
+
 bool ModuleQualities::isManglingOn() const {
     return bool(m_data & (1 << 4));
 }
 
 void ModuleQualities::setMangling(bool isToMangle) {
     m_data = (m_data & ~0b10000) | (u8(isToMangle ? 1 : 0) << 4);
+}
+
+TypeQualities::TypeQualities() {
+    setVisibility(Visibility::PUBLIC);
+    setSafety(Safety::SAFE_ONLY);
+    setClassType(ClassType::COMMON);
+    setConst(false);
+    setMoveOnly(false);
 }
 
 ClassType TypeQualities::getClassType() const {
@@ -48,12 +62,36 @@ void TypeQualities::setConst(bool isConst) {
     m_data = (m_data & ~0b10000000) | (u8(isConst ? 1 : 0) << 7);
 }
 
+VariableQualities::VariableQualities() {
+    setVisibility(Visibility::PUBLIC);
+    setSafety(Safety::SAFE_ONLY);
+    setVariableType(VariableType::COMMON);
+}
+
 VariableType VariableQualities::getVariableType() const {
     return VariableType((m_data >> 4) & 3);
 }
 
 void VariableQualities::setVariableType(VariableType type) {
     m_data = (m_data & ~0b110000) | ((u8)type << 4);
+}
+
+bool VariableQualities::isThreadLocal() const {
+    return bool(m_data & (1 << 6));
+}
+
+void VariableQualities::setThreadLocal(bool isThreadLocal) {
+    m_data = (m_data & ~0b1000000) | (u8(isThreadLocal ? 1 : 0) << 6);
+}
+
+FunctionQualities::FunctionQualities() {
+    setVisibility(Visibility::PUBLIC);
+    setSafety(Safety::SAFE_ONLY);
+    setIsMethod(false);
+    setCallingConvention(CallingConvention::CCALL);
+    setMangling(true);
+    setNoReturn(false);
+    setNoExcept(false);
 }
 
 bool FunctionQualities::isMethod() const {

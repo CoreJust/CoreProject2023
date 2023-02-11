@@ -34,7 +34,7 @@ void Visitor::visit(VariableDefStatement* state, std::unique_ptr<Statement>& nod
 }
 
 void Visitor::visit(ReturnStatement* state, std::unique_ptr<Statement>& node) {
-	state->m_expression->accept(this, state->m_expression);
+	state->m_expr->accept(this, state->m_expr);
 }
 
 void Visitor::visit(ExpressionStatement* state, std::unique_ptr<Statement>& node) {

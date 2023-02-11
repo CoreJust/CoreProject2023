@@ -1,6 +1,6 @@
 #include "Type.h"
 #include "TypeNode.h"
-#include <Parser/AST/INode.h>
+#include <Module/LLVMGlobals.h>
 
 Type::Type()
 	: basicType(BasicType::NO_TYPE), isConst(false) {
@@ -24,30 +24,7 @@ bool Type::equals(const std::unique_ptr<Type>& other) const {
 }
 
 llvm::Type* Type::to_llvm() const {
-	switch (basicType) {
-		case BasicType::NO_TYPE: return llvm::Type::getVoidTy(g_context);
-		case BasicType::I8: return llvm::Type::getInt8Ty(g_context);
-		case BasicType::I16: return llvm::Type::getInt16Ty(g_context);
-		case BasicType::I32: return llvm::Type::getInt32Ty(g_context);
-		case BasicType::I64: return llvm::Type::getInt64Ty(g_context);
-		case BasicType::U8: return llvm::Type::getInt8Ty(g_context);
-		case BasicType::U16: return llvm::Type::getInt16Ty(g_context);
-		case BasicType::U32: return llvm::Type::getInt32Ty(g_context);
-		case BasicType::U64: return llvm::Type::getInt64Ty(g_context);
-		case BasicType::F32: return llvm::Type::getFloatTy(g_context);
-		case BasicType::F64: return llvm::Type::getDoubleTy(g_context);
-		case BasicType::BOOL: return llvm::Type::getInt1Ty(g_context);
-		case BasicType::C8: return llvm::Type::getInt8Ty(g_context);
-		case BasicType::C16: return llvm::Type::getInt16Ty(g_context);
-		case BasicType::C32: return llvm::Type::getInt32Ty(g_context);
-		case BasicType::STR8: return llvm::StructType::get(g_context,
-			{ llvm::Type::getInt8PtrTy(g_context), llvm::Type::getInt64Ty(g_context) }, true);
-		case BasicType::STR16: return llvm::StructType::get(g_context, 
-			{ llvm::Type::getInt16PtrTy(g_context), llvm::Type::getInt64Ty(g_context) }, true);
-		case BasicType::STR32: return llvm::StructType::get(g_context, 
-			{ llvm::Type::getInt32PtrTy(g_context), llvm::Type::getInt64Ty(g_context) }, true);
-	default: return nullptr;
-	}
+	return basicTypeToLLVM(basicType);
 }
 
 std::string Type::toString() const {
@@ -115,19 +92,25 @@ bool PointerType::equals(const std::unique_ptr<Type>& other) const {
 llvm::Type* PointerType::to_llvm() const {
 	switch (basicType) {
 		case BasicType::DYN_ARRAY:
-			return llvm::StructType::get(g_context,
-				{ llvm::PointerType::get(elementType->to_llvm(), 0), llvm::Type::getInt64Ty(g_context) },
-				true
+			return llvm::StructType::get(
+				g_context,
+				{ // { -type-* data, u64 size }
+					llvm::PointerType::get(elementType->to_llvm(), 0), 
+					llvm::Type::getInt64Ty(g_context) 
+				},
+				true // is packed
 			);
 		case BasicType::POINTER:
-		case BasicType::REFERENCE:
-			return llvm::PointerType::get(elementType->to_llvm(), 0);
-		case BasicType::RVAL_REFERENCE:
-			return elementType->to_llvm();
+		case BasicType::REFERENCE: return llvm::PointerType::get(elementType->to_llvm(), 0);
+		case BasicType::RVAL_REFERENCE: return elementType->to_llvm();
 		case BasicType::OPTIONAL:
-			return llvm::StructType::get(g_context,
-				{ elementType->to_llvm(), llvm::Type::getInt1Ty(g_context) },
-				true
+			return llvm::StructType::get(
+				g_context,
+				{ // { -type- data, bool has }
+					elementType->to_llvm(), 
+					llvm::Type::getInt1Ty(g_context) 
+				},
+				true // is packed
 			);
 	default: return nullptr;
 	}
@@ -207,8 +190,16 @@ u64 TupleType::getBitSize() const {
 	return result;
 }
 
-FunctionType::FunctionType(std::unique_ptr<Type> returnType, std::vector<std::unique_ptr<Type>> argTypes, bool isVaArgs, bool isConst)
-	: returnType(std::move(returnType)), argTypes(std::move(argTypes)), isVaArgs(isVaArgs), Type(BasicType::FUNCTION, isConst) {
+FunctionType::FunctionType(
+	std::unique_ptr<Type> returnType, 
+	std::vector<std::unique_ptr<Type>> argTypes, 
+	bool isVaArgs, 
+	bool isConst
+) : 
+	returnType(std::move(returnType)), 
+	argTypes(std::move(argTypes)), 
+	isVaArgs(isVaArgs), 
+	Type(BasicType::FUNCTION, isConst) {
 	
 }
 
@@ -276,7 +267,11 @@ u64 FunctionType::getBitSize() const {
 	return 64; // pointer
 }
 
-bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to, bool isFromCompileTime) {
+bool isImplicitlyConverible(
+	const std::unique_ptr<Type>& from, 
+	const std::unique_ptr<Type>& to, 
+	bool isFromCompileTime
+) {
 	if (to->basicType == BasicType::NO_TYPE) {
 		return true;
 	}
@@ -371,8 +366,12 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	return false;
 }
 
-std::unique_ptr<Type> findCommonType(const std::unique_ptr<Type>& first, const std::unique_ptr<Type>& second,
-									 bool isFirstCompileTime, bool isSecondCompileTime) {
+std::unique_ptr<Type> findCommonType(
+	const std::unique_ptr<Type>& first, 
+	const std::unique_ptr<Type>& second,
+	bool isFirstCompileTime, 
+	bool isSecondCompileTime
+) {
 	if ((isInteger(first->basicType) && isInteger(second->basicType))
 			|| (isFloat(first->basicType) && isFloat(second->basicType))) {
 		if (isFirstCompileTime) {

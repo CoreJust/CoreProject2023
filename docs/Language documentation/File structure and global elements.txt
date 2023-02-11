@@ -85,7 +85,9 @@ Consists of elements, where an elements is:
         
         @safe - allows the element to use unsafe code inside and remain safe. Elements by default are safe, but cannot use unsafe code. Cannot be applied to variables.
 		@safe_only - does not allow the element to use unsafe code. Default value.
-        @unsafe - means that the element is unsafe to use. Can contain unsafe code. Cannot be applied to variables.
+        @unsafe - means that the element is unsafe to use. Can contain unsafe code.
+		
+		@thread_local - applicable only to global variables. States that the variable is to be created anew for each thread.
         
         @explicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion explicit (which is default value).
         @implicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion implicit.

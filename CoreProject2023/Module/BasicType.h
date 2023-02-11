@@ -57,7 +57,14 @@ bool hasSubtypes(BasicType type);
 bool isUserDefined(BasicType type);
 
 bool isReference(BasicType type);
-bool isPointer(BasicType type);
+bool isPointer(BasicType type); // is pointer-like
+bool isTruePointer(BasicType type); // is actually a pointer: static array, pointer, function
 
 // Size of a basic type in bits. If it is varies (e.g. tuple), returns -1
 int getBasicTypeSize(BasicType type);
+
+namespace llvm {
+	class Type;
+};
+
+llvm::Type* basicTypeToLLVM(BasicType type);

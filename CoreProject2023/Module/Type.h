@@ -27,13 +27,18 @@ public:
 	u64 getAlignment() const;
 };
 
+
 class ArrayType : public Type {
 public:
 	std::unique_ptr<Type> elementType;
 	u64 size;
 
 public:
-	ArrayType(std::unique_ptr<Type> elementType, u64 size, bool isConst = false);
+	ArrayType(
+		std::unique_ptr<Type> elementType, 
+		u64 size, 
+		bool isConst = false
+	);
 
 	std::unique_ptr<Type> copy() const override;
 
@@ -45,13 +50,18 @@ public:
 	u64 getBitSize() const override;
 };
 
+
 // Dynamic array, pointer, references, optional
 class PointerType : public Type {
 public:
 	std::unique_ptr<Type> elementType;
 
 public:
-	PointerType(BasicType basicType, std::unique_ptr<Type> elementType, bool isConst = false);
+	PointerType(
+		BasicType basicType, 
+		std::unique_ptr<Type> elementType, 
+		bool isConst = false
+	);
 
 	std::unique_ptr<Type> copy() const override;
 
@@ -62,13 +72,17 @@ public:
 
 	u64 getBitSize() const override;
 };
+
 
 class TupleType : public Type {
 public:
 	std::vector<std::unique_ptr<Type>> subTypes;
 
 public:
-	TupleType(std::vector<std::unique_ptr<Type>> subTypes, bool isConst = false);
+	TupleType(
+		std::vector<std::unique_ptr<Type>> subTypes, 
+		bool isConst = false
+	);
 
 	std::unique_ptr<Type> copy() const override;
 
@@ -79,6 +93,7 @@ public:
 
 	u64 getBitSize() const override;
 };
+
 
 class FunctionType : public Type {
 public:
@@ -87,7 +102,12 @@ public:
 	bool isVaArgs;
 
 public:
-	FunctionType(std::unique_ptr<Type> returnType, std::vector<std::unique_ptr<Type>> argTypes, bool isVaArgs, bool isConst = false);
+	FunctionType(
+		std::unique_ptr<Type> returnType, 
+		std::vector<std::unique_ptr<Type>> argTypes, 
+		bool isVaArgs, 
+		bool isConst = false
+	);
 
 	std::unique_ptr<Type> copy() const override;
 
@@ -100,12 +120,25 @@ public:
 	u64 getBitSize() const override;
 };
 
+
 // TODO: user-defined types
 
 // TODO: add consideration of user-defined types
-bool isImplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to, bool isFromCompileTime = false);
-bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to);
+bool isImplicitlyConverible(
+	const std::unique_ptr<Type>& from, 
+	const std::unique_ptr<Type>& to, 
+	bool isFromCompileTime = false
+);
+
+bool isExplicitlyConverible(
+	const std::unique_ptr<Type>& from, 
+	const std::unique_ptr<Type>& to
+);
 
 // Returns the type both types can be converted to, returns nullptr if cannot be converted
-std::unique_ptr<Type> findCommonType(const std::unique_ptr<Type>& first, const std::unique_ptr<Type>& second,
-	bool isFirstCompileTime = false, bool isSecondCompileTime = false);
+std::unique_ptr<Type> findCommonType(
+	const std::unique_ptr<Type>& first, 
+	const std::unique_ptr<Type>& second,
+	bool isFirstCompileTime = false, 
+	bool isSecondCompileTime = false
+);

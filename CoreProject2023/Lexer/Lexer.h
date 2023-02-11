@@ -35,6 +35,8 @@ public:
 	std::vector<std::string> handleImports();
 
 private:
+	void nextToken();
+
 	void tokenizeNumber();
 	void tokenizeOperator();
 	void tokenizeText();

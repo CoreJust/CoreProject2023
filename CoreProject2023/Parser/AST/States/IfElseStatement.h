@@ -6,7 +6,10 @@ class IfElseStatement final : public Statement {
 	FRIEND_CLASS_VISITORS
 
 public:
-	IfElseStatement(std::vector<std::unique_ptr<Statement>> bodies, std::vector<std::unique_ptr<Expression>> conditions);
+	IfElseStatement(
+		std::vector<std::unique_ptr<Statement>> bodies,
+		std::vector<std::unique_ptr<Expression>> conditions
+	);
 
 	void accept(Visitor* visitor, std::unique_ptr<Statement>& node) override;
 	void generate() override;

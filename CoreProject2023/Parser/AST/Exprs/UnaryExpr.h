@@ -33,6 +33,14 @@ public:
 	llvm::Value* generateRValue() override;
 
 private:
+	llvm::Value* createIncOrDecrement(
+		BasicType btype,
+		bool isIncrement,
+		bool isPostfix,
+		bool isRVal
+	);
+
+private:
 	std::unique_ptr<Expression> m_expr;
 	UnaryOp m_op;
 };

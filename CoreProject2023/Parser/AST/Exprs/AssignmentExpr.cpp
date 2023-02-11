@@ -1,6 +1,7 @@
 #include "AssignmentExpr.h"
 #include <Parser/Visitor/Visitor.h>
 #include <Module/LLVMUtils.h>
+#include <Module/LLVMGlobals.h>
 #include <Utils/ErrorManager.h>
 
 AssignmentExpr::AssignmentExpr(std::unique_ptr<Expression> rval, std::unique_ptr<Expression> expr)
@@ -20,7 +21,13 @@ void AssignmentExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node)
 llvm::Value* AssignmentExpr::generate() {
 	llvm::Value* rval = m_rval->generateRValue();
 	llvm::Value* value = m_expr->generate();
-	value = llvm_utils::tryImplicitlyConvertTo(m_rval->getType(), m_expr->getType(), value, m_errLine, m_expr->isCompileTime());
+	value = llvm_utils::tryImplicitlyConvertTo(
+		m_rval->getType(), 
+		m_expr->getType(), 
+		value, 
+		m_errLine, 
+		m_expr->isCompileTime()
+	);
 
 	g_builder->CreateStore(value, rval);
 	return value;

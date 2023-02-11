@@ -31,8 +31,10 @@ std::set<TokenType> DEFINABLE_OPERATORS = {
 	TokenType::ETCETERA,
 };
 
+
 SymbolLoader::SymbolLoader(std::vector<Token>& toks, ModuleQualities qualities, const std::string& path)
 	: m_toks(toks), m_qualities(qualities), m_path(path) {
+
 }
 
 void SymbolLoader::loadSymbols() {
@@ -40,15 +42,16 @@ void SymbolLoader::loadSymbols() {
 		readAnnotations();
 
 		// read the symbol
-		if (match(TokenType::USE))
+		if (match(TokenType::USE)) {
 			loadUse();
-		else if (match(TokenType::DEF))
+		} else if (match(TokenType::DEF)) {
 			loadFunction();
-		else if (m_toks[m_pos].type == TokenType::ABSTRACT
-			|| (m_toks[m_pos].type >= TokenType::CLASS && m_toks[m_pos].type <= TokenType::UNION))
+		} else if (m_toks[m_pos].type == TokenType::ABSTRACT
+			|| (m_toks[m_pos].type >= TokenType::CLASS && m_toks[m_pos].type <= TokenType::UNION)) {
 			loadClass();
-		else
+		} else {
 			loadVariable();
+		}
 
 		// skip code blocks
 		if (m_pos < m_toks.size() && match(TokenType::LBRACE)) {
@@ -74,11 +77,7 @@ void SymbolLoader::loadFunction() {
 	FunctionQualities qualities;
 	qualities.setVisibility(m_qualities.getVisibility());
 	qualities.setSafety(m_qualities.getSafety());
-	qualities.setIsMethod(false);
-	qualities.setCallingConvention(CallingConvention::CCALL);
 	qualities.setMangling(m_qualities.isManglingOn());
-	qualities.setNoReturn(false);
-	qualities.setNoExcept(false);
 
 	// read annotations
 	for (auto& a : m_annots) {
@@ -101,14 +100,19 @@ void SymbolLoader::loadFunction() {
 		else if (a[0] == "mangle")			qualities.setMangling(true);
 		else if (a[0] == "noreturn")		qualities.setNoReturn(true);
 		else if (a[0] == "noexcept")		qualities.setNoExcept(true);
-		else ErrorManager::lexerError(ErrorID::E1051_UNKNOWN_ANNOTATION, getCurrLine(),
-			"unknown function annotation: " + a[0]);
+		else ErrorManager::lexerError(
+			ErrorID::E1051_UNKNOWN_ANNOTATION,
+			getCurrLine(),
+			"unknown function annotation: " + a[0]
+		);
 	}
 
 	// read function declaration
 	std::string alias = "";
 
-	if (match(TokenType::NATIVE)) qualities.setNative(true);
+	if (match(TokenType::NATIVE)) {
+		qualities.setNative(true);
+	}
 
 	if (match(TokenType::WORD)) { // common function
 		alias = m_toks[m_pos - 1].data;
@@ -130,8 +134,11 @@ void SymbolLoader::loadFunction() {
 		do {
 			if (match(TokenType::ETCETERA)) {
 				if (peek().type != TokenType::RPAR) {
-					ErrorManager::parserError(ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT, getCurrLine(),
-						"incorrect va_args while parsing function " + alias);
+					ErrorManager::parserError(
+						ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT,
+						getCurrLine(),
+						"incorrect va_args while parsing function " + alias
+					);
 				}
 
 				isVaArgs = true;
@@ -154,21 +161,49 @@ void SymbolLoader::loadFunction() {
 	switch (qualities.getVisibility()) {
 		case Visibility::LOCAL: break;
 		case Visibility::PUBLIC:
-			m_symbols.publicSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs));
+			m_symbols.publicSymbols.addFunction(
+				FunctionPrototype(
+					alias,
+					std::move(returnType),
+					std::move(args),
+					qualities,
+					isVaArgs
+				)
+			);
 			break;
 		case Visibility::DIRECT_IMPORT:
-			m_symbols.publicOnceSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs));
+			m_symbols.publicOnceSymbols.addFunction(
+				FunctionPrototype(
+					alias,
+					std::move(returnType),
+					std::move(args),
+					qualities,
+					isVaArgs
+				)
+			);
 			break;
 		case Visibility::PRIVATE:
-			m_symbols.privateSymbols.addFunction(FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs));
+			m_symbols.privateSymbols.addFunction(
+				FunctionPrototype(
+					alias,
+					std::move(returnType),
+					std::move(args),
+					qualities,
+					isVaArgs
+				)
+			);
 			break;
 	default: break;
 	}
 
 	// skip code
-	if (match(TokenType::EQ)) skipAssignment();
-	else if (match(TokenType::LBRACE)) skipCodeInBraces();
-	else consume(TokenType::SEMICOLON);
+	if (match(TokenType::EQ)) {
+		skipAssignment();
+	} else if (match(TokenType::LBRACE)) {
+		skipCodeInBraces();
+	} else {
+		consume(TokenType::SEMICOLON);
+	}
 }
 
 void SymbolLoader::loadVariable() {
@@ -176,7 +211,6 @@ void SymbolLoader::loadVariable() {
 	VariableQualities qualities;
 	qualities.setVisibility(m_qualities.getVisibility());
 	qualities.setSafety(m_qualities.getSafety());
-	qualities.setVariableType(VariableType::COMMON);
 
 	// read annotations
 	for (auto& a : m_annots) {
@@ -186,13 +220,20 @@ void SymbolLoader::loadVariable() {
 		else if (a[0] == "safe")			qualities.setSafety(Safety::SAFE);
 		else if (a[0] == "safe_only")		qualities.setSafety(Safety::SAFE_ONLY);
 		else if (a[0] == "unsafe")			qualities.setSafety(Safety::UNSAFE);
-		else ErrorManager::lexerError(ErrorID::E1051_UNKNOWN_ANNOTATION, getCurrLine(),
-			"unknown function annotation: " + a[0]);
+		else if (a[0] == "thread_local")	qualities.setThreadLocal(true);
+		else ErrorManager::lexerError(
+			ErrorID::E1051_UNKNOWN_ANNOTATION,
+			getCurrLine(),
+			"unknown function annotation: " + a[0]
+		);
 	}
 
 	// read variable declaration
-	if (match(TokenType::CONST)) qualities.setVariableType(VariableType::CONST);
-	else if (match(TokenType::EXTERN)) qualities.setVariableType(VariableType::EXTERN);
+	if (match(TokenType::CONST)) {
+		qualities.setVariableType(VariableType::CONST);
+	} else if (match(TokenType::EXTERN)) {
+		qualities.setVariableType(VariableType::EXTERN);
+	}
 
 	std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
 	if (qualities.getVariableType() == VariableType::CONST) {
@@ -218,29 +259,49 @@ void SymbolLoader::loadVariable() {
 	}
 
 	// skip code
-	if (match(TokenType::EQ)) skipAssignment();
-	else match(TokenType::SEMICOLON);
+	if (match(TokenType::EQ)) {
+		skipAssignment();
+	} else {
+		match(TokenType::SEMICOLON);
+	}
 }
 
 void SymbolLoader::skipCodeInBraces() {
 	i32 depth = 1;
 	while (depth) {
-		if (m_pos >= m_toks.size())
-			ErrorManager::lexerError(ErrorID::E1004_NO_CLOSING_BRACE, getCurrLine(), "");
+		if (m_pos >= m_toks.size()) {
+			ErrorManager::lexerError(
+				ErrorID::E1004_NO_CLOSING_BRACE,
+				getCurrLine(),
+				""
+			);
+		}
 
-		if (match(TokenType::LBRACE)) depth++;
-		else if (match(TokenType::RBRACE)) depth--;
-		else m_pos++;
+		if (match(TokenType::LBRACE)) {
+			depth++;
+		} else if (match(TokenType::RBRACE)) {
+			depth--;
+		} else {
+			m_pos++;
+		}
 	}
 }
 
 void SymbolLoader::skipAssignment() {
 	while (true) {
-		if (m_pos >= m_toks.size())
-			ErrorManager::lexerError(ErrorID::E1004_NO_CLOSING_BRACE, getCurrLine(), "");
+		if (m_pos >= m_toks.size()) {
+			ErrorManager::lexerError(
+				ErrorID::E1004_NO_CLOSING_BRACE,
+				getCurrLine(),
+				""
+			);
+		}
 
-		if (match(TokenType::SEMICOLON)) break;
-		else if (match(TokenType::LBRACE)) skipCodeInBraces();
+		if (match(TokenType::SEMICOLON)) {
+			break;
+		} else if (match(TokenType::LBRACE)) {
+			skipCodeInBraces();
+		}
 
 		m_pos++;
 	}
@@ -269,23 +330,29 @@ bool SymbolLoader::match(TokenType type) {
 
 void SymbolLoader::consume(TokenType type) {
 	if (!match(type)) {
-		ErrorManager::parserError(ErrorID::E2002_UNEXPECTED_TOKEN, getCurrLine(), "expected " + Token::toString(type));
+		ErrorManager::parserError(
+			ErrorID::E2002_UNEXPECTED_TOKEN,
+			getCurrLine(),
+			"expected " + Token::toString(type)
+		);
 	}
 }
 
 Token& SymbolLoader::peek(int rel) {
 	static Token _NO_TOK = Token();
 	u64 pos = m_pos + rel;
-	if (pos >= m_toks.size())
+	if (pos >= m_toks.size()) {
 		return _NO_TOK;
+	}
 
 	return m_toks[pos];
 }
 
 int SymbolLoader::getCurrLine() {
-	auto& tok = peek();
-	if (tok.type == TokenType::NO_TOKEN)
+	Token& tok = peek();
+	if (tok.type == TokenType::NO_TOKEN) {
 		return m_toks.back().errLine;
+	}
 
 	return tok.errLine;
 }

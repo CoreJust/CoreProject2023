@@ -7,6 +7,7 @@
 static Token _NO_TOK = Token();
 u64* g_errLine; // used in INode.cpp
 
+
 Parser::Parser(std::vector<Token> tokens)
 	: m_toks(std::move(tokens)), m_pos(0) {
 	g_errLine = &m_pos;
@@ -60,6 +61,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 				VariableQualities qualities;
 				bool isConst = match(TokenType::CONST);
 				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+
 				type->isConst = isConst;
 				if (isConst) {
 					qualities.setVariableType(VariableType::CONST);
@@ -82,16 +84,23 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 		if (match(TokenType::EQ)) {
 			std::unique_ptr<Expression> expr = expression();
 			std::unique_ptr<Statement> body = std::make_unique<ReturnStatement>(std::move(expr));
+
 			g_module->deleteBlock();
 			consume(TokenType::SEMICOLON);
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		} else if (match(TokenType::LBRACE)) {
 			m_pos--;
 			std::unique_ptr<Statement> body = stateOrBlock();
+
 			g_module->deleteBlock();
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		} else {
-			ErrorManager::parserError(ErrorID::E2104_FUNCTION_BODY_MISMATCHED, getCurrLine(), "function: " + alias);
+			ErrorManager::parserError(
+				ErrorID::E2104_FUNCTION_BODY_MISMATCHED,
+				getCurrLine(), 
+				"function: " + alias
+			);
+
 			return nullptr;
 		}
 	}
@@ -173,7 +182,11 @@ std::unique_ptr<Statement> Parser::variableDefStatement() {
 
 	if (!type) {
 		if (!expr) {
-			ErrorManager::parserError(ErrorID::E2101_VAR_HAS_NO_INIT, getCurrLine(), "variable: " + alias);
+			ErrorManager::parserError(
+				ErrorID::E2101_VAR_HAS_NO_INIT,
+				getCurrLine(),
+				"variable: " + alias
+			);
 		} else {
 			type = expr->getType()->copy();
 		}
@@ -499,12 +512,20 @@ std::unique_ptr<Expression> Parser::primary() {
 			Function* function = g_module->getFunction(moduleName, name);
 			return std::make_unique<FunctionExpr>(function);
 		} else if (symType == SymbolType::NO_SYMBOL) {
-			ErrorManager::parserError(ErrorID::E2003_UNKNOWN_IDENTIFIER, getCurrLine(),
-				"identifier: " + (moduleName.size() ? moduleName + "." + name : name));
+			ErrorManager::parserError(
+				ErrorID::E2003_UNKNOWN_IDENTIFIER,
+				getCurrLine(),
+				"identifier: " + (moduleName.size() ? moduleName + "." + name : name)
+			);
 		}
 	}
 
-	ErrorManager::parserError(ErrorID::E2001_EXPRESSION_NOT_FOUND, getCurrLine(), "No expression found");
+	ErrorManager::parserError(
+		ErrorID::E2001_EXPRESSION_NOT_FOUND, 
+		getCurrLine(),
+		"No expression found"
+	);
+
 	return nullptr;
 }
 
@@ -513,48 +534,58 @@ void Parser::skipAnnotation() {
 }
 
 Token& Parser::consume(TokenType type) {
-	if (!match(type))
-		ErrorManager::parserError(ErrorID::E2002_UNEXPECTED_TOKEN, getCurrLine(), "expected " + Token::toString(type));
+	if (!match(type)) {
+		ErrorManager::parserError(
+			ErrorID::E2002_UNEXPECTED_TOKEN,
+			getCurrLine(),
+			"expected " + Token::toString(type)
+		);
+	}
 
 	return peek(-1);
 }
 
 bool Parser::match(TokenType type) {
-	if (peek().type != type)
+	if (peek().type != type) {
 		return false;
+	}
 
 	m_pos++;
 	return true;
 }
 
 bool Parser::matchRange(TokenType from, TokenType to) {
-	auto type = peek().type;
-	if (type < from || type > to)
+	TokenType type = peek().type;
+	if (type < from || type > to) {
 		return false;
+	}
 
 	m_pos++;
 	return true;
 }
 
 Token& Parser::next() {
-	if (m_pos >= m_toks.size())
+	if (m_pos >= m_toks.size()) {
 		return _NO_TOK;
+	}
 
 	return m_toks[m_pos++];
 }
 
 Token& Parser::peek(int rel) {
 	u64 pos = m_pos + rel;
-	if (pos >= m_toks.size())
+	if (pos >= m_toks.size()) {
 		return _NO_TOK;
+	}
 
 	return m_toks[pos];
 }
 
 int Parser::getCurrLine() {
-	auto &tok = peek();
-	if (tok.type == TokenType::NO_TOKEN)
+	Token &tok = peek();
+	if (tok.type == TokenType::NO_TOKEN) {
 		return m_toks.back().errLine;
+	}
 
 	return tok.errLine;
 }

@@ -25,7 +25,12 @@ public:
 	// Intended for adding function duplicates to modules importing the function
 	void addFunction(FunctionPrototype prototype, llvm::Function* value);
 
-	void addVariable(const std::string& name, std::unique_ptr<Type> type, VariableQualities qualities, llvm::Value* value);
+	void addVariable(
+		const std::string& name, 
+		std::unique_ptr<Type> type, 
+		VariableQualities qualities, 
+		llvm::Value* value
+	);
 
 	SymbolType getSymbolType(const std::string& name) const;
 

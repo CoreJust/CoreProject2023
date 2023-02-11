@@ -16,7 +16,9 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
 		}
 	}
 
-	if (result.back().size() == 0) result.pop_back();
+	if (result.back().size() == 0) {
+		result.pop_back();
+	}
 
 	return result;
 }
@@ -31,7 +33,9 @@ void replaceChar(std::string& str, char old, char newChar) {
 
 
 int charToDecimal(char c) {
-	return isdigit(c) ? c - '0' : tolower(c) - 'a' + 10;
+	return isdigit(c) ?
+		c - '0'
+		: tolower(c) - 'a' + 10;
 }
 
 double to_double(const std::string& s, int num_sys) {
@@ -40,8 +44,10 @@ double to_double(const std::string& s, int num_sys) {
 	bool isNeg = false;
 	double afterPoint = 1;
 	size_t i = 0;
-	if (s[0] == '-')
+
+	if (s[0] == '-') {
 		isNeg = ++i;
+	}
 
 	for (; i < s.size(); ++i) {
 		if (s[i] == '.') {
@@ -90,8 +96,9 @@ u32 utf32ToUtf16(std::string& from) {
 
 	int j = 0;
 	for (int i = 0; i < from.size(); i += 4) {
-		if (*(u32*)(&from[i]) > 0xffff)
+		if (*(u32*)(&from[i]) > 0xffff) {
 			return *(u32*)(&from[i]); // non-translatable character
+		}
 
 		*(u16*)(&from[j]) = u16(*(u32*)&from[i]);
 		j += 2;
@@ -107,8 +114,9 @@ u32 utf32ToASCII(std::string& from) {
 
 	int j = 0;
 	for (int i = 0; i < from.size(); i += 4) {
-		if (*(u32*)(&from[i]) > 0xff)
+		if (*(u32*)(&from[i]) > 0xff) {
 			return *(u32*)(&from[i]); // non-translatable character
+		}
 
 		from[j++] = u8(*(u32*)&from[i]);
 	}

@@ -1,14 +1,11 @@
-import core.crt.cstdio;
+import core.io.console;
 import core.crt.cstdlib;
 
-def print(str8 str) i32 = print(c8*(str));
-def print(c8* str) i32 = cstdio.puts(str);
-def print(i8 i) i32 = cstdio.printf(c8*("%d\n"), i32(i));
+def test(i64 a, i64 b, i64 c) bool = a < b < c;
 
 def main() i32 {
-	print("some string");
-	print(10);
-	print<i8>(15);
+	console.println(test(1, 2, 3));
+	console.println(test(1, 5, 3));
 	
 	cstdlib.system(c8*("pause"));
 	return 0;

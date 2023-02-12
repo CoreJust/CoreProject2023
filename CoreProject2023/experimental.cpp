@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cmath>
 
 /*extern "C"
 int puts(const char* str);

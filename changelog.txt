@@ -150,3 +150,11 @@ Initial development
 	Fixed bug with const compile-time str8 to str8 conversion (failed with error)
 
 	Commited as "Function overloading"
+
+	Implemented core.crt.cstring and core.crt.cmath (<c++11)
+	Fixed bug when '\r' was not considered a new line, although it is
+	Created module ConditionalExpr
+
+	Implemented core.io.console (print, println, scan-type-)
+
+	Commited as "Conditional expressions, core.crt.cstring, core.crt.cmath, core.io.console"

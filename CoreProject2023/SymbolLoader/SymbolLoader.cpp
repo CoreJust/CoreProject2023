@@ -19,8 +19,8 @@ std::set<TokenType> DEFINABLE_OPERATORS = {
 	TokenType::LSHIFT, TokenType::RSHIFT, TokenType::TILDE,
 
 	TokenType::EXCL, TokenType::EXCLEQ, TokenType::LESS,
-	TokenType::BIGGER, TokenType::EQEQ, TokenType::LESSEQ,
-	TokenType::BIGGEREQ,
+	TokenType::GREATER, TokenType::EQEQ, TokenType::LESSEQ,
+	TokenType::GREATEREQ,
 
 	TokenType::ANDAND, TokenType::OROR,
 
@@ -143,10 +143,7 @@ void SymbolLoader::loadFunction() {
 
 				isVaArgs = true;
 			} else {
-				bool isConst = match(TokenType::CONST);
 				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
-				type->isConst = isConst;
-
 				consume(TokenType::WORD);
 				args.push_back(Argument{ m_toks[m_pos - 1].data, std::move(type) });
 			}

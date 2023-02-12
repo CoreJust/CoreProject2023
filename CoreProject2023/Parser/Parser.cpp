@@ -5,12 +5,16 @@
 #include "TypeParser.h"
 
 static Token _NO_TOK = Token();
-u64* g_errLine; // used in INode.cpp
+
+// used in INode.cpp
+u64* g_pos;
+std::vector<Token>* g_toks;
 
 
 Parser::Parser(std::vector<Token> tokens)
 	: m_toks(std::move(tokens)), m_pos(0) {
-	g_errLine = &m_pos;
+	g_pos = &m_pos;
+	g_toks = &m_toks;
 }
 
 std::vector<std::unique_ptr<Declaration>> Parser::parse() {
@@ -59,11 +63,9 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 		do {
 			if (!match(TokenType::ETCETERA))  {
 				VariableQualities qualities;
-				bool isConst = match(TokenType::CONST);
 				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
 
-				type->isConst = isConst;
-				if (isConst) {
+				if (type->isConst) {
 					qualities.setVariableType(VariableType::CONST);
 				}
 
@@ -281,8 +283,48 @@ std::unique_ptr<Expression> Parser::logical() {
 }
 
 std::unique_ptr<Expression> Parser::conditional() {
-	// TODO: implement
-	return bitwise();
+	std::unique_ptr<Expression> initialExpr = rangeAndAs();
+	std::vector<std::unique_ptr<Expression>> exprs;
+	std::vector<ConditionalExpr::ConditionOp> ops;
+
+	auto addCondition = [&](ConditionalExpr::ConditionOp op) {
+		if (exprs.size() == 0) {
+			exprs.push_back(std::move(initialExpr));
+		}
+
+		exprs.push_back(rangeAndAs());
+		ops.push_back(op);
+	};
+
+	while (true) {
+		if (match(TokenType::EQEQ)) {
+			addCondition(ConditionalExpr::EQUALS);
+			continue;
+		} if (match(TokenType::EXCLEQ)) {
+			addCondition(ConditionalExpr::NOT_EQUALS);
+			continue;
+		} if (match(TokenType::LESS)) {
+			addCondition(ConditionalExpr::LESS);
+			continue;
+		} if (match(TokenType::LESSEQ)) {
+			addCondition(ConditionalExpr::LESS_OR_EQUAL);
+			continue;
+		} if (match(TokenType::GREATER)) {
+			addCondition(ConditionalExpr::GREATER);
+			continue;
+		} if (match(TokenType::GREATEREQ)) {
+			addCondition(ConditionalExpr::GREATER_OR_EQUAL);
+			continue;
+		}
+
+		break;
+	}
+	
+	if (exprs.size() == 0) {
+		return initialExpr;
+	} else {
+		return std::make_unique<ConditionalExpr>(std::move(exprs), std::move(ops));
+	}
 }
 
 std::unique_ptr<Expression> Parser::rangeAndAs() {
@@ -537,11 +579,11 @@ std::unique_ptr<Expression> Parser::primary() {
 std::unique_ptr<Expression> Parser::parseFunctionValue(std::string moduleName, std::string name) {
 	if (match(TokenType::LESS)) { // template
 		std::vector<std::unique_ptr<Type>> argTypes;
-		if (!match(TokenType::BIGGER)) {
+		if (!match(TokenType::GREATER)) {
 			do {
 				argTypes.push_back(TypeParser(m_toks, m_pos).consumeType());
 			} while (match(TokenType::COMMA));
-			consume(TokenType::BIGGER);
+			consume(TokenType::GREATER);
 		}
 
 		Function* func = g_module->getFunction(moduleName, name, argTypes, {});

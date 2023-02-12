@@ -17,6 +17,7 @@ public:
 	virtual void visit(FunctionCallExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(FunctionExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(AssignmentExpr* expr, std::unique_ptr<Expression>& node);
+	virtual void visit(ConditionalExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(BinaryExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(UnaryExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(TypeConversionExpr* expr, std::unique_ptr<Expression>& node);

@@ -57,6 +57,12 @@ void Visitor::visit(AssignmentExpr* expr, std::unique_ptr<Expression>& node) {
 	expr->m_expr->accept(this, expr->m_expr);
 }
 
+void Visitor::visit(ConditionalExpr* expr, std::unique_ptr<Expression>& node) {
+	for (auto& e : expr->m_exprs) {
+		e->accept(this, e);
+	}
+}
+
 void Visitor::visit(BinaryExpr* expr, std::unique_ptr<Expression>& node) {
 	expr->m_right->accept(this, expr->m_right);
 	expr->m_left->accept(this, expr->m_left);

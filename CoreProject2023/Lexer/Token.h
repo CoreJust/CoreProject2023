@@ -145,10 +145,10 @@ enum class TokenType : u8 {
 	EXCL, // !
 	EXCLEQ, // !=
 	LESS, // <
-	BIGGER, // >
+	GREATER, // >
 	EQEQ, // ==
 	LESSEQ, // <=
-	BIGGEREQ, // >=
+	GREATEREQ, // >=
 
 	ANDAND, // &&
 	OROR, // ||

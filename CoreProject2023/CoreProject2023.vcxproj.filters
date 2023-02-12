@@ -150,6 +150,9 @@
     <ClCompile Include="Module\LLVMGlobals.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Parser\AST\Exprs\ConditionalExpr.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h">
@@ -300,6 +303,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Module\LLVMGlobals.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser\AST\Exprs\ConditionalExpr.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

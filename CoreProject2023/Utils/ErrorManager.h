@@ -33,7 +33,7 @@ enum ErrorID : u32 {
 	E1105_NUMBER_HAS_UNKNOWN_NUMERIC_SYSTEM, // Number starts with 0..xxxx, where .. is not x, b, o
 	E1106_NUMBER_DELIMITER_FORBIDDEN, // Number has delimiter (') where it is banned
 	E1107_INCONSISTENT_HEX_NUMBER, // Hexadecimal number has both cases (upper and lower)
-	E1108_STRING_CONTAINS_CHARS_BIGGER_THAN_FORMAT_ALLOWS, // e.g. ascii string has character with code 1024
+	E1108_STRING_CONTAINS_CHARS_GREATER_THAN_FORMAT_ALLOWS, // e.g. ascii string has character with code 1024
 
 	E1111_NO_CLOSING_APOSTROPHE, // Character literal has no closing '
 	E1112_NO_CLOSING_QUOTE, // String literal has no closing " or """
@@ -103,4 +103,6 @@ namespace ErrorManager {
 	void internalError(ErrorID id, int line, const std::string& data);
 
 	void warning(ErrorID id, const std::string& data);
+
+	void printFileLine(int line);
 };

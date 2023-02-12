@@ -1,4 +1,4 @@
-# stdio.core - the standard core library module that is an interface with C stdio functions.
+# cstdio.core - the standard core library module that is an interface with C stdio functions.
 @set visibility direct_import
 @set safety unsafe
 @set mangling nomangle

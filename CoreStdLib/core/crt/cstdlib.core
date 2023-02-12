@@ -1,4 +1,4 @@
-# stdio.core - the standard core library module that is an interface with C stdio functions.
+# cstdlib.core - the standard core library module that is an interface with C stdio functions.
 @set visibility direct_import
 @set safety unsafe
 @set mangling nomangle
@@ -22,7 +22,10 @@ def native strtoull(const c8* nptr, c8** endptr, i32 base) u64; # c++17
 
 
 # Random generation
+@safe
 def native rand() i32;
+
+@safe
 def native srand(u32 seed);
 
 
@@ -71,30 +74,6 @@ def native system(const c8* string) i32;
 def native bsearch(const u8* key, const u8* base, u64 nmemb, u64 size,
                 func i32(const u8*, const u8*) compar) u8*;
 def native qsort(u8* base, u64 nmemb, u64 size, func i32(const u8*, const u8*) compar);
-
-
-# Integer arithmetics (must be ct)
-def native abs(i32 j) i32;
-
-###
-@mangle
-def native abs(i64 j) i64;
-
-@mangle
-def native abs(i64 j) i64;
-
-@mangle
-def native abs(f32 j) f32;
-
-@mangle
-def native abs(f64 j) f64;
-
-@mangle
-def native abs(f64 j) f64;
-###
- 
-def native labs(i64 j) i64;
-def native llabs(i64 j) i64; # c++11
 
 ###
 def native div(i32 numer, i32 denom) div_t;

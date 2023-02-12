@@ -281,6 +281,14 @@ void Module::loadSymbolsIfNotLoaded() {
 }
 
 void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* unit) {
+	if (unit->isEmpty()) {
+		if (!m_symbols.contains(alias)) {
+			m_symbols[alias] = { };
+		}
+
+		return;
+	}
+
 	// Addind to module's LLVM IR
 	ModuleSymbolsUnit *newUnit = new ModuleSymbolsUnit();
 	for (Variable& var : unit->getVariables()) {

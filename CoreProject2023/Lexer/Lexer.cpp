@@ -53,10 +53,10 @@ std::map<std::string, TokenType> OPERATORS = {
 	{ "!", TokenType::EXCL },
 	{ "!=", TokenType::EXCLEQ },
 	{ "<", TokenType::LESS },
-	{ ">", TokenType::BIGGER },
+	{ ">", TokenType::GREATER },
 	{ "==", TokenType::EQEQ },
 	{ "<=", TokenType::LESSEQ },
-	{ ">=", TokenType::BIGGEREQ },
+	{ ">=", TokenType::GREATEREQ },
 	{ "&&", TokenType::ANDAND },
 	{ "||", TokenType::OROR },
 	{ "(", TokenType::LPAR },
@@ -208,7 +208,7 @@ std::vector<std::string> Lexer::handleImports() {
 			skipWhitespaces(true);
 
 			while (m_pos < m_text.size() && m_text[m_pos] != ';') {
-				if (m_text[m_pos] == '\n') {
+				if (m_text[m_pos] == '\n' || m_text[m_pos] == '\r') {
 					ErrorManager::lexerError(
 						ErrorID::E1002_NO_ENDING_SEMICOLON, 
 						m_line, 
@@ -387,7 +387,7 @@ void Lexer::tokenizeText() {
 			break;
 		}
 
-		if (!isMultiline && m_text[m_pos + 1] == '\n') {
+		if (!isMultiline && (m_text[m_pos + 1] == '\n' || m_text[m_pos + 1] == '\r')) {
 			ErrorManager::lexerError(
 				ErrorID::E1112_NO_CLOSING_QUOTE, 
 				m_line, 
@@ -552,7 +552,7 @@ void Lexer::tokenizeLine() {
 	m_buffer.clear();
 
 	char c = next(); // skip whitespace
-	while (c != '\n' && c != '\0' && c != ';') {
+	while (c != '\n' && c != '\r' && c != '\0' && c != ';') {
 		m_buffer += c;
 		c = next();
 	}
@@ -593,7 +593,7 @@ void Lexer::tokenizeComment() {
 
 	// single-line comment
 	char c = next();
-	while (c != '\n' && c != '\0')
+	while (c != '\n' && c != '\0' && c != '\r')
 		c = next();
 }
 
@@ -772,7 +772,7 @@ void Lexer::printStringTranslationError(u32 errCode) {
 		);
 	} else {
 		ErrorManager::lexerError(
-			ErrorID::E1108_STRING_CONTAINS_CHARS_BIGGER_THAN_FORMAT_ALLOWS, 
+			ErrorID::E1108_STRING_CONTAINS_CHARS_GREATER_THAN_FORMAT_ALLOWS, 
 			m_line,
 			"cannot cast the character to shorter code: " + std::to_string(errCode)
 		);
@@ -807,7 +807,7 @@ char Lexer::next() {
 
 	if (m_pos < m_text.size()) {
 		char r = m_text[m_pos];
-		if (r == '\n') {
+		if (r == '\n' || r == '\r') {
 			m_nextLine++;
 		}
 

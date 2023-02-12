@@ -22,6 +22,7 @@ void IfElseStatement::generate() {
 	llvm::Function* fun = g_builder->GetInsertBlock()->getParent();
 	llvm::BasicBlock* mergeBlock = llvm::BasicBlock::Create(g_context, "mergeBlock");
 	llvm::BasicBlock* currBlock = llvm::BasicBlock::Create(g_context, "ifBlock", fun);
+	bool addMergeBlock = false;
 
 	g_builder->CreateBr(currBlock);
 	g_builder->SetInsertPoint(currBlock);
@@ -52,6 +53,7 @@ void IfElseStatement::generate() {
 		try {
 			m_bodies[i]->generate();
 			g_builder->CreateBr(mergeBlock);
+			addMergeBlock = true;
 		} catch (TerminatorAdded*) {}
 
 		g_module->deleteBlock();
@@ -67,11 +69,14 @@ void IfElseStatement::generate() {
 		try {
 			m_bodies.back()->generate();
 			g_builder->CreateBr(mergeBlock);
+			addMergeBlock = true;
 		} catch (TerminatorAdded*) {}
 
 		g_module->deleteBlock();
 
-		fun->getBasicBlockList().push_back(mergeBlock);
-		g_builder->SetInsertPoint(mergeBlock);
+		if (addMergeBlock) {
+			fun->getBasicBlockList().push_back(mergeBlock);
+			g_builder->SetInsertPoint(mergeBlock);
+		}
 	}
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include "Expression.h"
-#include <Lexer/Token.h>
 
 // all binary exprs apart from conditionals (==, !=, <, >, >=, <=) and special operators (is, as, in, ...)
 class BinaryExpr final : public Expression {

@@ -1,0 +1,75 @@
+@set safety safe
+import core.crt.cstdio;
+import core.crt.cstdlib;
+
+# Prints the value to the console
+def print(str8 str) i32 = print(c8*(str));
+def print(c8* str) i32 = cstdio.printf(c8*("%s"), str);
+def print(c8 ch) i32 = cstdio.putchar(i32(ch));
+def print(i32 i) i32 = cstdio.printf(c8*("%d"), i);
+def print(i64 i) i32 = cstdio.printf(c8*("%lld"), i);
+def print(u64 i) i32 = cstdio.printf(c8*("%ull"), i);
+def print(f64 i) i32 = cstdio.printf(c8*("%f"), i);
+def print(bool b) i32 {
+	if b return print("true");
+	else return print("false");
+}
+
+# Prints the value to console and prints a new line
+def println(str8 str) i32 = println(c8*(str));
+def println(c8* str) i32 = cstdio.printf(c8*("%s\n"), str);
+def println(c8 ch) i32 = cstdio.printf(c8*("%c\n"), ch);
+def println(i32 i) i32 = cstdio.printf(c8*("%d\n"), i);
+def println(i64 i) i32 = cstdio.printf(c8*("%lld\n"), i);
+def println(u64 i) i32 = cstdio.printf(c8*("%ull\n"), i);
+def println(f64 i) i32 = cstdio.printf(c8*("%f\n"), i);
+def println(bool b) i32 {
+	if b return println("true");
+	else return println("false");
+}
+
+
+# Scans a value from the console and returns it.
+# If the input does not contain a value of the type needed, the default value is returned
+def scanc8() c8 = c8(cstdio.getchar());
+
+def scani64() i64 {
+	return scani64(0);
+}
+
+def scanu64() u64 {
+	return scanu64(0);
+}
+
+def scanf64() f64 {
+	return scanf64(0);
+}
+
+# Scans a value from the console and returns it.
+# If the input does not contain a value of the type needed, the argument is returned
+def scani64(i64 default_value) i64 {
+	i64 result;
+	if (cstdio.scanf("%lld", &result)) {
+		return result;
+	} else {
+		return default_value;
+	}
+}
+
+def scanu64(u64 default_value) u64 {
+	u64 result;
+	if (cstdio.scanf("%llu", &result)) {
+		return result;
+	} else {
+		return default_value;
+	}
+}
+
+def scanf64(f64 default_value) f64 {
+	f64 result;
+	if (cstdio.scanf("%f", &result)) {
+		return result;
+	} else {
+		return default_value;
+	}
+}

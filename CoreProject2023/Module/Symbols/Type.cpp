@@ -40,7 +40,7 @@ llvm::Type* Type::to_llvm() const {
 }
 
 std::string Type::toString() const {
-	return getBasicTypeNode(basicType).name;
+	return (isConst ? "const " : "") + getBasicTypeNode(basicType).name;
 }
 
 std::string Type::toMangleString() const {
@@ -53,7 +53,7 @@ std::string Type::toMangleString() const {
 		"_f32", "_f64", "_u1", "_c8", "_c16", "_c32", "_str8", "_str16", "_str32"
 	};
 
-	return MANGLED_TYPE_NAMES[(u8)basicType];
+	return MANGLED_TYPE_NAMES[(u8)basicType] + (isConst ? "C" : "");
 }
 
 u64 Type::getBitSize() const {
@@ -110,11 +110,11 @@ llvm::Type* ArrayType::to_llvm() const {
 }
 
 std::string ArrayType::toString() const {
-	return elementType->toString() + "[" + std::to_string(size) + "]";
+	return elementType->toString() + (isConst ? " const" : "") + "[" + std::to_string(size) + "]";
 }
 
 std::string ArrayType::toMangleString() const {
-	return elementType->toMangleString() + "[" + std::to_string(size) + "]";
+	return elementType->toMangleString() + (isConst ? "C" : "") + "[" + std::to_string(size) + "]";
 }
 
 u64 ArrayType::getBitSize() const {
@@ -192,11 +192,11 @@ std::string POINTER_TYPE_MANGLE_STRING[] = { // starting from 19
 };
 
 std::string PointerType::toString() const {
-	return elementType->toString() + POINTER_TYPE_MANGLE_STRING[(u8)basicType - 19];
+	return elementType->toString() + (isConst ? " const" : "") + POINTER_TYPE_MANGLE_STRING[(u8)basicType - 19];
 }
 
 std::string PointerType::toMangleString() const {
-	return elementType->toMangleString() + POINTER_TYPE_MANGLE_STRING[(u8)basicType - 19];
+	return elementType->toMangleString() + (isConst ? "C" : "") + POINTER_TYPE_MANGLE_STRING[(u8)basicType - 19];
 }
 
 u64 PointerType::getBitSize() const {
@@ -279,7 +279,7 @@ llvm::Type* TupleType::to_llvm() const {
 }
 
 std::string TupleType::toString() const {
-	std::string result = "tuple<";
+	std::string result = (isConst ? "const " : "") + std::string("tuple<");
 	for (auto& type : subTypes) {
 		result.append(type->toString()).append(", ");
 	}
@@ -290,7 +290,7 @@ std::string TupleType::toString() const {
 }
 
 std::string TupleType::toMangleString() const {
-	std::string result = "tup<";
+	std::string result = (isConst ? "tupC<" : "tup<");
 	for (auto& type : subTypes) {
 		result.append(type->toMangleString());
 	}
@@ -405,7 +405,7 @@ llvm::Type* FunctionType::to_llvm() const {
 }
 
 std::string FunctionType::toString() const {
-	std::string result = "func " + returnType->toString() + "(";
+	std::string result = std::string(isConst ? "const " : "") + "func " + returnType->toString() + "(";
 	for (auto& type : argTypes) {
 		result.append(type->toString()).append(", ");
 	}
@@ -421,7 +421,7 @@ std::string FunctionType::toString() const {
 }
 
 std::string FunctionType::toMangleString() const {
-	std::string result = "func" + returnType->toMangleString() + "(";
+	std::string result = (isConst ? "funcC" : "func") + returnType->toMangleString() + "(";
 	for (auto& type : argTypes) {
 		result.append(type->toMangleString());
 	}

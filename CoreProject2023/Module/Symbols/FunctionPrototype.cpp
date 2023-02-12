@@ -43,8 +43,9 @@ llvm::Function* FunctionPrototype::generate() const {
 	}
 	
 	u32 index = 0;
-	for (auto& arg : fun->args())
+	for (auto& arg : fun->args()) {
 		arg.setName(m_args[index++].name);
+	}
 
 	return fun;
 }
@@ -69,8 +70,9 @@ llvm::Function* FunctionPrototype::generateImportedFromOtherModule(llvm::Module&
 	}
 
 	u32 index = 0;
-	for (auto& arg : fun->args())
+	for (auto& arg : fun->args()) {
 		arg.setName(m_args[index++].name);
+	}
 
 	return fun;
 }

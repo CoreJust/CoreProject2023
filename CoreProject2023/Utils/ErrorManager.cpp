@@ -1,4 +1,5 @@
 #include "ErrorManager.h"
+#include "String.h"
 
 std::string g_currFileName = "";
 std::string g_currFilePath = "";
@@ -153,6 +154,50 @@ void ErrorManager::printError(const std::string& error, int line, const std::str
 		(*_file) << text << std::endl;
 	}
 
+	printFileLine(line);
+
 	system("pause");
 	quick_exit(0);
+}
+
+void ErrorManager::printFileLine(int line) {
+	if (line < 0) {
+		return;
+	}
+
+	std::ifstream file(g_currFilePath + g_currFileName + ".core");
+	std::string tmp;
+	size_t i = 0;
+	while (std::getline(file, tmp)) {
+		if (i == line) {
+			if (_mode & CONSOLE) {
+				std::cout << tmp << std::endl;
+			} if (_mode & LOGS) {
+				ASSERT(_file == nullptr, "");
+				(*_file) << tmp << std::endl;
+			}
+
+			break;
+		}
+
+		if (size_t off = std::count(tmp.begin(), tmp.end(), '\r')) {
+			if (i + off >= line) {
+				std::vector<std::string> splitted = split(tmp, '\r');
+				if (_mode & CONSOLE) {
+					std::cout << splitted[line - i] << std::endl;
+				} if (_mode & LOGS) {
+					ASSERT(_file == nullptr, "");
+					(*_file) << splitted[line - i] << std::endl;
+				}
+
+				break;
+			}
+
+			i += off;
+		}
+
+		i++;
+	}
+
+	file.close();
 }

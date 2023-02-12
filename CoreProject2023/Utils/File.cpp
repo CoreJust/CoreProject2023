@@ -6,6 +6,12 @@ std::string readFile(const std::string& file) {
 	std::ifstream f(file);
 	std::string tmp, result;
 	while (std::getline(f, tmp)) {
+		for (auto& ch : tmp) {
+			if (ch == '\r') {
+				ch = '\n';
+			}
+		}
+
 		result.append(tmp) += '\n';
 	}
 

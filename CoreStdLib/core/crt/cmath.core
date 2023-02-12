@@ -1,0 +1,457 @@
+# cmath.core - the standard core library module that is an interface with C math functions.
+@set visibility direct_import
+@set safety safe
+@set mangling nomangle
+
+# Note: most of the functions must be ct
+
+
+# Absolute value functions
+@mangle
+def abs(i32 j) i32 {
+	if j < 0 return -j;
+	return j;
+}
+
+@mangle
+def abs(i64 j) i64 {
+	if j < 0 return -j;
+	return j;
+}
+
+@mangle
+def abs(f32 j) f32 {
+	if j < 0 return -j;
+	return j;
+}
+
+@mangle
+def abs(f64 j) f64 {
+	if j < 0 return -j;
+	return j;
+}
+ 
+@mangle
+def fabs(f32 x) f32 {
+	if j < 0 return -j;
+	return j;
+}
+
+@mangle
+def fabs(f64 x) f64 {
+	if j < 0 return -j;
+	return j;
+}
+
+@mangle
+def fabsf(f32 x) f32 {
+	if j < 0 return -j;
+	return j;
+}
+
+
+
+# Remainder functions
+# Floatng point division remainder
+def native fmod(f64 x, f64 y) f64;
+def native fmodf(f32 x, f32 y) f32;
+
+@mangle
+def fmod(f32 x, f32 y) f32 = fmodf(x, y);
+
+# Signed floatng point division remainder
+def native remainder(f64 x, f64 y) f64;
+def native remainderf(f32 x, f32 y) f32;
+
+@mangle
+def remainder(f32 x, f32 y) f32 = remainderf(x, y);
+
+# Signed floatng point division remainder and three last bits of the division
+def native remquo(f64 x, f64 y, i32* quo) f64;
+def native remquof(f32 x, f32 y, i32* quo) f32;
+
+@mangle
+def remquo(f32 x, f32 y, i32* quo) f32 = remquof(x, y, quo);
+
+
+
+# Other basic functions
+# Fused multiply-add
+def native fma(f64 x, f64 y, f64 z) f64;
+def native fmaf(f32 x, f32 y, f32 z) f32;
+
+@mangle
+def fma(f32 x, f32 y, f32 z) f32 = fmaf(x, y, z);
+
+# Maximal value
+def native fmax(f64 x, f64 y) f64;
+def native fmaxf(f32 x, f32 y) f32;
+
+@mangle
+def fmax(f32 x, f32 y) f32 = fmaxf(x, y);
+
+# Minimal value
+def native fmin(f64 x, f64 y) f64;
+def native fminf(f32 x, f32 y) f32;
+
+@mangle
+def fmin(f32 x, f32 y) f32 = fminf(x, y);
+
+# Positive difference (max(0, x - y))
+def native fdim(f64 x, f64 y) f64;
+def native fdimf(f32 x, f32 y) f32;
+
+@mangle
+def fdim(f32 x, f32 y) f32 = fdimf(x, y);
+
+# Not-a-number
+def native nan(const c8* tagp) f64;
+def native nanf(const c8* tagp) f32;
+
+
+
+# Exponential functions
+# e raised to power x (e**x)
+def native exp(f64 x) f64;
+def native expf(f32 x) f32;
+
+@mangle
+def exp(f32 x) f32 = expf(x);
+
+# 2 raised to power x (2**x)
+def native exp2(f64 x) f64;
+def native exp2f(f32 x) f32;
+
+@mangle
+def exp2(f32 x) f32 = exp2f(x);
+
+# e raised to power x minus 1 (e**x - 1)
+def native expm1(f64 x) f64;
+def native expm1f(f32 x) f32;
+
+@mangle
+def expm1(f32 x) f32 = expm1f(x);
+
+# Natural logarithm (with base e)
+def native log(f64 x) f64;
+def native logf(f32 x) f32;
+
+@mangle
+def log(f32 x) f32 = logf(x);
+
+# Common logarithm (with base 10)
+def native log10(f64 x) f64;
+def native log10f(f32 x) f32;
+
+@mangle
+def log10(f32 x) f32 = log10f(x);
+
+# Logarithm with base 2
+def native log2(f64 x) f64;
+def native log2f(f32 x) f32;
+
+@mangle
+def log2(f32 x) f32 = log2f(x);
+
+# Natural logarithm (with base e) of 1 plus x (ln(1 + x))
+def native log1p(f64 x) f64;
+def native log1pf(f32 x) f32;
+
+@mangle
+def log1p(f32 x) f32 = log1pf(x);
+
+
+
+
+# Power functions
+# Raise to power
+def native pow(f64 x, f64 y) f64;
+def native powf(f32 x, f32 y) f32;
+
+@mangle
+def pow(f32 x, f32 y) f32 = powf(x, y);
+
+# Square root
+def native sqrt(f64 x) f64;
+def native sqrtf(f32 x) f32;
+
+@mangle
+def sqrt(f32 x) f32 = sqrtf(x);
+
+# Cubic root
+def native cbrt(f64 x) f64;
+def native cbrtf(f32 x) f32;
+
+@mangle
+def cbrt(f32 x) f32 = cbrtf(x);
+
+# Hypotenuse 2D (length of the vector (x; y))
+@mangle
+def hypot(f64 x, f64 y) f64 = sqrt(x*x + y*y);
+
+@mangle
+def hypotf(f32 x, f32 y) f32 = sqrt(x*x + y*y);
+
+@mangle
+def hypot(f32 x, f32 y) f32 = sqrt(x*x + y*y);
+
+# Hypotenuse 3D (length of the vector (x; y; z))
+@mangle
+def hypot(f64 x, f64 y, f64 z) f64 = sqrt(x*x + y*y + z*z);
+
+@mangle
+def hypot(f32 x, f32 y, f32 z) f32 = sqrt(x*x + y*y + z*z);
+
+
+
+
+# Trigonometric functions
+# Sine
+def native sin(f64 x) f64;
+def native sinf(f32 x) f32;
+
+@mangle
+def sin(f32 x) f32 = sinf(x);
+
+# Cosine
+def native cos(f64 x) f64;
+def native cosf(f32 x) f32;
+
+@mangle
+def cos(f32 x) f32 = cosf(x);
+
+# Tangent
+def native tan(f64 x) f64;
+def native tanf(f32 x) f32;
+
+@mangle
+def tan(f32 x) f32 = tanf(x);
+
+# Arc sine
+def native asin(f64 x) f64;
+def native asinf(f32 x) f32;
+
+@mangle
+def asin(f32 x) f32 = asinf(x);
+
+# Arc cosine
+def native acos(f64 x) f64;
+def native acosf(f32 x) f32;
+
+@mangle
+def acos(f32 x) f32 = acosf(x);
+
+# Arc tangent
+def native atan(f64 x) f64;
+def native atanf(f32 x) f32;
+
+@mangle
+def atan(f32 x) f32 = atanf(x);
+
+# Arc tangent, using signs to determine quadrants
+def native atan2(f64 y, f64 x) f64;
+def native atan2f(f32 y, f32 x) f32;
+
+@mangle
+def atan2(f32 y, f32 x) f32 = atan2f(y, x);
+
+
+
+
+# Hyperbolic functions	# Hyperbolic sine
+def native sinh(f64 x) f64;
+def native sinhf(f32 x) f32;
+
+@mangle
+def sinh(f32 x) f32 = sinhf(x);
+
+# Hyperbolic cosine
+def native cosh(f64 x) f64;
+def native coshf(f32 x) f32;
+
+@mangle
+def cosh(f32 x) f32 = coshf(x);
+
+# Hyperbolic tangent
+def native tanh(f64 x) f64;
+def native tanhf(f32 x) f32;
+
+@mangle
+def tanh(f32 x) f32 = tanhf(x);
+
+# Inverse hyperbolic sine
+def native asinh(f64 x) f64;
+def native asinhf(f32 x) f32;
+
+@mangle
+def asinh(f32 x) f32 = asinhf(x);
+
+# Inverse hyperbolic cosine
+def native acosh(f64 x) f64;
+def native acoshf(f32 x) f32;
+
+@mangle
+def acosh(f32 x) f32 = acoshf(x);
+
+# Inverse hyperbolic tangent
+def native atanh(f64 x) f64;
+def native atanhf(f32 x) f32;
+
+@mangle
+def atanh(f32 x) f32 = atanhf(x);
+
+
+
+
+# Error and gamma functions
+# Error function
+def native erf(f64 x) f64;
+def native erff(f32 x) f32;
+
+@mangle
+def erf(f32 x) f32 = erff(x);
+
+# Complimentary error function
+def native erfc(f64 x) f64;
+def native erfcf(f32 x) f32;
+
+@mangle
+def erfc(f32 x) f32 = erfcf(x);
+
+# Gamma function
+def native tgamma(f64 x) f64;
+def native tgammaf(f32 x) f32;
+
+@mangle
+def tgamma(f32 x) f32 = tgammaf(x);
+
+# Natural logarithm of the gamma function
+def native lgamma(f64 x) f64;
+def native lgammaf(f32 x) f32;
+
+@mangle
+def lgamma(f32 x) f32 = lgammaf(x);
+
+
+
+
+# Rounding functions
+# Nearest integer not less than x
+def native ceil(f64 x) f64;
+def native ceilf(f32 x) f32;
+
+@mangle
+def ceil(f32 x) f32 = ceilf(x);
+
+# Nearest integer not greater than x
+def native floor(f64 x) f64;
+def native floorf(f32 x) f32;
+
+@mangle
+def floor(f32 x) f32 = floorf(x);
+
+# Nearest integer not greater in magnitude than x
+def native trunc(f64 x) f64;
+def native truncf(f32 x) f32;
+
+@mangle
+def trunc(f32 x) f32 = truncf(x);
+
+# Nearest integer, rounding away from zero in halfway cases
+def native round(f64 x) f64;
+def native roundf(f32 x) f32;
+
+@mangle
+def round(f32 x) f32 = roundf(x);
+
+def native lround(f64 x) i64;
+def native lroundf(f32 x) i32;
+
+@mangle
+def lround(f32 x) i32 = lroundf(x);
+
+# Nearest integer using current rounding mode
+def native nearbyint(f64 x) f64;
+def native nearbyintf(f32 x) f32;
+
+@mangle
+def nearbyint(f32 x) f32 = nearbyintf(x);
+
+# Nearest integer using current rounding mode with exception if the result differs
+def native rint(f64 x) f64;
+def native rintf(f32 x) f32;
+
+@mangle
+def rint(f32 x) f32 = rintf(x);
+
+def native lrint(f64 x) i64;
+def native lrintf(f32 x) i32;
+
+@mangle
+def lrint(f32 x) i32 = lrintf(x);
+
+
+
+
+# Floating point manipulation functions
+# Decomposes a number into significand and a power of 2def native frexp(f64 value, i32* exp) f64;
+
+@mangle
+def frexpf(f32 value, i32* exp) f32 = f32(frexp<f64, i32*>(value, exp));
+
+@mangle
+def frexp(f32 value, i32* exp) f32 = frexpf(value, exp);
+
+# Multiplies a number by 2 raised to a power
+def native ldexp(f64 x, i32 exp) f64;
+def native ldexpf(f32 x, i32 exp) f32;
+
+@mangle
+def ldexp(f32 x, i32 exp) f32 = ldexpf(x, exp);
+
+# Decomposes a number into integer and fractional parts
+def native modf(f64 value, f64* iptr) f64;
+def native modff(f32 value, f32* iptr) f32;
+
+@mangle
+def modf(f32 value, f32* iptr) f32 = modff(value, iptr);
+
+# Multiplies a number by FLT_RADIX raised to a power
+def native scalbn(f64 x, i32 n) f64;
+def native scalbnf(f32 x, i32 n) f32;
+
+@mangle
+def scalbn(f32 x, i32 n) f32 = scalbnf(x, n);
+
+def native scalbln(f64 x, i64 n) f64;
+def native scalblnf(f32 x, i64 n) f32;
+
+@mangle
+def scalbln(f32 x, i64 n) f32 = scalblnf(x, n);
+
+# Extracts exponent of the numberdef native ilogb(f64 x) i32;def native ilogbf(f32 x) i32;
+
+@mangle
+def ilogb(f32 x) i32 = ilogbf(x);
+def native logb(f64 x) f64;def native logbf(f32 x) f32;
+
+@mangle
+def logb(f32 x) f32 = logbf(x);
+
+# Next representable floating point value towards the given value
+def native nextafter(f64 x, f64 y) f64;
+def native nextafterf(f32 x, f32 y) f32;
+
+@mangle
+def nextafter(f32 x, f32 y) f32 = nextafterf(x, y);
+
+def native nexttoward(f64 x, f64 y) f64;
+def native nexttowardf(f32 x, f64 y) f32;
+
+@mangle
+def nexttoward(f32 x, f64 y) f32 = nexttowardf(x, y);
+
+# Copies the sign of a floating point valuedef native copysign(f64 x, f64 y) f64;def native copysignf(f32 x, f32 y) f32;
+
+@mangle
+def copysign(f32 x, f32 y) f32 = copysignf(x, y);

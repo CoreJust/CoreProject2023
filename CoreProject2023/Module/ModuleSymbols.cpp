@@ -122,3 +122,7 @@ std::vector<Variable>& ModuleSymbolsUnit::getVariables() {
 std::vector<Function>& ModuleSymbolsUnit::getFunctions() {
 	return m_functions;
 }
+
+bool ModuleSymbolsUnit::isEmpty() const {
+	return m_variables.size() == 0 && m_functions.size() == 0 && m_types.size() == 0;
+}

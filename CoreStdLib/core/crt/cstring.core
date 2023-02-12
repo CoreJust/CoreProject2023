@@ -1,0 +1,50 @@
+# cstring.core - the standard core library module that is an interface with C string functions.
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+# Memory manipulation
+def native memcpy(u8* dest, const u8* src, u64 count) u8*;
+def native memmove(u8* dest, const u8* src, u64 count) u8*;
+def native memmove(u8* dest, i32 ch, u64 count) u8*;
+def native memcmp(const u8* lhs, const u8* rhs, u64 count) i32;
+def native memchr(const u8* ptr, i32 ch, u64 count) const u8*;
+
+@mangle
+def memchr(u8* ptr, i32 ch, u64 count) u8* = u8*(memchr<const u8*, i32, u64>(ptr, ch, count));
+
+
+# C-string manipulation
+def native strcpy(c8* dest, const c8* src) c8*;
+def native strncpy(c8* dest, const c8* src, u64 count) c8*;
+def native strcat(c8* dest, const c8* src) c8*;
+def native strncat(c8* dest, const c8* src, u64 count) c8*;
+def native strxfrm(c8* dest, const c8* src, u64 count) u64;
+
+# C-string examination
+def native strlen(const c8* str) u64;
+def native strcmp(const c8* lhs, const c8* rhs) i32;
+def native strncmp(const c8* lhs, const c8* rhs, u64 count) i32;
+def native strcoll(const c8* lhs, const c8* rhs) i32;
+def native strchr(const c8* str, i32 ch) const c8*;
+def native strrchr(const c8* str, i32 ch) const c8*;
+def native strspn(const c8* dest, const c8* src) u64;
+def native strcspn(const c8* dest, const c8* src) u64;
+def native strpbrk(const c8* dest, const c8* src) const c8*;
+def native strstr(const c8* haystack, const c8* needle) const c8*;
+def native strtok(c8* str, const c8* delime) c8*;
+
+@mangle
+def strchr(c8* str, i32 ch) c8* = c8*(strchr<const c8*, i32>(str, ch));
+
+@mangle
+def strrchr(c8* str, i32 ch) c8* = c8*(strrchr<const c8*, i32>(str, ch));
+
+@mangle
+def strpbrk(c8* dest, const c8* src) c8* = c8*(strpbrk<const c8*, const c8*>(dest, src));
+
+@mangle
+def strstr(c8* haystack, c8* needle) c8* = c8*(strstr<const c8*, const c8*>(haystack, needle));
+
+# C error to string
+def native strerror(i32 errnum) c8*;

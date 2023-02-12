@@ -57,6 +57,8 @@ public:
 
 	std::vector<Variable>& getVariables();
 	std::vector<Function>& getFunctions();
+
+	bool isEmpty() const;
 };
 
 struct ModuleSymbols {

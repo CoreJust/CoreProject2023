@@ -1,7 +1,7 @@
 #include "ModuleSymbols.h"
 #include <Module/LLVMGlobals.h>
 
-void ModuleSymbolsUnit::addType(TypeNode type) {
+void ModuleSymbolsUnit::addType(std::shared_ptr<TypeNode> type) {
 	m_types.push_back(std::move(type));
 }
 
@@ -33,6 +33,12 @@ SymbolType ModuleSymbolsUnit::getSymbolType(const std::string& name) const {
 	for (auto& fun : m_functions) {
 		if (fun.prototype.getName() == name) {
 			return SymbolType::FUNCTION;
+		}
+	}
+
+	for (auto& type : m_types) {
+		if (type->name == name) {
+			return SymbolType::TYPE;
 		}
 	}
 
@@ -107,8 +113,8 @@ Variable* ModuleSymbolsUnit::getVariable(const std::string& name) {
 
 TypeNode* ModuleSymbolsUnit::getType(const std::string& name) {
 	for (auto& type : m_types) {
-		if (type.name == name) {
-			return &type;
+		if (type->name == name) {
+			return type.get();
 		}
 	}
 
@@ -121,6 +127,10 @@ std::vector<Variable>& ModuleSymbolsUnit::getVariables() {
 
 std::vector<Function>& ModuleSymbolsUnit::getFunctions() {
 	return m_functions;
+}
+
+std::vector<std::shared_ptr<TypeNode>>& ModuleSymbolsUnit::getTypes() {
+	return m_types;
 }
 
 bool ModuleSymbolsUnit::isEmpty() const {

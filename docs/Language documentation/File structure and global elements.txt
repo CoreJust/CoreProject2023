@@ -57,16 +57,16 @@ Consists of elements, where an elements is:
     /// USE ///
     Allows to use one symbol instead of another.
     Format:
-        use -symbol- [as -word-];
+        use [-symbol_type-] -symbol- [as -word-];
     Applies:
-        1. use -type- as -alias-: allows to use -alias- instead of -type-
-        2. use -name- as -alias-: allows to use -alias- as function/global variable/module -name-
-        3. use -module.func-/-module.var-: allows to use a function/variable without naming the module
-        4. use -module-: allows to use all the symbols from the module without naming the module
+        1. use -name- as -alias-: allows to use -alias- as function/global variable/module -name-
+        2. use -module.func-/-module.var- [as -alias]: allows to use a function/variable without naming the module (or with a new alias)
+        3. use -module- [as -alias-]: allows to use all the symbols from the module without naming the module (or with a new alias)
     Examples:
-        use u8 as byte; - now byte can be as an alias of u8
         use math.sin; - now the sinus function can be called as sin(x) instead of math.sin(x)
         use math; - now all the functions of the math module can be used without 'math' part.
+	Note:
+		Aliases created through use are available only in the current module.
     
     
     /// ANNOTATION ///
@@ -139,6 +139,13 @@ Consists of elements, where an elements is:
             -Name- is a necessary part of declaration of a variable. It is used to refer to the variable.
             After the -name-, there can be the sign = and an -expression- to initialize the variable with. It cannot be used with extern and must be used with const.
                 Otherwise, if there is none, the variable would be initialized with default value of the type if there is such, else there would be an error.
+				
+		/// Type ///
+		Format:
+			type -name- = -type-;
+			
+			Creates a global alias for the type (available in the other modules through import if not annotated with @private).
+			Example: type int = i32;
                 
         /// Class ///
         Format:

@@ -16,10 +16,10 @@ class ModuleSymbolsUnit final {
 private:
 	std::vector<Variable> m_variables;
 	std::vector<Function> m_functions;
-	std::vector<TypeNode> m_types;
+	std::vector<std::shared_ptr<TypeNode>> m_types;
 
 public:
-	void addType(TypeNode type);
+	void addType(std::shared_ptr<TypeNode> type);
 	void addFunction(FunctionPrototype prototype);
 
 	// Intended for adding function duplicates to modules importing the function
@@ -57,6 +57,7 @@ public:
 
 	std::vector<Variable>& getVariables();
 	std::vector<Function>& getFunctions();
+	std::vector<std::shared_ptr<TypeNode>>& getTypes();
 
 	bool isEmpty() const;
 };

@@ -1,11 +1,16 @@
 import core.io.console;
 import core.crt.cstdlib;
 
+use console;
+
 def test(i64 a, i64 b, i64 c) bool = a < b < c;
 
+use test as check;
+
 def main() i32 {
-	console.println(test(1, 2, 3));
-	console.println(test(1, 5, 3));
+	cstdlib.size_t i = 0;
+	println(check(1, 2, 3));
+	println(check(1, 5, 3));
 	
 	cstdlib.system(c8*("pause"));
 	return 0;

@@ -62,17 +62,39 @@ void Module::loadSymbols() {
 	}
 }
 
-void Module::addModuleAlias(const std::string& moduleName, const std::string& alias) {
-	ASSERT(m_symbols.contains(moduleName), "cannot add alias if there is no such module");
-	if (!m_symbols.contains(alias)) {
-		m_symbols[alias] = m_symbols[moduleName];
-	} else {
-		auto& insertedSymbols = m_symbols[moduleName];
-		m_symbols[alias].insert(
-			m_symbols[alias].end(), 
-			insertedSymbols.begin(), 
-			insertedSymbols.end()
-		);
+void Module::addAlias(
+	SymbolType symType,
+	const std::string& moduleName, 
+	const std::string& name, 
+	std::string alias
+) {
+	if (symType == SymbolType::MODULE) {
+		if (!m_symbols.contains(alias)) {
+			m_symbols[alias] = m_symbols[name];
+		} else {
+			auto& insertedSymbols = m_symbols[name];
+			m_symbols[alias].insert(
+				m_symbols[alias].end(),
+				insertedSymbols.begin(),
+				insertedSymbols.end()
+			);
+		}
+	} else if (symType == SymbolType::VARIABLE) {
+		Variable* var = getVariable(moduleName, name);
+		if (alias.size() == 0) {
+			alias = name;
+		}
+
+		m_symbols[""].back()->addVariable(alias, var->type->copy(), var->qualities, var->value);
+	} else if (symType == SymbolType::FUNCTION) {
+		Function* func = getFunction(moduleName, name);
+		if (alias.size() == 0) {
+			alias = name;
+		}
+
+		FunctionPrototype newProto = func->prototype;
+		newProto.setName(alias);
+		m_symbols[""].back()->addFunction(newProto, func->functionValue);
 	}
 }
 
@@ -301,6 +323,10 @@ void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* u
 				func.prototype,
 				func.prototype.generateImportedFromOtherModule(*m_llvmModule)
 		);
+	}
+
+	for (std::shared_ptr<TypeNode>& typeNode : unit->getTypes()) {
+		newUnit->addType(typeNode);
 	}
 
 	// Adding to the module's symbols

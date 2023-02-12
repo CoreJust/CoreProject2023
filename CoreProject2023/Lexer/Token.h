@@ -89,6 +89,8 @@ enum class TokenType : u8 {
 	REF,
 	MOVE,
 
+	TYPE,
+
 	BOOL,
 	C8,
 	C16,

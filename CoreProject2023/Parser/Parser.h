@@ -18,6 +18,7 @@ public:
 
 private:
 	std::unique_ptr<Declaration> declaration();
+	void useDeclaration();
 	std::unique_ptr<Declaration> functionDeclaration();
 	std::unique_ptr<Declaration> variableDeclaration();
 

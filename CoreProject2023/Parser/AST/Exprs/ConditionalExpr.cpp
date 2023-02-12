@@ -6,7 +6,7 @@
 
 ConditionalExpr::ConditionalExpr(std::vector<std::unique_ptr<Expression>> exprs, std::vector<ConditionOp> ops)
 	: m_exprs(std::move(exprs)), m_ops(std::move(ops)) {
-	ASSERT(m_exprs.size() == m_ops.size() - 1, "incorrect condtional expr");
+	ASSERT(m_exprs.size() == m_ops.size() + 1, "incorrect conditional expr");
 	m_type = std::make_unique<Type>(BasicType::BOOL);
 }
 

@@ -6,6 +6,8 @@
 # After user-defined types are presented: add div_t, ldiv_t, etc
 # TODO: add constants (macros in original C header file)
 
+type size_t = u64;
+
 
 # Conversion functions
 def native atof(const c8* nptr) f64;

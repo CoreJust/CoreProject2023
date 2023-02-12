@@ -26,13 +26,14 @@ private:
 	void loadClass(); // or another user-defined type
 	void loadFunction();
 	void loadVariable();
+	void loadTypeVariable();
 
 	void skipCodeInBraces();
 	void skipAssignment();
 	void readAnnotations();
 
+	Token& consume(TokenType type);
 	bool match(TokenType type);
-	void consume(TokenType type);
 	Token& peek(int rel = 0);
 	int getCurrLine();
 };

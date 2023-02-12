@@ -30,9 +30,11 @@ public:
 	Module(Module&& other) = default;
 
 	void loadSymbols();
-	void addModuleAlias(
-		const std::string& moduleName, 
-		const std::string& alias
+	void addAlias(
+		SymbolType symType,
+		const std::string& moduleName,
+		const std::string& name, 
+		std::string alias
 	);
 
 	void addBlock();

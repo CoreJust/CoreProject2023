@@ -49,6 +49,8 @@ void SymbolLoader::loadSymbols() {
 		} else if (m_toks[m_pos].type == TokenType::ABSTRACT
 			|| (m_toks[m_pos].type >= TokenType::CLASS && m_toks[m_pos].type <= TokenType::UNION)) {
 			loadClass();
+		} else if (match(TokenType::TYPE)) {
+			loadTypeVariable();
 		} else {
 			loadVariable();
 		}
@@ -64,7 +66,7 @@ void SymbolLoader::loadSymbols() {
 
 // TODO: implement
 void SymbolLoader::loadUse() {
-
+	skipAssignment();
 }
 
 // TODO: implement
@@ -242,16 +244,16 @@ void SymbolLoader::loadVariable() {
 
 	// Store the variable
 	switch (qualities.getVisibility()) {
-	case Visibility::LOCAL: break;
-	case Visibility::PUBLIC:
-		m_symbols.publicSymbols.addVariable(alias, std::move(type), qualities, nullptr);
-		break;
-	case Visibility::DIRECT_IMPORT:
-		m_symbols.publicOnceSymbols.addVariable(alias, std::move(type), qualities, nullptr);
-		break;
-	case Visibility::PRIVATE:
-		m_symbols.privateSymbols.addVariable(alias, std::move(type), qualities, nullptr);
-		break;
+		case Visibility::LOCAL: break;
+		case Visibility::PUBLIC:
+			m_symbols.publicSymbols.addVariable(alias, std::move(type), qualities, nullptr);
+			break;
+		case Visibility::DIRECT_IMPORT:
+			m_symbols.publicOnceSymbols.addVariable(alias, std::move(type), qualities, nullptr);
+			break;
+		case Visibility::PRIVATE:
+			m_symbols.privateSymbols.addVariable(alias, std::move(type), qualities, nullptr);
+			break;
 	default: break;
 	}
 
@@ -259,7 +261,52 @@ void SymbolLoader::loadVariable() {
 	if (match(TokenType::EQ)) {
 		skipAssignment();
 	} else {
-		match(TokenType::SEMICOLON);
+		consume(TokenType::SEMICOLON);
+	}
+}
+
+void SymbolLoader::loadTypeVariable() {
+	// set default qualities
+	TypeQualities qualities;
+	qualities.setVisibility(m_qualities.getVisibility());
+	qualities.setSafety(m_qualities.getSafety());
+
+	// read annotations
+	for (auto& a : m_annots) {
+		if (a[0] == "public")				qualities.setVisibility(Visibility::PUBLIC);
+		else if (a[0] == "direct_import")	qualities.setVisibility(Visibility::DIRECT_IMPORT);
+		else if (a[0] == "private")			qualities.setVisibility(Visibility::PRIVATE);
+		else if (a[0] == "safe")			qualities.setSafety(Safety::SAFE);
+		else if (a[0] == "safe_only")		qualities.setSafety(Safety::SAFE_ONLY);
+		else if (a[0] == "unsafe")			qualities.setSafety(Safety::UNSAFE);
+		else ErrorManager::lexerError(
+			ErrorID::E1051_UNKNOWN_ANNOTATION,
+			getCurrLine(),
+			"unknown function annotation: " + a[0]
+		);
+	}
+
+	std::string alias = consume(TokenType::WORD).data;
+	consume(TokenType::EQ);
+
+	std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+	consume(TokenType::SEMICOLON);
+
+	llvm::Type* llvmType = type->to_llvm();
+	std::shared_ptr<TypeNode> typeNode = std::make_shared<TypeNode>(alias, TypeQualities(), std::move(type), llvmType);
+
+	// Store the variable
+	switch (qualities.getVisibility()) {
+		case Visibility::PUBLIC:
+			m_symbols.publicSymbols.addType(std::move(typeNode));
+			break;
+		case Visibility::DIRECT_IMPORT:
+			m_symbols.publicOnceSymbols.addType(std::move(typeNode));
+			break;
+		case Visibility::PRIVATE:
+			m_symbols.privateSymbols.addType(std::move(typeNode));
+			break;
+	default: break;
 	}
 }
 
@@ -317,15 +364,7 @@ void SymbolLoader::readAnnotations() {
 	}
 }
 
-bool SymbolLoader::match(TokenType type) {
-	if (peek().type != type)
-		return false;
-
-	m_pos++;
-	return true;
-}
-
-void SymbolLoader::consume(TokenType type) {
+Token& SymbolLoader::consume(TokenType type) {
 	if (!match(type)) {
 		ErrorManager::parserError(
 			ErrorID::E2002_UNEXPECTED_TOKEN,
@@ -333,6 +372,17 @@ void SymbolLoader::consume(TokenType type) {
 			"expected " + Token::toString(type)
 		);
 	}
+
+	return peek(-1);
+}
+
+bool SymbolLoader::match(TokenType type) {
+	if (peek().type != type) {
+		return false;
+	}
+
+	m_pos++;
+	return true;
 }
 
 Token& SymbolLoader::peek(int rel) {

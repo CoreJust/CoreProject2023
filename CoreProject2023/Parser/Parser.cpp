@@ -27,8 +27,20 @@ std::vector<std::unique_ptr<Declaration>> Parser::parse() {
 }
 
 std::unique_ptr<Declaration> Parser::declaration() {
-	while (match(TokenType::AT)) {
-		skipAnnotation();
+	while (true) {
+		if (match(TokenType::AT)) {
+			skipAnnotation();
+			continue;
+		} if (match(TokenType::TYPE)) {
+			while (!match(TokenType::SEMICOLON)) {
+				m_pos++;
+			}
+		} if (match(TokenType::USE)) {
+			useDeclaration();
+			continue;
+		}
+
+		break;
 	}
 
 	if (match(TokenType::DEF)) {
@@ -36,6 +48,37 @@ std::unique_ptr<Declaration> Parser::declaration() {
 	} else {
 		return variableDeclaration();
 	}
+}
+
+void Parser::useDeclaration() {
+	std::string moduleName = "";
+	std::string name = consume(TokenType::WORD).data;
+	SymbolType symType = g_module->getSymbolType(name);
+
+	if (symType == SymbolType::MODULE && match(TokenType::DOT)) {
+		moduleName = std::move(name);
+		name = consume(TokenType::WORD).data;
+		symType = g_module->getSymbolType(moduleName, name);
+	}
+
+	if (symType == SymbolType::NO_SYMBOL) {
+		ErrorManager::parserError(
+			ErrorID::E2003_UNKNOWN_IDENTIFIER,
+			getCurrLine(),
+			"identifier: " + (moduleName.size() ? moduleName + "." + name : name)
+		);
+
+		return;
+	}
+
+	std::string alias = "";
+	if (match(TokenType::AS)) {
+		alias = consume(TokenType::WORD).data;
+	}
+		
+	g_module->addAlias(symType, moduleName, name, alias);
+
+	consume(TokenType::SEMICOLON);
 }
 
 std::unique_ptr<Declaration> Parser::functionDeclaration() {

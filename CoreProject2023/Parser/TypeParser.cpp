@@ -127,9 +127,12 @@ std::unique_ptr<Type> TypeParser::parseType() {
 
 				return nullptr;
 			} else {
-				// TODO: add generics/user-defined types support
-				ErrorManager::warning(ErrorID::W0001, "not developed yet");
-				result = std::unique_ptr<Type>(g_module->getType(moduleName, name)->type->copy());
+				TypeNode* typeNode = g_module->getType(moduleName, name);
+				if (!isUserDefined(typeNode->type->basicType)) {
+					result = std::unique_ptr<Type>(typeNode->type->copy());
+				} else {
+					// TODO: add generics/user-defined types support
+				}
 			}
 		}; break;
 		case TokenType::TYPEOF: {

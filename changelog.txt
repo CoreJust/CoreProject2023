@@ -158,3 +158,8 @@ Initial development
 	Implemented core.io.console (print, println, scan-type-)
 
 	Commited as "Conditional expressions, core.crt.cstring, core.crt.cmath, core.io.console"
+
+	Added module/function/variables aliases (available only within one module)
+	Added type aliases (type -alias- = -type-;)
+
+	Commited as "Aliases"

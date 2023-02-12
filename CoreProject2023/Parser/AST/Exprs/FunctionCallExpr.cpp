@@ -2,6 +2,7 @@
 #include <Parser/Visitor/Visitor.h>
 #include <Utils/ErrorManager.h>
 #include <Module/LLVMGlobals.h>
+#include <Module/LLVMUtils.h>
 
 FunctionCallExpr::FunctionCallExpr(
 	std::unique_ptr<Expression> func, 
@@ -33,18 +34,19 @@ llvm::Value* FunctionCallExpr::generate() {
 	FunctionType* funcType = (FunctionType*)m_funcExpr->getType().get();
 
 	std::vector<llvm::Value*> argValues;
-	for (auto& arg : m_argExprs) {
-		argValues.push_back(arg->generate());
-#if 0
-		argValues.back()->print(llvm::errs());
-		llvm::errs() << "\n";
-#endif
-	}
+	for (size_t i = 0; i < m_argExprs.size(); i++) {
+		argValues.push_back(m_argExprs[i]->generate());
 
-#if 0
-	funcVal->print(llvm::errs());
-	llvm::errs() << "\n\n";
-#endif
+		if (i < funcType->argTypes.size()) { // not va_args
+			argValues.back() = llvm_utils::tryImplicitlyConvertTo(
+				funcType->argTypes[i], // to type
+				m_argExprs[i]->getType(), // from type
+				argValues.back(), // llvm value to be converted
+				m_errLine, // the line the expression is at
+				m_argExprs[i]->isCompileTime() // is the expression available in compile time
+			);
+		}
+	}
 
 	llvm::Value* result = g_builder->CreateCall(
 		funcType->to_llvmFunctionType(), 

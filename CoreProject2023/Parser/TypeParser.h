@@ -1,6 +1,6 @@
 #pragma once
 #include <Lexer/Token.h>
-#include <Module/Type.h>
+#include <Module/Symbols/Type.h>
 
 // Note: do not handle TokenType::VAR
 class TypeParser {

@@ -32,7 +32,7 @@ llvm::Function* FunctionPrototype::generate() const {
 	llvm::FunctionType* ft = llvm::FunctionType::get(m_returnType->to_llvm(), types, m_isVaArgs);
 	llvm::Function* fun = llvm::Function::Create(ft,
 		llvm::Function::ExternalLinkage,
-		m_name,
+		getLLVMName(),
 		g_module->getLLVMModule());
 
 	fun->setCallingConv(getCallingConvention(m_qualities.getCallingConvention()));
@@ -58,7 +58,7 @@ llvm::Function* FunctionPrototype::generateImportedFromOtherModule(llvm::Module&
 	llvm::FunctionType* ft = llvm::FunctionType::get(m_returnType->to_llvm(), types, m_isVaArgs);
 	llvm::Function* fun = llvm::Function::Create(ft,
 		llvm::Function::ExternalLinkage,
-		m_name,
+		getLLVMName(),
 		thisModule);
 
 	fun->setCallingConv(getCallingConvention(m_qualities.getCallingConvention()));
@@ -73,6 +73,58 @@ llvm::Function* FunctionPrototype::generateImportedFromOtherModule(llvm::Module&
 		arg.setName(m_args[index++].name);
 
 	return fun;
+}
+
+i32 FunctionPrototype::getSuitableness(
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime
+) const {
+	auto isCT = [&](size_t i) -> bool {
+		if (i >= isCompileTime.size()) {
+			return false;
+		} else {
+			return isCompileTime[i];
+		}
+	};
+
+	// TODO: add consideration for default values of arguments
+	i32 result = 0;
+	if (m_isVaArgs && m_args.size() < argTypes.size()) {
+		result += 80192;
+	}
+
+	if (m_args.size() != argTypes.size() && !result) {
+		return -1;
+	}
+
+	for (size_t i = 0; i < m_args.size(); i++) {
+		if (i32 convertibility = evaluateConvertibility(argTypes[i], m_args[i].type, isCT(i));
+			convertibility >= 0 ) {
+			result += convertibility;
+		} else {
+			return -1;
+		}
+	}
+
+	return result;
+}
+
+std::string FunctionPrototype::getLLVMName() const {
+	if (m_qualities.isManglingOn() && m_name != "main") {
+		return genMangledName();
+	} else {
+		return m_name;
+	}
+}
+
+std::string FunctionPrototype::genMangledName() const {
+	std::string result = m_name + "$" + m_returnType->toMangleString();
+	
+	for (auto& arg : m_args) {
+		result.append("_").append(arg.type->toMangleString());
+	}
+
+	return result;
 }
 
 const std::string& FunctionPrototype::getName() const {

@@ -20,6 +20,19 @@ public:
 	llvm::Function* generate() const;
 	llvm::Function* generateImportedFromOtherModule(llvm::Module& thisModule) const;
 
+	// 0 is complete coincidence
+	// Otherwise - the score showing for how much is the function suitable, the lesser the better
+	// A negative value means that the function is not suitable for this arguments at all
+	i32 getSuitableness(
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime
+	) const;
+
+	// Returns mangled name or just name if the function has @nomangle annotation
+	std::string getLLVMName() const;
+
+	std::string genMangledName() const;
+
 	const std::string& getName() const;
 	void setName(const std::string& s);
 

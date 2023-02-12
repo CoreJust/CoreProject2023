@@ -38,6 +38,8 @@ std::string ErrorIDStrings[] = {
 	"E2001: No expression found where it is expected to be",
 	"E2002: Unexpected token",
 	"E2003: Unknown identifier; there is no such variable/function",
+	"E2004: There are multiple functions with such name; specify its argument types",
+	"E2005: No function exists that can be called with such arguments",
 
 	"E2101: Variable declared via keyword var must be initialized",
 	"E2102: Expression cannot be called; no operator () defined",

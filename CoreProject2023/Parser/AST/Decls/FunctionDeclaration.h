@@ -1,7 +1,7 @@
 #pragma once
 #include "Declaration.h"
 #include "../States/Statement.h"
-#include <Module/Function.h>
+#include <Module/Symbols/Function.h>
 
 class FunctionDeclaration : public Declaration {
 	FRIEND_CLASS_VISITORS

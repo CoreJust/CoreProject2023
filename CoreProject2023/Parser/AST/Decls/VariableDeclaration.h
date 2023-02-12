@@ -1,7 +1,7 @@
 #pragma once
 #include "Declaration.h"
 #include "../Exprs/Expression.h"
-#include <Module/Variable.h>
+#include <Module/Symbols/Variable.h>
 
 class VariableDeclaration : public Declaration {
 	FRIEND_CLASS_VISITORS

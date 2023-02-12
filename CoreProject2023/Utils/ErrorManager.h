@@ -43,6 +43,8 @@ enum ErrorID : u32 {
 	E2001_EXPRESSION_NOT_FOUND, // No expression where it is expected
 	E2002_UNEXPECTED_TOKEN, // Expected token not met
 	E2003_UNKNOWN_IDENTIFIER, // No such variable/function/type
+	E2004_MANY_FUNCTIONS_WITH_SUCH_NAME, // Many functions found while searching by name
+	E2005_NO_SUITABLE_FUNCTION, // No function can be called with such argument types
 
 	E2101_VAR_HAS_NO_INIT, // Variable declared through var cannot deduce type without initial value
 	E2102_CANNOT_BE_CALLED, // Expression cannot be called through -expr-(...)

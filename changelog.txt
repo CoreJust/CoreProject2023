@@ -138,6 +138,15 @@ Initial development
 	Commited as "Fixed mutliline comments, added multiline string literals"
 	
 	Added @thread_local for global variables
+	Created module LLVMGlobals for global variables (moved from INode)
 	Some refactoring
 
 	Commited as "Refactoring, @thread_local annotation"
+
+	Added name mangling for functions
+
+12.02.2023
+	Completely implemented function overloading
+	Fixed bug with const compile-time str8 to str8 conversion (failed with error)
+
+	Commited as "Function overloading"

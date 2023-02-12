@@ -1,6 +1,6 @@
 #pragma once
 #include "Expression.h"
-#include <Module/Function.h>
+#include <Module/Symbols/Function.h>
 
 class FunctionExpr final : public Expression {
 	FRIEND_CLASS_VISITORS

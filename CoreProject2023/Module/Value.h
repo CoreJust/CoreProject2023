@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "BasicType.h"
+#include "Symbols/BasicType.h"
 
 constexpr size_t VALUE_UNION_DATA_SIZE = sizeof(std::string) / sizeof(u64);
 

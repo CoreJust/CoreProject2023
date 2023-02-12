@@ -310,6 +310,10 @@ llvm::Value* llvm_utils::convertValueTo(
 		return nullptr;
 	}
 
+	if (bfrom == bto && bfrom <= BasicType::STR32) {
+		return value;
+	}
+
 	// TODO: user-defined types
 
 	// For integral (non-user-defined) types

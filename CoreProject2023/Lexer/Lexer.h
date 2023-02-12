@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <Utils/ErrorManager.h>
-#include <Module/Annotations.h>
+#include <Module/Symbols/Annotations.h>
 #include "Token.h"
 
 /*

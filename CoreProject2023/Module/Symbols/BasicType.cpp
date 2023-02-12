@@ -1,5 +1,5 @@
 #include "BasicType.h"
-#include "LLVMGlobals.h"
+#include "../LLVMGlobals.h"
 
 std::strong_ordering operator<=>(BasicType left, BasicType right) {
     return u8(left) <=> u8(right);

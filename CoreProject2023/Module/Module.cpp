@@ -145,9 +145,29 @@ SymbolType Module::getSymbolType(const std::string& moduleAlias, const std::stri
 	return SymbolType::NO_SYMBOL;
 }
 
-Function* Module::getFunction(const std::string& name) {
-	for (ModuleSymbolsUnit* unit : m_symbols.at("")) {
+Function* Module::getFunction(const std::string& moduleAlias, const std::string& name) {
+	Function* result = nullptr;
+	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleAlias)) {
 		if (auto fun = unit->getFunction(name); fun != nullptr) {
+			if (result != nullptr) {
+				return nullptr;
+			}
+
+			result = fun;
+		}
+	}
+
+	return result;
+}
+
+Function* Module::getFunction(
+	const std::string& moduleName,
+	const std::string& name,
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime
+) {
+	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleName)) {
+		if (auto fun = unit->getFunction(name, argTypes, isCompileTime); fun != nullptr) {
 			return fun;
 		}
 	}
@@ -155,14 +175,25 @@ Function* Module::getFunction(const std::string& name) {
 	return nullptr;
 }
 
-Function* Module::getFunction(const std::string& moduleAlias, const std::string& name) {
-	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleAlias)) {
-		if (auto fun = unit->getFunction(name); fun != nullptr) {
-			return fun;
+Function* Module::chooseFunction(
+	const std::string& moduleName,
+	const std::string& name,
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime
+) {
+	Function* result = nullptr;
+	i32 bestScore = -1;
+	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleName)) {
+		if (auto fun = unit->chooseFunction(name, argTypes, isCompileTime); fun != nullptr) {
+			i32 score = fun->prototype.getSuitableness(argTypes, isCompileTime);
+			if (result == nullptr || score < bestScore) {
+				bestScore = score;
+				result = fun;
+			}
 		}
 	}
 
-	return nullptr;
+	return result;
 }
 
 Variable* Module::getVariable(const std::string& name) {

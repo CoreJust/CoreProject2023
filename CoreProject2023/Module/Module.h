@@ -48,8 +48,25 @@ public:
 	SymbolType getSymbolType(const std::string& name) const;
 	SymbolType getSymbolType(const std::string& moduleAlias, const std::string& name) const;
 
-	Function* getFunction(const std::string& name);
-	Function* getFunction(const std::string& moduleAlias, const std::string& name);
+	// Tries to get a function by name
+	// Returns nullptr if nothing found or more than one function with such name exist
+	Function* getFunction(const std::string& moduleName, const std::string& name);
+
+	// Finds the function with the name and exactly argTypes
+	Function* getFunction(
+		const std::string& moduleName,
+		const std::string& name,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime
+	);
+
+	// Chooses the most suitable function with name for argTypes
+	Function* chooseFunction(
+		const std::string& moduleName,
+		const std::string& name,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime
+	);
 	Variable* getVariable(const std::string& name);
 	Variable* getVariable(const std::string& moduleAlias, const std::string& name);
 	TypeNode* getType(const std::string& name);

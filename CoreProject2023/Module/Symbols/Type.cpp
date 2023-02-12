@@ -23,12 +23,37 @@ bool Type::equals(const std::unique_ptr<Type>& other) const {
 	return true;
 }
 
+i32 Type::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+	if (basicType != other->basicType) {
+		return -1;
+	}
+
+	if (isConst) {
+		return other->isConst ? 0 : -1;
+	}
+
+	return other->isConst ? 1 : 0;
+}
+
 llvm::Type* Type::to_llvm() const {
 	return basicTypeToLLVM(basicType);
 }
 
 std::string Type::toString() const {
 	return getBasicTypeNode(basicType).name;
+}
+
+std::string Type::toMangleString() const {
+	if (basicType > BasicType::STR32) {
+		return "";
+	}
+
+	static std::string MANGLED_TYPE_NAMES[] = {
+		"_v", "_i8", "_i16", "_i32", "_i64", "_u8", "_u16", "_u32", "_u64",
+		"_f32", "_f64", "_u1", "_c8", "_c16", "_c32", "_str8", "_str16", "_str32"
+	};
+
+	return MANGLED_TYPE_NAMES[(u8)basicType];
 }
 
 u64 Type::getBitSize() const {
@@ -58,12 +83,38 @@ bool ArrayType::equals(const std::unique_ptr<Type>& other) const {
 	return size == arrType->size;
 }
 
+i32 ArrayType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+	if (other->basicType != BasicType::ARRAY) {
+		return -1;
+	}
+
+	const ArrayType* arrType = (ArrayType*)other.get();
+	if (arrType->size != size) {
+		return false;
+	}
+
+	i32 value = elementType->equalsOrLessConstantThan(arrType->elementType);
+	if (value < 0) {
+		return value;
+	}
+
+	if (isConst) {
+		return value + (other->isConst ? 0 : -1);
+	}
+
+	return value + (other->isConst ? 1 : 0);
+}
+
 llvm::Type* ArrayType::to_llvm() const {
 	return llvm::ArrayType::get(elementType->to_llvm(), size);
 }
 
 std::string ArrayType::toString() const {
 	return elementType->toString() + "[" + std::to_string(size) + "]";
+}
+
+std::string ArrayType::toMangleString() const {
+	return elementType->toMangleString() + "[" + std::to_string(size) + "]";
 }
 
 u64 ArrayType::getBitSize() const {
@@ -80,13 +131,33 @@ std::unique_ptr<Type> PointerType::copy() const {
 }
 
 bool PointerType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) return false;
+	if (!Type::equals(other)) {
+		return false;
+	}
 
 	const PointerType* ptrType = (PointerType*)other.get();
 	if (!elementType->equals(ptrType->elementType))
 		return false;
 
 	return true;
+}
+
+i32 PointerType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+	if (basicType != other->basicType) {
+		return -1;
+	}
+
+	const PointerType* ptrType = (PointerType*)other.get();
+	i32 value = elementType->equalsOrLessConstantThan(ptrType->elementType);
+	if (value < 0) {
+		return value;
+	}
+
+	if (isConst) {
+		return value + (other->isConst ? 0 : -1);
+	}
+
+	return value + (other->isConst ? 1 : 0);
 }
 
 llvm::Type* PointerType::to_llvm() const {
@@ -116,8 +187,16 @@ llvm::Type* PointerType::to_llvm() const {
 	}
 }
 
+std::string POINTER_TYPE_MANGLE_STRING[] = { // starting from 19
+	"[]", "*", "&", "&&", "?"
+};
+
 std::string PointerType::toString() const {
-	return elementType->toString() + "*";
+	return elementType->toString() + POINTER_TYPE_MANGLE_STRING[(u8)basicType - 19];
+}
+
+std::string PointerType::toMangleString() const {
+	return elementType->toMangleString() + POINTER_TYPE_MANGLE_STRING[(u8)basicType - 19];
 }
 
 u64 PointerType::getBitSize() const {
@@ -146,11 +225,14 @@ std::unique_ptr<Type> TupleType::copy() const {
 }
 
 bool TupleType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) return false;
+	if (!Type::equals(other)) {
+		return false;
+	}
 
 	const TupleType* tupType = (TupleType*)other.get();
-	if (subTypes.size() != tupType->subTypes.size())
+	if (subTypes.size() != tupType->subTypes.size()) {
 		return false;
+	}
 
 	for (size_t i = 0; i < subTypes.size(); i++) {
 		if (!subTypes[i]->equals(tupType->subTypes[i])) {
@@ -159,6 +241,32 @@ bool TupleType::equals(const std::unique_ptr<Type>& other) const {
 	}
 
 	return true;
+}
+
+i32 TupleType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+	if (basicType != other->basicType) {
+		return -1;
+	}
+
+	const TupleType* tupType = (TupleType*)other.get();
+	if (subTypes.size() != tupType->subTypes.size())
+		return -1;
+
+	i32 value = 0;
+	for (size_t i = 0; i < subTypes.size(); i++) {
+		i32 subVal = subTypes[i]->equalsOrLessConstantThan(tupType->subTypes[i]);
+		if (subVal < 0) {
+			return -1;
+		}
+
+		value += subVal;
+	}
+
+	if (isConst) {
+		return value + (other->isConst ? 0 : -1);
+	}
+
+	return value + (other->isConst ? 1 : 0);
 }
 
 llvm::Type* TupleType::to_llvm() const {
@@ -177,6 +285,16 @@ std::string TupleType::toString() const {
 	}
 
 	result.pop_back();
+	result.back() = '>';
+	return result;
+}
+
+std::string TupleType::toMangleString() const {
+	std::string result = "tup<";
+	for (auto& type : subTypes) {
+		result.append(type->toMangleString());
+	}
+
 	result.back() = '>';
 	return result;
 }
@@ -217,13 +335,17 @@ bool FunctionType::equals(const std::unique_ptr<Type>& other) const {
 	if (!Type::equals(other)) return false;
 
 	const FunctionType* funcType = (FunctionType*)other.get();
-	if (isVaArgs != funcType->isVaArgs) return false;
-
-	if (argTypes.size() != funcType->argTypes.size())
+	if (isVaArgs != funcType->isVaArgs) {
 		return false;
+	}
 
-	if (!returnType->equals(funcType->returnType))
+	if (argTypes.size() != funcType->argTypes.size()) {
 		return false;
+	}
+
+	if (!returnType->equals(funcType->returnType)) {
+		return false;
+	}
 
 	for (size_t i = 0; i < argTypes.size(); i++) {
 		if (!argTypes[i]->equals(funcType->argTypes[i])) {
@@ -232,6 +354,41 @@ bool FunctionType::equals(const std::unique_ptr<Type>& other) const {
 	}
 
 	return true;
+}
+
+i32 FunctionType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+	if (basicType != other->basicType) {
+		return -1;
+	}
+
+	const FunctionType* funcType = (FunctionType*)other.get();
+	if (isVaArgs != funcType->isVaArgs) {
+		return -1;
+	}
+
+	if (argTypes.size() != funcType->argTypes.size()) {
+		return -1;
+	}
+
+	i32 value = returnType->equalsOrLessConstantThan(funcType->returnType);
+	if (value < 0) {
+		return -1;
+	}
+
+	for (size_t i = 0; i < argTypes.size(); i++) {
+		i32 subVal = argTypes[i]->equalsOrLessConstantThan(funcType->argTypes[i]);
+		if (subVal < 0) {
+			return -1;
+		}
+
+		value += subVal;
+	}
+
+	if (isConst) {
+		return value + (other->isConst ? 0 : -1);
+	}
+
+	return value + (other->isConst ? 1 : 0);
 }
 
 llvm::FunctionType* FunctionType::to_llvmFunctionType() const {
@@ -263,6 +420,20 @@ std::string FunctionType::toString() const {
 	return result;
 }
 
+std::string FunctionType::toMangleString() const {
+	std::string result = "func" + returnType->toMangleString() + "(";
+	for (auto& type : argTypes) {
+		result.append(type->toMangleString());
+	}
+
+	if (isVaArgs) {
+		result += "_...";
+	}
+
+	result += ')';
+	return result;
+}
+
 u64 FunctionType::getBitSize() const {
 	return 64; // pointer
 }
@@ -276,7 +447,7 @@ bool isImplicitlyConverible(
 		return true;
 	}
 
-	if (from->equals(to)) {
+	if (from->equalsOrLessConstantThan(to) >= 0) {
 		return true;
 	}
 
@@ -364,6 +535,44 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	}
 
 	return false;
+}
+
+i32 evaluateConvertibility(
+	const std::unique_ptr<Type>& from,
+	const std::unique_ptr<Type>& to,
+	bool isFromCompileTime
+) {
+	BasicType bfrom = from->basicType;
+	BasicType bto = to->basicType;
+
+	if (isReference(bfrom) && !isReference(bto)) {
+		return evaluateConvertibility(((PointerType*)from.get())->elementType, to);
+	}
+
+	if (i32 value = from->equalsOrLessConstantThan(to); value >= 0) {
+		return value;
+	}
+
+	// Prefered implicit conversions
+	if ((isInteger(bfrom) && isInteger(bto))
+		|| (isChar(bfrom) && isChar(bto))
+		|| (isFloat(bfrom) && isFloat(bto))) {
+		if (from->getBitSize() < to->getBitSize()) {
+			return 1024;
+		}
+	}
+
+	if (isString(bfrom) && isString(bto)) {
+		if (bfrom < bto) {
+			return 1024;
+		}
+	}
+
+	if (isImplicitlyConverible(from, to, isFromCompileTime)) {
+		return 2048;
+	}
+
+	return -1;
 }
 
 std::unique_ptr<Type> findCommonType(

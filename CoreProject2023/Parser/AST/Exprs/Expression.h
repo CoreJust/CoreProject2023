@@ -1,6 +1,6 @@
 #pragma once
 #include "../INode.h"
-#include <Module/Type.h>
+#include <Module/Symbols/Type.h>
 
 namespace llvm {
 	class Value;

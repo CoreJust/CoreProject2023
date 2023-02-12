@@ -50,11 +50,11 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 		m_pos++;
 	}
 
-	Function* function = g_module->getFunction(alias);
-
 	// Arguments
+	std::vector<std::unique_ptr<Type>> argTypes;
 	g_module->addBlock();
 	consume(TokenType::LPAR);
+
 	if (!match(TokenType::RPAR)) {
 		do {
 			if (!match(TokenType::ETCETERA))  {
@@ -67,6 +67,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 					qualities.setVariableType(VariableType::CONST);
 				}
 
+				argTypes.push_back(type->copy());
 				std::string name = consume(TokenType::WORD).data;
 				g_module->addLocalVariable(name, std::move(type), qualities, nullptr);
 			}
@@ -74,6 +75,8 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 
 		consume(TokenType::RPAR);
 	}
+
+	Function* function = g_module->getFunction("", alias, argTypes, { });
 
 	TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
 	if (function->prototype.getQualities().isNative()) {
@@ -498,6 +501,8 @@ std::unique_ptr<Expression> Parser::primary() {
 		std::string name = peek(-1).data;
 		std::string moduleName = "";
 		SymbolType symType = g_module->getSymbolType(name);
+
+		// Module
 		if (symType == SymbolType::MODULE) {
 			consume(TokenType::DOT);
 			moduleName = std::move(name);
@@ -505,13 +510,13 @@ std::unique_ptr<Expression> Parser::primary() {
 			symType = g_module->getSymbolType(moduleName, name);
 		}
 
+		// Variable
 		if (symType == SymbolType::VARIABLE) {
 			Variable* variable = g_module->getVariable(moduleName, name);
 			return std::make_unique<VariableExpr>(std::move(moduleName), variable);
-		} else if (symType == SymbolType::FUNCTION) {
-			Function* function = g_module->getFunction(moduleName, name);
-			return std::make_unique<FunctionExpr>(function);
-		} else if (symType == SymbolType::NO_SYMBOL) {
+		} else if (symType == SymbolType::FUNCTION) { // Function
+			return parseFunctionValue(std::move(moduleName), std::move(name));
+		} else if (symType == SymbolType::NO_SYMBOL) { // No such symbol
 			ErrorManager::parserError(
 				ErrorID::E2003_UNKNOWN_IDENTIFIER,
 				getCurrLine(),
@@ -527,6 +532,89 @@ std::unique_ptr<Expression> Parser::primary() {
 	);
 
 	return nullptr;
+}
+
+std::unique_ptr<Expression> Parser::parseFunctionValue(std::string moduleName, std::string name) {
+	if (match(TokenType::LESS)) { // template
+		std::vector<std::unique_ptr<Type>> argTypes;
+		if (!match(TokenType::BIGGER)) {
+			do {
+				argTypes.push_back(TypeParser(m_toks, m_pos).consumeType());
+			} while (match(TokenType::COMMA));
+			consume(TokenType::BIGGER);
+		}
+
+		Function* func = g_module->getFunction(moduleName, name, argTypes, {});
+		if (func == nullptr) {
+			functionCallError(moduleName, name, argTypes, true);
+			return nullptr;
+		} else {
+			return std::make_unique<FunctionExpr>(func);
+		}
+	} else if (match(TokenType::LPAR)) { // function call
+		std::vector<std::unique_ptr<Expression>> args;
+		std::vector<std::unique_ptr<Type>> argTypes;
+		std::vector<bool> isCompileTime;
+
+		while (!match(TokenType::RPAR)) {
+			args.push_back(expression());
+			argTypes.push_back(args.back()->getType()->copy());
+			isCompileTime.push_back(args.back()->isCompileTime());
+			if (peek().type != TokenType::RPAR) {
+				consume(TokenType::COMMA);
+			}
+		}
+
+		Function* func = g_module->chooseFunction(moduleName, name, argTypes, isCompileTime);
+		if (func == nullptr) {
+			functionCallError(moduleName, name, argTypes, false);
+			return nullptr;
+		}
+
+		std::unique_ptr<Expression> functionExpr = std::make_unique<FunctionExpr>(func);
+		return std::make_unique<FunctionCallExpr>(std::move(functionExpr), std::move(args));
+	} else {
+		Function* func = g_module->getFunction(moduleName, name);
+		if (func == nullptr) {
+			functionCallError(moduleName, name, {}, true);
+			return nullptr;
+		} else {
+			return std::make_unique<FunctionExpr>(func);
+		}
+	}
+}
+
+void Parser::functionCallError(
+	std::string moduleName, 
+	std::string name, 
+	const std::vector<std::unique_ptr<Type>>& argTypes, 
+	bool isMultipleFunctionsFound
+) {
+	std::string error = "function: ";
+	if (moduleName.size()) {
+		error += moduleName;
+		error += '.';
+	}
+
+	error += name;
+	error += isMultipleFunctionsFound ? '<' : '(';
+	for (auto& type : argTypes) {
+		error += type->toString();
+		error += ", ";
+	}
+
+	error.pop_back();
+	error.back() = isMultipleFunctionsFound ? '>' : ')';
+
+	ErrorID errorID = isMultipleFunctionsFound ?
+		ErrorID::E2004_MANY_FUNCTIONS_WITH_SUCH_NAME
+		: ErrorID::E2005_NO_SUITABLE_FUNCTION;
+
+	ErrorManager::parserError(
+		errorID,
+		getCurrLine(),
+		error
+	);
 }
 
 void Parser::skipAnnotation() {

@@ -40,13 +40,59 @@ SymbolType ModuleSymbolsUnit::getSymbolType(const std::string& name) const {
 }
 
 Function* ModuleSymbolsUnit::getFunction(const std::string& name) {
+	Function* result = nullptr;
 	for (auto& fun : m_functions) {
 		if (fun.prototype.getName() == name) {
-			return &fun;
+			if (result != nullptr) {
+				return nullptr;
+			}
+
+			result = &fun;
+		}
+	}
+
+	return result;
+}
+
+Function* ModuleSymbolsUnit::getFunction(
+	const std::string& name,
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime
+) {
+	for (auto& fun : m_functions) {
+		if (fun.prototype.getName() == name) {
+			i32 score = fun.prototype.getSuitableness(argTypes, isCompileTime);
+			if (score == 0) {
+				return &fun;
+			}
 		}
 	}
 
 	return nullptr;
+}
+
+Function* ModuleSymbolsUnit::chooseFunction(
+	const std::string& name,
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime
+) {
+	Function* result = nullptr;
+	i32 bestScore = -1;
+	for (auto& fun : m_functions) {
+		if (fun.prototype.getName() == name) {
+			i32 score = fun.prototype.getSuitableness(argTypes, isCompileTime);
+			if (score < 0) {
+				continue;
+			}
+
+			if (result == nullptr || score < bestScore) {
+				bestScore = score;
+				result = &fun;
+			}
+		}
+	}
+
+	return result;
 }
 
 Variable* ModuleSymbolsUnit::getVariable(const std::string& name) {

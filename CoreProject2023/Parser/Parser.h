@@ -40,6 +40,16 @@ private:
 	std::unique_ptr<Expression> postfix();
 	std::unique_ptr<Expression> primary();
 
+	std::unique_ptr<Expression> parseFunctionValue(std::string moduleName, std::string name);
+
+private:
+	void functionCallError(
+		std::string moduleName,
+		std::string name,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		bool isMultipleFunctionsFound // true if searched exact functions, false if tried to chooseS
+	);
+
 private:
 	void skipAnnotation();
 

@@ -1,6 +1,6 @@
 #pragma once
-#include "Variable.h"
-#include "Function.h"
+#include "Symbols/Variable.h"
+#include "Symbols/Function.h"
 
 class Expression;
 

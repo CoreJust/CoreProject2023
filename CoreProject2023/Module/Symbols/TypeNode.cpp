@@ -46,7 +46,16 @@ TypeNode& TypeNode::operator=(TypeNode&& other) {
     fields = std::move(other.fields);
     methods = std::move(other.methods);
     internalTypes = std::move(other.internalTypes);
+
     return *this;
+}
+
+std::unique_ptr<Type> TypeNode::genType(std::shared_ptr<TypeNode> typeNode, bool isConst) {
+    if (typeNode->type && typeNode->type->basicType == BasicType::TYPE_NODE) {
+        return typeNode->type->copy();
+    } else {
+        return std::make_unique<TypeNodeType>(std::move(typeNode), isConst);
+    }
 }
 
 void initBasicTypeNodes() {

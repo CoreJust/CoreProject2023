@@ -72,6 +72,10 @@ void Visitor::visit(UnaryExpr* expr, std::unique_ptr<Expression>& node) {
 	expr->m_expr->accept(this, expr->m_expr);
 }
 
+void Visitor::visit(FieldAccessExpr* expr, std::unique_ptr<Expression>& node) {
+	expr->m_expr->accept(this, expr->m_expr);
+}
+
 void Visitor::visit(TypeConversionExpr* expr, std::unique_ptr<Expression>& node) {
 	expr->m_expr->accept(this, expr->m_expr);
 }

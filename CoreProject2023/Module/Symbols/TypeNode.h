@@ -29,6 +29,8 @@ struct TypeNode {
 	TypeNode(TypeNode&& other);
 
 	TypeNode& operator=(TypeNode&& other);
+
+	static std::unique_ptr<Type> genType(std::shared_ptr<TypeNode> typeNode, bool isConst = false);
 };
 
 void initBasicTypeNodes();

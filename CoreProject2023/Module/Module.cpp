@@ -18,9 +18,14 @@ Module::Module(
 	m_path(path), 
 	m_qualities(qualities), 
 	m_importedModules(std::move(imports)),
-	m_llvmModule(std::make_unique<llvm::Module>(name, g_context)) 
+	m_llvmModule(std::make_unique<llvm::Module>(name, g_context)),
+	m_ownSymbols(std::make_unique<ModuleSymbols>())
 {
-	m_symbols[""] = {};
+	m_symbols[""] = {
+		&m_ownSymbols->privateSymbols,
+		&m_ownSymbols->publicOnceSymbols,
+		&m_ownSymbols->publicSymbols
+	};
 }
 
 Module::Module(Module& other) 
@@ -28,35 +33,76 @@ Module::Module(Module& other)
 
 }
 
-void Module::loadSymbols() {
-	// Loading this module's symbols
-	auto& thisModule = g_symbolTable.getModuleSymbols(m_path);
-	m_symbols[""] = { 
-		&thisModule.privateSymbols, 
-		&thisModule.publicOnceSymbols, 
-		&thisModule.publicSymbols 
-	};
+void Module::loadImportsList() {
+	if (m_allTheImportedModules.size()) {
+		return;
+	}
 
+	m_allTheImportedModules.insert(m_path);
 	for (auto& importedModulePath : m_importedModules) {
 		ModuleRef module = g_moduleList.getModule(importedModulePath);
-
-		// Loading directly imported module's symbols
-		auto& moduleSymbols = g_symbolTable.getModuleSymbols(importedModulePath);
-		addModuleSymbolsUnit(module->getName(), &moduleSymbols.publicOnceSymbols);
-		addModuleSymbolsUnit(module->getName(), &moduleSymbols.publicSymbols);
-		m_allTheImportedModules[importedModulePath] = &moduleSymbols;
+		m_allTheImportedModules.insert(module->getPath());
+		m_symbols[module->getName()] = { };
 
 		// Loading indirectly imported module's symbols
-		module->loadSymbolsIfNotLoaded();
+		module->loadImportsList();
 		const auto& subimportedModules = module->getAllTheImportedModules();
 
 		for (auto& subimportedModule : subimportedModules) {
-			if (!m_allTheImportedModules.contains(subimportedModule.first)) {
-				m_allTheImportedModules[subimportedModule.first] = subimportedModule.second;
+			if (!m_allTheImportedModules.contains(subimportedModule)) {
+				m_allTheImportedModules.insert(subimportedModule);
+			}
+		}
+	}
+}
+
+void Module::loadSymbols() {
+	if (m_areSymbolsLoaded) {
+		return;
+	} else {
+		m_areSymbolsLoaded = true;
+		m_allTheImportedModules.clear();
+	}
+
+	m_allTheImportedModules.insert(m_path);
+	for (auto& importedModulePath : m_importedModules) {
+		ModuleRef module = g_moduleList.getModule(importedModulePath);
+		module->loadSymbols();
+
+		// Loading directly imported module's symbols
+		auto& moduleSymbols = module->getOwnSymbols();
+		addModuleSymbolsUnit(module->getName(), &moduleSymbols.publicOnceSymbols);
+		addModuleSymbolsUnit(module->getName(), &moduleSymbols.publicSymbols);
+		m_allTheImportedModules.insert(module->getPath());
+
+		// Loading indirectly imported module's symbols
+		const auto& subimportedModules = module->getAllTheImportedModules();
+
+		for (auto& subimportedModule : subimportedModules) {
+			if (!m_allTheImportedModules.contains(subimportedModule)) {
+				m_allTheImportedModules.insert(subimportedModule);
 				addModuleSymbolsUnit(
-					g_moduleList.getModule(subimportedModule.first)->getName(),
-					&subimportedModule.second->publicSymbols
+					g_moduleList.getModule(subimportedModule)->getName(),
+					&g_moduleList.getModule(subimportedModule)->getOwnSymbols().publicSymbols
 				);
+			}
+		}
+	}
+}
+
+void Module::loadAsLLVM() {
+	loadThisModuleUnit(&m_ownSymbols->privateSymbols);
+	loadThisModuleUnit(&m_ownSymbols->publicOnceSymbols);
+	loadThisModuleUnit(&m_ownSymbols->publicSymbols);
+
+	for (size_t i = 3; i < m_symbols[""].size(); i++) {
+		loadModuleSymbolsAsLLVM(m_symbols[""][i]);
+	}
+
+	for (auto& units : m_symbols) {
+		if (units.first != "") {
+			for (auto& unit : units.second) {
+				loadModuleSymbolsAsLLVM(unit);
 			}
 		}
 	}
@@ -167,6 +213,10 @@ SymbolType Module::getSymbolType(const std::string& moduleAlias, const std::stri
 	return SymbolType::NO_SYMBOL;
 }
 
+Function* Module::getFunction(u64 tokenPos) {
+	return m_ownSymbols->getFunction(tokenPos);
+}
+
 Function* Module::getFunction(const std::string& moduleAlias, const std::string& name) {
 	Function* result = nullptr;
 	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleAlias)) {
@@ -205,12 +255,17 @@ Function* Module::chooseFunction(
 ) {
 	Function* result = nullptr;
 	i32 bestScore = -1;
+
 	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleName)) {
 		if (auto fun = unit->chooseFunction(name, argTypes, isCompileTime); fun != nullptr) {
 			i32 score = fun->prototype.getSuitableness(argTypes, isCompileTime);
 			if (result == nullptr || score < bestScore) {
 				bestScore = score;
 				result = fun;
+
+				if (score == 0) {
+					return fun;
+				}
 			}
 		}
 	}
@@ -218,20 +273,12 @@ Function* Module::chooseFunction(
 	return result;
 }
 
+Variable* Module::getVariable(u64 tokenPos) {
+	return m_ownSymbols->getVariable(tokenPos);
+}
+
 Variable* Module::getVariable(const std::string& name) {
-	for (auto it = m_localVariables.rbegin(); it != m_localVariables.rend(); it++) {
-		if (it->name == name) {
-			return &*it;
-		}
-	}
-
-	for (ModuleSymbolsUnit* unit : m_symbols.at("")) {
-		if (auto var = unit->getVariable(name); var != nullptr) {
-			return var;
-		}
-	}
-
-	return nullptr;
+	return getVariable("", name);
 }
 
 Variable* Module::getVariable(const std::string& moduleAlias, const std::string& name) {
@@ -252,17 +299,15 @@ Variable* Module::getVariable(const std::string& moduleAlias, const std::string&
 	return nullptr;
 }
 
-TypeNode* Module::getType(const std::string& name) {
-	for (ModuleSymbolsUnit* unit : m_symbols.at("")) {
-		if (auto type = unit->getType(name); type != nullptr) {
-			return type;
-		}
-	}
-
-	return nullptr;
+std::shared_ptr<TypeNode> Module::getType(u64 tokenPos) {
+	return m_ownSymbols->getType(tokenPos);
 }
 
-TypeNode* Module::getType(const std::string& moduleAlias, const std::string& name) {
+std::shared_ptr<TypeNode> Module::getType(const std::string& name) {
+	return getType("", name);
+}
+
+std::shared_ptr<TypeNode> Module::getType(const std::string& moduleAlias, const std::string& name) {
 	for (ModuleSymbolsUnit* unit : m_symbols.at(moduleAlias)) {
 		if (auto type = unit->getType(name); type != nullptr) {
 			return type;
@@ -284,35 +329,40 @@ ModuleQualities Module::getQualities() const noexcept {
 	return m_qualities;
 }
 
-const std::map<std::string, ModuleSymbols*>& Module::getAllTheImportedModules() const {
+const std::vector<std::string>& Module::getImports() const noexcept {
+	return m_importedModules;
+}
+
+const std::set < std::string>& Module::getAllTheImportedModules() const {
 	return m_allTheImportedModules;
+}
+
+ModuleSymbols& Module::getOwnSymbols() {
+	return *m_ownSymbols;
 }
 
 llvm::Module& Module::getLLVMModule() {
 	return *m_llvmModule;
 }
 
-bool Module::areSymbolsLoaded() const {
-	return !m_symbols.empty();
-}
-
-void Module::loadSymbolsIfNotLoaded() {
-	if (!areSymbolsLoaded()) {
-		loadSymbols();
+void Module::loadThisModuleUnit(ModuleSymbolsUnit* unit) {
+	// Addind to module's LLVM IR
+	for (Function& func : unit->getFunctions()) {
+		func.functionValue = func.prototype.generate();
 	}
 }
 
 void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* unit) {
 	if (unit->isEmpty()) {
-		if (!m_symbols.contains(alias)) {
-			m_symbols[alias] = { };
-		}
-
 		return;
 	}
 
-	// Addind to module's LLVM IR
-	ModuleSymbolsUnit *newUnit = new ModuleSymbolsUnit();
+	// Adding to the module's symbols
+	m_symbols[alias].push_back(unit);
+}
+
+void Module::loadModuleSymbolsAsLLVM(ModuleSymbolsUnit*& unit) {
+	ModuleSymbolsUnit* newUnit = new ModuleSymbolsUnit();
 	for (Variable& var : unit->getVariables()) {
 		newUnit->addVariable(var.name, std::unique_ptr<Type>(var.type->copy()),
 			var.qualities, llvm_utils::addGlobalVariableFromOtherModule(var, *m_llvmModule));
@@ -320,8 +370,8 @@ void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* u
 
 	for (Function& func : unit->getFunctions()) {
 		newUnit->addFunction(
-				func.prototype,
-				func.prototype.generateImportedFromOtherModule(*m_llvmModule)
+			func.prototype,
+			func.prototype.generateImportedFromOtherModule(*m_llvmModule)
 		);
 	}
 
@@ -329,12 +379,7 @@ void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* u
 		newUnit->addType(typeNode);
 	}
 
-	// Adding to the module's symbols
-	if (m_symbols.contains(alias)) {
-		m_symbols[alias].push_back(newUnit);
-	} else {
-		m_symbols[alias] = { newUnit };
-	}
+	unit = newUnit;
 }
 
 std::string Module::getModuleNameFromPath(const std::string& path) {

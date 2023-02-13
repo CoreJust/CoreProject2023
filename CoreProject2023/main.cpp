@@ -1,9 +1,10 @@
 #include <iostream>
 #include "Compiler.h"
+#include <stdlib.h>
 
-// TODO: add expressions, add aliases, safe/unsafe code, refactor operation expressions, arguments' default values
+// TODO: refactor operation expressions, arguments' default values
 // Long term TODO: project settings file, implement optionals, add ct preprocesing
-// Current tasks: add user-defined types, add va_args (in user-defined funcs as well), implement crt
+// Current tasks: constructors, struct methods, private/public, static, implement crt, expressions, safe/unsafe code, templates
 // To test: strings, format strings, str's convertions
 
 int main() {

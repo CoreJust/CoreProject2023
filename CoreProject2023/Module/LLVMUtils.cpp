@@ -186,6 +186,17 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 
 			return llvm::ConstantStruct::get((llvm::StructType*)llvmType, init);
 		};
+		case BasicType::STRUCT: {
+			std::vector<llvm::Constant*> init;
+			StructType* structType = (StructType*)type.get();
+			init.reserve(structType->fieldTypes.size());
+			for (auto& fieldType : structType->fieldTypes) {
+				init.push_back(getDefaultValueOf(fieldType));
+			}
+
+			return llvm::ConstantStruct::get((llvm::StructType*)llvmType, init);
+		};
+		case BasicType::TYPE_NODE: return getDefaultValueOf(((TypeNodeType*)type.get())->node->type);
 			// TODO: implement for user-defined types
 	default: break;
 	}
@@ -303,6 +314,10 @@ llvm::Value* llvm_utils::convertValueTo(
 	const std::unique_ptr<Type>& from, 
 	llvm::Value* value
 ) {
+	if (to->equalsOrLessConstantThan(from) >= -4096) { // equals not considering constantness
+		return value;
+	}
+
 	BasicType bfrom = from->basicType;
 	BasicType bto = to->basicType;
 
@@ -321,6 +336,12 @@ llvm::Value* llvm_utils::convertValueTo(
 		return convertValueTo(to, ((PointerType*)from.get())->elementType, value);
 	} else if (isReference(bto)) {
 		return convertValueTo(((PointerType*)to.get())->elementType, from, value);
+	}
+
+	if (bfrom == BasicType::TYPE_NODE) {
+		return convertValueTo(((TypeNodeType*)from.get())->node->type, to, value);
+	} else if (bto == BasicType::TYPE_NODE) {
+		return convertValueTo(from, ((TypeNodeType*)to.get())->node->type, value);
 	}
 
 	if (bto == BasicType::BOOL) {
@@ -367,6 +388,16 @@ llvm::Value* llvm_utils::convertValueTo(
 	} else if (isString(bfrom)) {
 		if (bto == BasicType::POINTER) {
 			return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(0)); // getting .data
+		}
+	}
+
+	if (bfrom == BasicType::STRUCT && bto == BasicType::TUPLE) {
+		if (((StructType*)from.get())->isEquivalentTo(((TupleType*)to.get())->subTypes)) {
+			return value;
+		}
+	} else if (bfrom == BasicType::TUPLE && bto == BasicType::STRUCT) {
+		if (((TupleType*)from.get())->isEquivalentTo(((StructType*)to.get())->fieldTypes)) {
+			return value;
 		}
 	}
 

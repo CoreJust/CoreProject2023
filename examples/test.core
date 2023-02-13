@@ -3,15 +3,23 @@ import core.crt.cstdlib;
 
 use console;
 
-def test(i64 a, i64 b, i64 c) bool = a < b < c;
-
-use test as check;
+struct String {
+	c8* data;
+	u64 capacity;
+	u64 size;
+}
 
 def main() i32 {
-	cstdlib.size_t i = 0;
-	println(check(1, 2, 3));
-	println(check(1, 5, 3));
+	String str;
+	str.data = "Hello world";
+	console.println(str.data);
 	
-	cstdlib.system(c8*("pause"));
+	cstdlib.lldiv_t div = cstdlib.div(18i64, 5);
+	
+	console.print(div.quot);
+	console.print(" : ");
+	console.println(div.rem);
+	
+	cstdlib.system("pause");
 	return 0;
 }

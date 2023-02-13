@@ -84,6 +84,9 @@ Lexer::Lexer(const std::string& text)
 }
 
 std::vector<Token> Lexer::tokenize() {
+	skipModuleQualities();
+	skipImports();
+
 	while (m_pos < m_text.size()) {
 		nextToken();
 	}
@@ -91,9 +94,7 @@ std::vector<Token> Lexer::tokenize() {
 	return std::move(m_toks);
 }
 
-ModuleQualities Lexer::handleModuleQualities() {
-	ModuleQualities result;
-
+void Lexer::skipModuleQualities() {
 	// read annotations
 	while (m_pos < m_text.size()) {
 		skipWhitespaces(false);
@@ -112,82 +113,18 @@ ModuleQualities Lexer::handleModuleQualities() {
 		next();
 
 		skipWhitespaces(true);
-		if (m_pos >= m_text.size() || !(isalnum(m_text[m_pos]) || m_text[m_pos] == '_' || m_text[m_pos] == '&'))
-			ErrorManager::lexerError(
-				ErrorID::E1053_ANNOTATION_PARAMETER_UNSTATED, 
-				m_line, 
-				"the parameter of @set is unstated"
-			);
 
 		std::string parameter;
 		loadIdentifier(parameter);
 
 		skipWhitespaces(true);
-		if (m_pos >= m_text.size() || !(isalnum(m_text[m_pos]) || m_text[m_pos] == '_' || m_text[m_pos] == '&'))
-			ErrorManager::lexerError(
-				ErrorID::E1054_ANNOTATION_VALUE_UNSTATED, 
-				m_line, 
-				"the value of @set is unstated"
-			);
 
 		m_buffer.clear();
 		loadIdentifier(m_buffer);
-
-		// parse the annotation
-		if (parameter == "visibility") {
-			if (m_buffer == "public") {
-				result.setVisibility(Visibility::PUBLIC);
-			} else if (m_buffer == "private") {
-				result.setVisibility(Visibility::PRIVATE);
-			} else if (m_buffer == "direct_import") {
-				result.setVisibility(Visibility::DIRECT_IMPORT);
-			} else {
-				ErrorManager::lexerError(
-					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE,
-					m_line,
-					"@set visibility " + m_buffer
-				);
-			}
-		} else if (parameter == "safety") {
-			if (m_buffer == "safe") {
-				result.setSafety(Safety::SAFE);
-			} else if (m_buffer == "unsafe") {
-				result.setSafety(Safety::UNSAFE);
-			} else if (m_buffer == "safe_only") {
-				result.setSafety(Safety::SAFE_ONLY);
-			} else {
-				ErrorManager::lexerError(
-					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, 
-					m_line, 
-					"@set safety " + m_buffer
-				);
-			}
-		} else if (parameter == "mangling") {
-			if (m_buffer == "mangle") {
-				result.setMangling(true);
-			} else if (m_buffer == "nomangle") {
-				result.setMangling(false);
-			} else {
-				ErrorManager::lexerError(
-					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE, 
-					m_line, 
-					"@set mangling " + m_buffer
-				);
-			}
-		} else {
-			ErrorManager::lexerError(
-				ErrorID::E1055_UNKNOWN_ANNOTATION_PARAMETER, 
-				m_line, 
-				"@set " + m_buffer
-			);
-		}
 	}
-
-	return result;
 }
 
-std::vector<std::string> Lexer::handleImports() {
-	ImportsHandler imports;
+void Lexer::skipImports() {
 	while (m_pos < m_text.size()) {
 		skipWhitespaces(false);
 		if (m_pos < m_text.size() && m_text[m_pos] == '#') {
@@ -195,10 +132,11 @@ std::vector<std::string> Lexer::handleImports() {
 			continue;
 		}
 
-		if (m_pos < m_text.size() && m_text[m_pos] == 'i')
+		if (m_pos < m_text.size() && m_text[m_pos] == 'i') {
 			tokenizeWord();
-		else
+		} else {
 			break;
+		}
 
 		if (m_toks.back().type == TokenType::IMPORT) {
 			m_toks.pop_back();
@@ -208,28 +146,16 @@ std::vector<std::string> Lexer::handleImports() {
 			skipWhitespaces(true);
 
 			while (m_pos < m_text.size() && m_text[m_pos] != ';') {
-				if (m_text[m_pos] == '\n' || m_text[m_pos] == '\r') {
-					ErrorManager::lexerError(
-						ErrorID::E1002_NO_ENDING_SEMICOLON, 
-						m_line, 
-						"import " + m_buffer
-					);
-				}
-
 				m_buffer += m_text[m_pos]; // read the module to import
 				next();
 			}
 
 			next(); // skip ;
 			skipWhitespaces(false);
-
-			imports.addImport(m_buffer);
 		} else {
 			break;
 		}
 	}
-
-	return imports.getImportedFiles();
 }
 
 void Lexer::nextToken() {
@@ -593,8 +519,9 @@ void Lexer::tokenizeComment() {
 
 	// single-line comment
 	char c = next();
-	while (c != '\n' && c != '\0' && c != '\r')
+	while (c != '\n' && c != '\0' && c != '\r') {
 		c = next();
+	}
 }
 
 void Lexer::loadIdentifier(std::string& to) {
@@ -760,7 +687,28 @@ void Lexer::skipWhitespaces(bool spacesOnly) {
 }
 
 void Lexer::skipString() {
-	while (next() != '"');
+	if (next() == '"') {
+		if (next() == '"') { // multiline string
+			while (true) {
+				if (m_pos >= m_text.size()) { // eof
+					ErrorManager::lexerError(
+						ErrorID::E1112_NO_CLOSING_QUOTE,
+						m_line,
+						"no closing quote till the end of file"
+					);
+				}
+
+				if (next() == '"' && next() == '"' && next() == '"') {
+					return;
+				}
+			}
+		} else {
+			m_pos--;
+			return;
+		}
+	} else { // single-line string
+		while (next() != '"');
+	}
 }
 
 void Lexer::printStringTranslationError(u32 errCode) {

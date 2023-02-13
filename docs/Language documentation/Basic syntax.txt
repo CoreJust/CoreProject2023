@@ -67,7 +67,7 @@ Explicit type conversions:
     8. Functions, arrays, classes can be casted to each other (e.g. u8*(func(), i32*(i32[8])).
     9. Numbers, pointers, arrays, tuples, bool and enums can be casted to string.
     10. Bool can be converted to character and float.
-    11. Structures can be casted to tuples.
+    11. Structures can be casted to tuples and vice versa (if they are equivalent).
     12. Enums convert according to their types.
 
 Other conversion are possible through -value- as -type-, which is a bit cast, or can be defined through def -type-(...)...

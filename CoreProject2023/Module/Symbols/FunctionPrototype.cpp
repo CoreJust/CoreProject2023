@@ -145,8 +145,12 @@ void FunctionPrototype::setVaArgs(bool isVaArgs) {
 	m_isVaArgs = isVaArgs;
 }
 
-FunctionQualities FunctionPrototype::getQualities() const {
+FunctionQualities& FunctionPrototype::getQualities() {
 	return m_qualities;
+}
+
+std::unique_ptr<Type>& FunctionPrototype::getReturnType() {
+	return m_returnType;
 }
 
 std::unique_ptr<FunctionType> FunctionPrototype::genType() const {

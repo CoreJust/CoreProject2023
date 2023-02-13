@@ -5,8 +5,135 @@
 static Token _NO_TOK = Token();
 
 TypeParser::TypeParser(std::vector<Token>& toks, u64& pos)
-	: m_toks(toks), m_pos(pos) {
+	: BasicParser(toks, pos) {
 
+}
+
+void TypeParser::skipConsumeType() {
+	if (skipType()) {
+		return;
+	}
+
+	ErrorManager::typeError(
+		ErrorID::E3001_TYPE_NOT_SPECIFIED,
+		getCurrLine(),
+		""
+	);
+}
+
+bool TypeParser::skipType() {
+	match(TokenType::CONST);
+
+	m_pos++;
+	if (peek(-1).type < TokenType::BOOL || peek(-1).type > TokenType::F64) {
+		switch (peek(-1).type) {
+		case TokenType::FUNC: {
+			skipType();
+			consume(TokenType::LPAR);
+			if (!match(TokenType::RPAR)) {
+				do {
+					if (match(TokenType::ETCETERA)) {
+						if (peek().type != TokenType::RPAR) {
+							ErrorManager::parserError(
+								ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT,
+								getCurrLine(),
+								"incorrect va_args while parsing a function-type"
+							);
+						}
+					} else {
+						skipConsumeType();
+					}
+				} while (match(TokenType::COMMA));
+				consume(TokenType::RPAR);
+			}
+		}; break;
+		case TokenType::TUPLE: {
+			consume(TokenType::LESS);
+			if (!match(TokenType::GREATER)) {
+				do {
+					skipConsumeType();
+				} while (match(TokenType::COMMA));
+				consume(TokenType::GREATER);
+			}
+		}; break;
+		case TokenType::STRUCT: {
+			consume(TokenType::LBRACE);
+			while (!match(TokenType::RBRACE)) {
+				skipConsumeType();
+				consume(TokenType::SEMICOLON);
+			}
+		}; break;
+
+		case TokenType::WORD: {
+			while (match(TokenType::DOT)) {
+				consume(TokenType::WORD);
+			}
+		}; break;
+		case TokenType::TYPEOF: {
+			bool hasParens = match(TokenType::LPAR);
+			consume(TokenType::WORD);
+			while (match(TokenType::DOT)) {
+				if (peek().type > TokenType::NUMBERU64 && peek().type != TokenType::WORD) {
+					ErrorManager::parserError(
+						ErrorID::E2002_UNEXPECTED_TOKEN,
+						getCurrLine(),
+						"expected WORD or NUMBER"
+					);
+				} else {
+					next();
+				}
+			}
+
+			if (hasParens) {
+				consume(TokenType::RPAR);
+			}
+		}; break;
+		default: m_pos--; return false;
+		}
+	}
+
+	// second type: modificators
+	while (true) {
+		match(TokenType::CONST);
+		if (match(TokenType::LBRACKET)) {
+			if (match(TokenType::RBRACKET)) { // dynamic array
+				continue;
+			} else { // static array
+				if (!matchRange(TokenType::NUMBERI8, TokenType::NUMBERU64)) {
+					ErrorManager::typeError(
+						ErrorID::E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE,
+						getCurrLine(),
+						"expected a number"
+					);
+				} else if (peek(-1).data[0] == '-' || peek(-1).data == "0") {
+					ErrorManager::typeError(
+						ErrorID::E3052_NEGATIVE_SIZE_ARRAY,
+						getCurrLine(),
+						"array size: " + peek(-1).data
+					);
+				} else {
+					consume(TokenType::RBRACKET);
+					continue;
+				}
+			}
+		} else if (match(TokenType::QUESTION)) { // optional
+			continue;
+		} else if (match(TokenType::ANDAND)) { // rvalue reference
+			continue;
+		}
+
+		if (match(TokenType::STAR)) { // pointer
+			continue;
+		} else if (match(TokenType::POWER)) { // pointer to pointer
+			continue;
+		} else if (match(TokenType::AND)) { // reference
+			continue;
+		}
+
+		break;
+	}
+
+	return true;
 }
 
 std::unique_ptr<Type> TypeParser::consumeType() {
@@ -94,7 +221,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				consume(TokenType::RPAR);
 			}
 
-			return std::make_unique<FunctionType>(std::move(returnType), std::move(argTypes), isVaArgs, isConst);
+			result = std::make_unique<FunctionType>(std::move(returnType), std::move(argTypes), isVaArgs, isConst);
 		}; break;
 		case TokenType::TUPLE: {
 			std::vector<std::unique_ptr<Type>> subTypes;
@@ -106,7 +233,17 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				consume(TokenType::GREATER);
 			}
 
-			return std::make_unique<TupleType>(std::move(subTypes), isConst);
+			result = std::make_unique<TupleType>(std::move(subTypes), isConst);
+		}; break;
+		case TokenType::STRUCT: {
+			std::vector<std::unique_ptr<Type>> fieldTypes;
+			consume(TokenType::LBRACE);
+			while (!match(TokenType::RBRACE)) {
+				fieldTypes.push_back(consumeType());
+				consume(TokenType::SEMICOLON);
+			}
+
+			result = std::make_unique<StructType>(std::move(fieldTypes), isConst);
 		}; break;
 
 		case TokenType::WORD: {
@@ -127,12 +264,8 @@ std::unique_ptr<Type> TypeParser::parseType() {
 
 				return nullptr;
 			} else {
-				TypeNode* typeNode = g_module->getType(moduleName, name);
-				if (!isUserDefined(typeNode->type->basicType)) {
-					result = std::unique_ptr<Type>(typeNode->type->copy());
-				} else {
-					// TODO: add generics/user-defined types support
-				}
+				std::shared_ptr<TypeNode> typeNode = g_module->getType(moduleName, name);
+				result = TypeNode::genType(std::move(typeNode), isConst);
 			}
 		}; break;
 		case TokenType::TYPEOF: {
@@ -262,63 +395,6 @@ bool TypeParser::isType() {
 
 	loadPos();
 	return false;
-}
-
-Token& TypeParser::consume(TokenType type) {
-	if (!match(type)) {
-		ErrorManager::typeError(
-			ErrorID::E3002_UNEXPECTED_TOKEN_WHILE_PARSING_TYPE,
-			getCurrLine(),
-			"expected " + Token::toString(type)
-		);
-	}
-
-	return peek(-1);
-}
-
-bool TypeParser::match(TokenType type) {
-	if (peek().type != type) {
-		return false;
-	}
-
-	m_pos++;
-	return true;
-}
-
-bool TypeParser::matchRange(TokenType from, TokenType to) {
-	TokenType type = peek().type;
-	if (type < from || type > to) {
-		return false;
-	}
-
-	m_pos++;
-	return true;
-}
-
-Token& TypeParser::next() {
-	if (m_pos >= m_toks.size()) {
-		return _NO_TOK;
-	}
-
-	return m_toks[m_pos++];
-}
-
-Token& TypeParser::peek(int rel) {
-	u64 pos = m_pos + rel;
-	if (pos >= m_toks.size()) {
-		return _NO_TOK;
-	}
-
-	return m_toks[pos];
-}
-
-int TypeParser::getCurrLine() {
-	Token& tok = peek();
-	if (tok.type == TokenType::NO_TOKEN) {
-		return m_toks.back().errLine;
-	}
-
-	return tok.errLine;
 }
 
 void TypeParser::savePos() {

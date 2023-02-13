@@ -24,8 +24,8 @@ private:
 	void initAll();
 	void initPasses(llvm::TargetMachine* machine = nullptr);
 
-	void handleFrontEnd(); // lexer, parser, IR generation
-	void compileModule(const std::string& path);
+	void preloadSymbols(const std::string& path);
+	void compileModules();
 	void compileLLVM();
 
 	void addDefaultFunctions();

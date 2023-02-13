@@ -1,6 +1,6 @@
 #pragma once
 #include <llvm/IR/Module.h>
-#include "SymbolTable.h"
+#include "ModuleSymbols.h"
 
 class Module final {
 private:
@@ -12,11 +12,14 @@ private:
 
 	// key "" means accessible without stating any module/namespace
 	std::map<std::string, std::vector<ModuleSymbolsUnit*>> m_symbols;
+	std::unique_ptr<ModuleSymbols> m_ownSymbols;
 
 	// needed to get symbols from imports in imported modules
-	std::map<std::string, ModuleSymbols*> m_allTheImportedModules; 
+	std::set<std::string> m_allTheImportedModules; 
 
 	std::vector<Variable> m_localVariables;
+
+	bool m_areSymbolsLoaded = false;
 
 public:
 	Module(
@@ -29,7 +32,11 @@ public:
 	Module(Module& other);
 	Module(Module&& other) = default;
 
+	// makes a list of all the imported modules
+	void loadImportsList();
 	void loadSymbols();
+	void loadAsLLVM(); // loads symbols to llvm::Module
+
 	void addAlias(
 		SymbolType symType,
 		const std::string& moduleName,
@@ -50,6 +57,8 @@ public:
 	SymbolType getSymbolType(const std::string& name) const;
 	SymbolType getSymbolType(const std::string& moduleAlias, const std::string& name) const;
 
+	Function* getFunction(u64 tokenPos);
+
 	// Tries to get a function by name
 	// Returns nullptr if nothing found or more than one function with such name exist
 	Function* getFunction(const std::string& moduleName, const std::string& name);
@@ -69,22 +78,29 @@ public:
 		const std::vector<std::unique_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime
 	);
+
+	Variable* getVariable(u64 tokenPos);
 	Variable* getVariable(const std::string& name);
 	Variable* getVariable(const std::string& moduleAlias, const std::string& name);
-	TypeNode* getType(const std::string& name);
-	TypeNode* getType(const std::string& moduleAlias, const std::string& name);
+
+	std::shared_ptr<TypeNode> getType(u64 tokenPos);
+	std::shared_ptr<TypeNode> getType(const std::string& name);
+	std::shared_ptr<TypeNode> getType(const std::string& moduleAlias, const std::string& name);
 
 	const std::string& getName() const noexcept;
 	const std::string& getPath() const noexcept;
 	ModuleQualities getQualities() const noexcept;
-	const std::map<std::string, ModuleSymbols*>& getAllTheImportedModules() const;
+
+	const std::vector<std::string>& getImports() const noexcept;
+	const std::set<std::string>& getAllTheImportedModules() const;
+
+	ModuleSymbols& getOwnSymbols();
 	llvm::Module& getLLVMModule();
 
-	bool areSymbolsLoaded() const;
-
 private:
-	void loadSymbolsIfNotLoaded();
+	void loadThisModuleUnit(ModuleSymbolsUnit* unit);
 	void addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* unit);
+	void loadModuleSymbolsAsLLVM(ModuleSymbolsUnit*& unit);
 
 public:
 	static std::string getModuleNameFromPath(const std::string& path);

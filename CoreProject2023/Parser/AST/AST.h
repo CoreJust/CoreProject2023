@@ -13,6 +13,7 @@
 #include "Exprs/ConditionalExpr.h"
 #include "Exprs/BinaryExpr.h"
 #include "Exprs/UnaryExpr.h"
+#include "Exprs/FieldAccessExpr.h"
 #include "Exprs/TypeConversionExpr.h"
 #include "Exprs/VariableExpr.h"
 #include "Exprs/ValueExpr.h"

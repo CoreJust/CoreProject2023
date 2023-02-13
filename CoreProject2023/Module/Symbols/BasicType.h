@@ -38,6 +38,7 @@ enum class BasicType : u8 {
 	ENUM,
 	UNION,
 
+	TYPE_NODE, // used to differentiate TypeNodeType, has no real representation in language
 	UNKNOWN
 };
 

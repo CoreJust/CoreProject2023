@@ -19,7 +19,7 @@ public:
 	virtual std::unique_ptr<Type> copy() const;
 
 	virtual bool equals(const std::unique_ptr<Type>& other) const;
-	virtual i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const; // < 0 if not equal
+	virtual i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const; // < 0 if not equal, < -4096 if not equal at all
 
 	virtual llvm::Type* to_llvm() const;
 	virtual std::string toString() const;
@@ -30,7 +30,7 @@ public:
 };
 
 
-class ArrayType : public Type {
+class ArrayType final : public Type {
 public:
 	std::unique_ptr<Type> elementType;
 	u64 size;
@@ -45,7 +45,7 @@ public:
 	std::unique_ptr<Type> copy() const override;
 
 	bool equals(const std::unique_ptr<Type>& other) const override;
-	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal
+	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal, < -4096 if not equal at all
 
 	llvm::Type* to_llvm() const override;
 	std::string toString() const override;
@@ -56,7 +56,7 @@ public:
 
 
 // Dynamic array, pointer, references, optional
-class PointerType : public Type {
+class PointerType final : public Type {
 public:
 	std::unique_ptr<Type> elementType;
 
@@ -70,7 +70,7 @@ public:
 	std::unique_ptr<Type> copy() const override;
 
 	bool equals(const std::unique_ptr<Type>& other) const override;
-	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal
+	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal, < -4096 if not equal at all
 
 	llvm::Type* to_llvm() const override;
 	std::string toString() const override;
@@ -80,7 +80,7 @@ public:
 };
 
 
-class TupleType : public Type {
+class TupleType final : public Type {
 public:
 	std::vector<std::unique_ptr<Type>> subTypes;
 
@@ -93,7 +93,9 @@ public:
 	std::unique_ptr<Type> copy() const override;
 
 	bool equals(const std::unique_ptr<Type>& other) const override;
-	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal
+	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal, < -4096 if not equal at all
+
+	bool isEquivalentTo(std::vector<std::unique_ptr<Type>>& types);
 
 	llvm::Type* to_llvm() const override;
 	std::string toString() const override;
@@ -103,7 +105,7 @@ public:
 };
 
 
-class FunctionType : public Type {
+class FunctionType final : public Type {
 public:
 	std::unique_ptr<Type> returnType;
 	std::vector<std::unique_ptr<Type>> argTypes;
@@ -120,7 +122,7 @@ public:
 	std::unique_ptr<Type> copy() const override;
 
 	bool equals(const std::unique_ptr<Type>& other) const override;
-	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal
+	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal, < -4096 if not equal at all
 
 	llvm::FunctionType* to_llvmFunctionType() const;
 	llvm::Type* to_llvm() const override;
@@ -130,8 +132,53 @@ public:
 	u64 getBitSize() const override;
 };
 
+class TypeNodeType final : public Type {
+public:
+	std::shared_ptr<TypeNode> node;
 
-// TODO: user-defined types
+public:
+	TypeNodeType(
+		std::shared_ptr<TypeNode> node,
+		bool isConst = false
+	);
+
+	std::unique_ptr<Type> copy() const override;
+
+	bool equals(const std::unique_ptr<Type>& other) const override;
+	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal, < -4096 if not equal at all
+
+	llvm::Type* to_llvm() const override;
+	std::string toString() const override;
+	std::string toMangleString() const override;
+
+	u64 getBitSize() const override;
+};
+
+// Note: to be used in TypeNode, otherwise must be wrapped in TypeNodeType
+class StructType final : public Type {
+public:
+	std::vector<std::unique_ptr<Type>> fieldTypes;
+
+public:
+	StructType(
+		std::vector<std::unique_ptr<Type>> fieldTypes,
+		bool isConst = false
+	);
+
+	std::unique_ptr<Type> copy() const override;
+
+	bool equals(const std::unique_ptr<Type>& other) const override;
+	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal, < -4096 if not equal at all
+
+	bool isEquivalentTo(std::vector<std::unique_ptr<Type>>& types);
+
+	llvm::Type* to_llvm() const override;
+	std::string toString() const override;
+	std::string toMangleString() const override;
+
+	u64 getBitSize() const override;
+};
+
 
 // TODO: add consideration of user-defined types
 bool isImplicitlyConverible(

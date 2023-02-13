@@ -41,6 +41,7 @@ std::string ErrorIDStrings[] = {
 	"E2003: Unknown identifier; there is no such variable/function",
 	"E2004: There are multiple functions with such name; specify its argument types",
 	"E2005: No function exists that can be called with such arguments",
+	"E2006: No member of the type with such name exists",
 
 	"E2101: Variable declared via keyword var must be initialized",
 	"E2102: Expression cannot be called; no operator () defined",
@@ -165,7 +166,7 @@ void ErrorManager::printFileLine(int line) {
 		return;
 	}
 
-	std::ifstream file(g_currFilePath + g_currFileName + ".core");
+	std::ifstream file(g_currFilePath);
 	std::string tmp;
 	size_t i = 0;
 	while (std::getline(file, tmp)) {

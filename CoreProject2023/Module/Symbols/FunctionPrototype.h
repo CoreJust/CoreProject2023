@@ -39,7 +39,8 @@ public:
 	bool isVaArgs() const;
 	void setVaArgs(bool isVaArgs);
 
-	FunctionQualities getQualities() const;
+	FunctionQualities& getQualities();
+	std::unique_ptr<Type>& getReturnType();
 
 	std::unique_ptr<FunctionType> genType() const;
 

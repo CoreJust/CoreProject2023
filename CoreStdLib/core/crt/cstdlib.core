@@ -6,7 +6,15 @@
 # After user-defined types are presented: add div_t, ldiv_t, etc
 # TODO: add constants (macros in original C header file)
 
-type size_t = u64;
+struct div_t {
+	i32 quot;
+	i32 rem;
+}
+
+struct lldiv_t {
+	i64 quot;
+	i64 rem;
+}
 
 
 # Conversion functions
@@ -77,13 +85,17 @@ def native bsearch(const u8* key, const u8* base, u64 nmemb, u64 size,
                 func i32(const u8*, const u8*) compar) u8*;
 def native qsort(u8* base, u64 nmemb, u64 size, func i32(const u8*, const u8*) compar);
 
-###
 def native div(i32 numer, i32 denom) div_t;
-def native div(i64 numer, i64 denom) ldiv_t;
-def native div(i64 numer, i64 denom) lldiv_t;
-def native ldiv(i64 numer, i64 denom) ldiv_t;
-def native lldiv(i64 numer, i64 denom) lldiv_t; # c++11
-###
+
+@private
+def native lldiv(lldiv_t& result, i64 numer, i64 denom);
+
+@mangle
+def div(i64 numer, i64 denom) lldiv_t {
+	lldiv_t result;
+	lldiv(ref result, numer, denom);
+	return result;
+}
 
 
 # Multibyte characters

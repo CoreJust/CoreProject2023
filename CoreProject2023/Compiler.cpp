@@ -2,8 +2,10 @@
 #include <iostream>
 #include <filesystem>
 #include <Utils/File.h>
+#include <Lexer/ModulePeeker.h>
 #include <Lexer/ImportsHandler.h>
 #include <Lexer/Lexer.h>
+#include <SymbolLoader/SymbolPreloader.h>
 #include <SymbolLoader/SymbolLoader.h>
 #include <Parser/Parser.h>
 #include <Module/LLVMGlobals.h>
@@ -19,6 +21,7 @@
 #include <llvm\Target\TargetOptions.h>
 #include <llvm\Target\TargetMachine.h>
 
+
 Compiler::Compiler(Project& project) 
 	: m_project(project) {
 	g_importPaths = m_project.getImportedPaths();
@@ -26,7 +29,8 @@ Compiler::Compiler(Project& project)
 }
 
 void Compiler::buildProject() {
-	handleFrontEnd();
+	preloadSymbols(m_project.getMainFilePath());
+	compileModules();
 	compileLLVM();
 }
 
@@ -73,66 +77,74 @@ void Compiler::initPasses(llvm::TargetMachine* machine) {
 	g_modulePassManager = std::make_unique<llvm::ModulePassManager>(pb.buildPerModuleDefaultPipeline(optLevel));
 }
 
-void Compiler::handleFrontEnd() {
-	compileModule(m_project.getMainFilePath());
-}
-
-void Compiler::compileModule(const std::string& path) {
+void Compiler::preloadSymbols(const std::string& path) {
 	if (m_builtModules.contains(path)) {
 		return;
 	} else {
 		m_builtModules.insert(path);
 	}
 
-	std::string currFilePath = Module::getModulePathWithoutName(path);
-	std::string currFileName = Module::getModuleNameFromPath(path);
-	g_currFilePath = currFilePath;
-	g_currFileName = currFileName;
+	g_currFilePath = path;
+	g_currFileName = Module::getModuleNameFromPath(path);
 
-	// Lexer
-	ModuleQualities qualities;
-	std::vector<std::string> imports;
-	std::vector<Token> toks;
+	// ModulePeeker
+	ModuleRef thisModule;
 
 	{
+		ModulePeeker peeker(path);
+		thisModule = peeker.load();
+	}
+
+	g_moduleList.setCurrentModule(path);
+
+	{
+		// Lexer
 		std::string program = readFile(path);
 		Lexer lexer(program);
-		qualities = lexer.handleModuleQualities();
-		imports = lexer.handleImports();
-		toks = lexer.tokenize();
-	}
-	
-	// Adding module to module table
-	ModuleRef thisModule;
-	{
-		std::string moduleName = Module::getModuleNameFromPath(path);
-		Module module(moduleName, path, qualities, imports);
-		thisModule = g_moduleList.addModule(module);
-		g_moduleList.setCurrentModule(path);
-	}
+		std::vector<Token> toks = lexer.tokenize();
 
-	// Symbols loading
-	{
-		SymbolLoader loader(toks, qualities, path);
+		// Symbols preloading (names)
+		SymbolPreloader loader(toks, path);
 		loader.loadSymbols();
 	}
 
-	// Building imported modules
-	for (auto& imp : imports) {
-		compileModule(imp);
+	for (auto& imp : thisModule->getImports()) {
+		preloadSymbols(imp);
 	}
+}
 
-	g_currFilePath = currFilePath;
-	g_currFileName = currFileName;
+void Compiler::compileModules() {
+	for (auto& module : g_moduleList.getModules()) {
+		g_currFilePath = module.getPath();
+		g_currFileName = module.getName();
 
-	// Parser
-	thisModule->loadSymbols();
-	g_moduleList.setCurrentModule(path);
-	g_functionPassManager = std::make_unique<llvm::FunctionPassManager>();
-	addDefaultFunctions();
-	auto astVec = Parser(std::move(toks)).parse();
-	for (auto& decl : astVec) {
-		decl->generate();
+		g_moduleList.setCurrentModule(module.getPath());
+		module.loadSymbols();
+
+		// Lexer
+		std::vector<Token> toks;
+
+		{
+			std::string program = readFile(module.getPath());
+			Lexer lexer(program);
+			toks = lexer.tokenize();
+		}
+
+		// Symbols loading (types)
+		{
+			SymbolLoader loader(toks, module.getPath());
+			loader.loadSymbols();
+		}
+
+		// Parser
+		g_moduleList.setCurrentModule(module.getPath());
+		module.loadAsLLVM();
+		g_functionPassManager = std::make_unique<llvm::FunctionPassManager>();
+		addDefaultFunctions();
+		auto astVec = Parser(toks).parse();
+		for (auto& decl : astVec) {
+			decl->generate();
+		}
 	}
 }
 

@@ -11,8 +11,8 @@ u64* g_pos;
 std::vector<Token>* g_toks;
 
 
-Parser::Parser(std::vector<Token> tokens)
-	: m_toks(std::move(tokens)), m_pos(0) {
+Parser::Parser(std::vector<Token>& tokens)
+	: BasicParser(tokens, m_truePos) {
 	g_pos = &m_pos;
 	g_toks = &m_toks;
 }
@@ -20,7 +20,9 @@ Parser::Parser(std::vector<Token> tokens)
 std::vector<std::unique_ptr<Declaration>> Parser::parse() {
 	std::vector<std::unique_ptr<Declaration>> result;
 	while (m_pos < m_toks.size()) {
-		result.push_back(declaration());
+		if (auto decl = declaration(); decl != nullptr) {
+			result.push_back(std::move(decl));
+		}
 	}
 
 	return result;
@@ -35,12 +37,21 @@ std::unique_ptr<Declaration> Parser::declaration() {
 			while (!match(TokenType::SEMICOLON)) {
 				m_pos++;
 			}
+
+			continue;
 		} if (match(TokenType::USE)) {
 			useDeclaration();
+			continue;
+		} if (match(TokenType::STRUCT)) {
+			structDeclaration();
 			continue;
 		}
 
 		break;
+	}
+
+	if (m_pos >= m_toks.size()) {
+		return nullptr;
 	}
 
 	if (match(TokenType::DEF)) {
@@ -79,6 +90,20 @@ void Parser::useDeclaration() {
 	g_module->addAlias(symType, moduleName, name, alias);
 
 	consume(TokenType::SEMICOLON);
+}
+
+std::unique_ptr<Declaration> Parser::structDeclaration() {
+	std::string name = consume(TokenType::WORD).data;
+	TypeNode* typeNode = g_module->getType(name).get();
+
+	// TODO: implement
+
+	consume(TokenType::LBRACE);
+	while (!match(TokenType::RBRACE)) {
+		m_pos++;
+	}
+
+	return std::unique_ptr<Declaration>();
 }
 
 std::unique_ptr<Declaration> Parser::functionDeclaration() {
@@ -513,6 +538,12 @@ std::unique_ptr<Expression> Parser::postfix() {
 		} if (match(TokenType::DECREMENT)) {
 			expr = std::make_unique<UnaryExpr>(std::move(expr), UnaryExpr::POST_DEC);
 			continue;
+		} if (match(TokenType::DOT)) { // member access
+			// TODO: add consideration of methods
+			m_pos++;
+			std::string memberName = peek(-1).data; // it can be WORD or any number
+			expr = std::make_unique<FieldAccessExpr>(std::move(expr), memberName);
+			continue;
 		}
 
 		break;
@@ -704,61 +735,4 @@ void Parser::functionCallError(
 
 void Parser::skipAnnotation() {
 	m_pos++;
-}
-
-Token& Parser::consume(TokenType type) {
-	if (!match(type)) {
-		ErrorManager::parserError(
-			ErrorID::E2002_UNEXPECTED_TOKEN,
-			getCurrLine(),
-			"expected " + Token::toString(type)
-		);
-	}
-
-	return peek(-1);
-}
-
-bool Parser::match(TokenType type) {
-	if (peek().type != type) {
-		return false;
-	}
-
-	m_pos++;
-	return true;
-}
-
-bool Parser::matchRange(TokenType from, TokenType to) {
-	TokenType type = peek().type;
-	if (type < from || type > to) {
-		return false;
-	}
-
-	m_pos++;
-	return true;
-}
-
-Token& Parser::next() {
-	if (m_pos >= m_toks.size()) {
-		return _NO_TOK;
-	}
-
-	return m_toks[m_pos++];
-}
-
-Token& Parser::peek(int rel) {
-	u64 pos = m_pos + rel;
-	if (pos >= m_toks.size()) {
-		return _NO_TOK;
-	}
-
-	return m_toks[pos];
-}
-
-int Parser::getCurrLine() {
-	Token &tok = peek();
-	if (tok.type == TokenType::NO_TOKEN) {
-		return m_toks.back().errLine;
-	}
-
-	return tok.errLine;
 }

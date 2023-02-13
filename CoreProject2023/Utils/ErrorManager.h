@@ -45,6 +45,7 @@ enum ErrorID : u32 {
 	E2003_UNKNOWN_IDENTIFIER, // No such variable/function/type
 	E2004_MANY_FUNCTIONS_WITH_SUCH_NAME, // Many functions found while searching by name
 	E2005_NO_SUITABLE_FUNCTION, // No function can be called with such argument types
+	E2006_NO_SUCH_MEMBER, // The type has no member with such name
 
 	E2101_VAR_HAS_NO_INIT, // Variable declared through var cannot deduce type without initial value
 	E2102_CANNOT_BE_CALLED, // Expression cannot be called through -expr-(...)

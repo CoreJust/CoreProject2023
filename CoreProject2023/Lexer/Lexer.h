@@ -21,18 +21,16 @@ private:
 	std::string m_buffer;
 	u64 m_pos = 0;
 	u64 m_nextLine = 0;
-	u64 m_line = 1;
+	u64 m_line = 0;
 
 public:
 	Lexer(const std::string& text);
 
 	std::vector<Token> tokenize();
 
-	// processes the module qualities stated at the beginning
-	ModuleQualities handleModuleQualities();
-
-	// scans the list of files to be loaded, checks for files' existance
-	std::vector<std::string> handleImports();
+private:
+	void skipModuleQualities();
+	void skipImports();
 
 private:
 	void nextToken();

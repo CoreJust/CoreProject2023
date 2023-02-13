@@ -3,81 +3,83 @@
 @set safety unsafe
 @set mangling nomangle
 
-# After user-defined types are presented: to replace u8* with CFILE*, add va_list
 # TODO: add constants (macros in original C header file)
 
+import core.crt.cstdarg;
+
+
+type CFILE = u8*;
 
 # Standard i/o streams
-def native __acrt_iob_func(u32 _Ix) u8*;
+@private
+def native __acrt_iob_func(u32 _Ix) CFILE;
 
-u8* stdin  = __acrt_iob_func(0);
-u8* stdout = __acrt_iob_func(1);
-u8* stderr = __acrt_iob_func(2);
+CFILE stdin  = __acrt_iob_func(0);
+CFILE stdout = __acrt_iob_func(1);
+CFILE stderr = __acrt_iob_func(2);
 
 
 # File(stream)-related functions
 def native remove(const c8* filename) i32;
 def native rename(const c8* oldname, const c8* newname) i32;
-def native tmpfile() u8*;
+def native tmpfile() CFILE;
 def native tmpname(c8* str) c8*;
 
-def native fclose(u8* stream) i32;
-def native fflush(u8* stream) i32;
-def native fopen(const c8* filename, const c8* mode) u8*;
-def native freopen(const c8* filename, const c8* mode, u8* stream) u8*;
+def native fclose(CFILE stream) i32;
+def native fflush(CFILE stream) i32;
+def native fopen(const c8* filename, const c8* mode) CFILE;
+def native freopen(const c8* filename, const c8* mode, CFILE stream) CFILE;
 
-def native setbuf(u8* stream, u8* buffer);
-def native setvbuf(u8* stream, u8* buffer, i32 mode, u64 size) i32;
+def native setbuf(CFILE stream, u8* buffer);
+def native setvbuf(CFILE stream, u8* buffer, i32 mode, u64 size) i32;
 
 
 # Formatted i/o
-def native fprintf(u8* stream, const c8* format, ...) i32;
-def native fscanf(u8* stream, const c8* format, ...) i32;
+def native fprintf(CFILE stream, const c8* format, ...) i32;
+def native fscanf(CFILE stream, const c8* format, ...) i32;
 def native printf(const c8* format, ...) i32;
 def native scanf(const c8* format, ...) i32;
 def native snprintf(c8* s, u64 n, const c8* format, ...) i32;
 def native sprintf(c8* s, const c8* format, ...) i32;
 def native sscanf(const c8* s, const c8* format, ...) i32;
 
-###
-def native vfprintf(u8* stream, const c8* format, va_list arg) i32;
-def native vfscanf(u8* stream, const c8* format, va_list arg) i32;
-def native vprintf(const c8* format, va_list arg) i32;
-def native vscanf(const c8* format, va_list arg) i32;
-def native vsnprintf(c8* s, u64 n, const c8* format, va_list arg) i32;
-def native vsprintf(c8* s, const c8* format, va_list arg) i32;
-def native vsscanf(const c8* s, const c8* format, va_list arg) i32;
-###
+def native vfprintf(CFILE stream, const c8* format, cstdarg.va_list arg) i32;
+def native vfscanf(CFILE stream, const c8* format, cstdarg.va_list arg) i32;
+def native vprintf(const c8* format, cstdarg.va_list arg) i32;
+def native vscanf(const c8* format, cstdarg.va_list arg) i32;
+def native vsnprintf(c8* s, u64 n, const c8* format, cstdarg.va_list arg) i32;
+def native vsprintf(c8* s, const c8* format, cstdarg.va_list arg) i32;
+def native vsscanf(const c8* s, const c8* format, cstdarg.va_list arg) i32;
 
 
 # Character i/o
-def native fgetc(u8* stream) i32;
-def native fgets(c8* s, i32 n, u8* stream) c8*;
-def native fputc(i32 c, u8* stream) i32;
-def native fputs(const c8* s, u8* stream) i32;
+def native fgetc(CFILE stream) i32;
+def native fgets(c8* s, i32 n, CFILE stream) c8*;
+def native fputc(i32 c, CFILE stream) i32;
+def native fputs(const c8* s, CFILE stream) i32;
 def native getc(u8* stream) i32;
 def native getchar() i32;
-def native putc(i32 c, u8* stream) i32;
+def native putc(i32 c, CFILE stream) i32;
 def native putchar(i32 c) i32;
 def native puts(const c8* s) i32;
-def native ungetc(i32 c, u8* stream) i32;
+def native ungetc(i32 c, CFILE stream) i32;
 
 
 # Direct i/o
-def native fread(u8* ptr, u64 size, u64 nmemb, u8* stream) u64;
-def native fwrite(const u8* ptr, u64 size, u64 nmemb, u8* stream) u64;
+def native fread(u8* ptr, u64 size, u64 nmemb, CFILE stream) u64;
+def native fwrite(const u8* ptr, u64 size, u64 nmemb, CFILE stream) u64;
 
 
 # File positioning
-def native fgetpos(u8* stream, u64* pos) i32;
-def native fseek(u8* stream, i64 offset, i32 whence) i32;
-def native fsetpos(u8* stream, const u64* pos) i32;
-def native ftell(u8* stream) i64;
-def native rewind(u8* stream);
+def native fgetpos(CFILE stream, u64* pos) i32;
+def native fseek(CFILE stream, i64 offset, i32 whence) i32;
+def native fsetpos(CFILE stream, const u64* pos) i32;
+def native ftell(CFILE stream) i64;
+def native rewind(CFILE stream);
 
 
 # Error handling
-def native clearerr(u8* stream);
-def native feof(u8* stream) i32;
-def native ferror(u8* stream) i32;
+def native clearerr(CFILE stream);
+def native feof(CFILE stream) i32;
+def native ferror(CFILE stream) i32;
 def native perror(const c8* s);

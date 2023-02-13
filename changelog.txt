@@ -163,3 +163,12 @@ Initial development
 	Added type aliases (type -alias- = -type-;)
 
 	Commited as "Aliases"
+
+	Added structure type (only fields)
+	Created module FieldAccessExpr
+
+	Symbols loading reviewed
+	Created modules ModulePeeker, BasicParser, BasicSymbolLoader, SymbolPreloader
+	Deleted module SymbolTable (its functionality was moved to ModuleList)
+
+	Commited as "Structures (with fields only)"

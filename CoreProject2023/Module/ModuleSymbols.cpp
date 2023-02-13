@@ -6,8 +6,7 @@ void ModuleSymbolsUnit::addType(std::shared_ptr<TypeNode> type) {
 }
 
 void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype) {
-	llvm::Function* funcVal = prototype.generate();
-	m_functions.push_back(Function{ std::move(prototype), funcVal });
+	m_functions.push_back(Function{ std::move(prototype), nullptr });
 }
 
 void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, llvm::Function* value) {
@@ -15,9 +14,9 @@ void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, llvm::Function*
 }
 
 void ModuleSymbolsUnit::addVariable(
-	const std::string& name, 
-	std::unique_ptr<Type> type, 
-	VariableQualities qualities, 
+	const std::string& name,
+	std::unique_ptr<Type> type,
+	VariableQualities qualities,
 	llvm::Value* value
 ) {
 	m_variables.push_back(Variable{ name, std::move(type), qualities, value });
@@ -94,6 +93,10 @@ Function* ModuleSymbolsUnit::chooseFunction(
 			if (result == nullptr || score < bestScore) {
 				bestScore = score;
 				result = &fun;
+
+				if (score == 0) {
+					return result;
+				}
 			}
 		}
 	}
@@ -111,10 +114,10 @@ Variable* ModuleSymbolsUnit::getVariable(const std::string& name) {
 	return nullptr;
 }
 
-TypeNode* ModuleSymbolsUnit::getType(const std::string& name) {
+std::shared_ptr<TypeNode> ModuleSymbolsUnit::getType(const std::string& name) {
 	for (auto& type : m_types) {
 		if (type->name == name) {
-			return type.get();
+			return type;
 		}
 	}
 
@@ -135,4 +138,88 @@ std::vector<std::shared_ptr<TypeNode>>& ModuleSymbolsUnit::getTypes() {
 
 bool ModuleSymbolsUnit::isEmpty() const {
 	return m_variables.size() == 0 && m_functions.size() == 0 && m_types.size() == 0;
+}
+
+ModuleSymbolsUnit& ModuleSymbols::getModuleSymbolsUnit(Visibility visibility) {
+	switch (visibility) {
+		case Visibility::PRIVATE: return privateSymbols;
+		case Visibility::PUBLIC: return publicSymbols;
+		case Visibility::DIRECT_IMPORT: return publicOnceSymbols;
+	default:
+		break;
+	}
+
+	ASSERT(false, "wrong visibility");
+}
+
+void ModuleSymbols::addType(Visibility visibility, std::shared_ptr<TypeNode> type, u64 tokenPos) {
+	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
+	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_types.size(), SymbolType::TYPE, visibility });
+	unit.addType(std::move(type));
+}
+
+void ModuleSymbols::addFunction(Visibility visibility, FunctionPrototype prototype, u64 tokenPos) {
+	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
+	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_functions.size(), SymbolType::FUNCTION, visibility });
+	unit.addFunction(std::move(prototype));
+}
+
+void ModuleSymbols::addVariable(Visibility visibility, const std::string& name, VariableQualities qualities, u64 tokenPos) {
+	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
+	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_variables.size(), SymbolType::VARIABLE, visibility });
+	unit.addVariable(name, nullptr, qualities, nullptr);
+}
+
+Function* ModuleSymbols::getFunction(u64 tokenPos) {
+	ASSERT(m_symbolRefs.size(), "No symbol refs");
+	SymbolRef& symbol = getSymbolRefByTokenPos(0, m_symbolRefs.size() - 1, tokenPos);
+	auto& funcsVec = getModuleSymbolsUnit(symbol.visibility).m_functions;
+
+	ASSERT(symbol.symType == SymbolType::FUNCTION, "not a function");
+	ASSERT(symbol.index < funcsVec.size(), "functions: index out of range");
+
+	return &funcsVec[symbol.index];
+}
+
+Variable* ModuleSymbols::getVariable(u64 tokenPos) {
+	ASSERT(m_symbolRefs.size(), "No symbol refs");
+	SymbolRef& symbol = getSymbolRefByTokenPos(0, m_symbolRefs.size() - 1, tokenPos);
+	auto& varsVec = getModuleSymbolsUnit(symbol.visibility).m_variables;
+
+	ASSERT(symbol.symType == SymbolType::VARIABLE, "not a variable");
+	ASSERT(symbol.index < varsVec.size(), "variables: index out of range");
+
+	return &varsVec[symbol.index];
+}
+
+std::shared_ptr<TypeNode> ModuleSymbols::getType(u64 tokenPos) {
+	ASSERT(m_symbolRefs.size(), "No symbol refs");
+	SymbolRef& symbol = getSymbolRefByTokenPos(0, m_symbolRefs.size() - 1, tokenPos);
+	auto& typesVec = getModuleSymbolsUnit(symbol.visibility).m_types;
+
+	ASSERT(symbol.symType == SymbolType::TYPE, "not a type");
+	ASSERT(symbol.index < typesVec.size(), "types: index out of range");
+
+	return typesVec[symbol.index];
+}
+
+SymbolRef& ModuleSymbols::getSymbolRefByTokenPos(u64 from, u64 to, u64 tokenPos) {
+	if (from == to) {
+		SymbolRef& val = m_symbolRefs[from];
+		if (val.tokenPos == tokenPos) {
+			return val;
+		} else {
+			ASSERT(false, "no such value found");
+		}
+	}
+
+	u64 middle = from + (to - from) / 2;
+	SymbolRef& val = m_symbolRefs[middle];
+	if (val.tokenPos == tokenPos) {
+		return val;
+	} else if (val.tokenPos < tokenPos) {
+		return getSymbolRefByTokenPos(middle + 1, to, tokenPos);
+	} else {
+		return getSymbolRefByTokenPos(from, middle, tokenPos);
+	}
 }

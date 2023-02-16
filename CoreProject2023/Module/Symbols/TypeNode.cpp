@@ -10,7 +10,7 @@ TypeNode::TypeNode(
     llvm::Type* llvmType,
     std::vector<Variable> fields, 
     std::vector<Function> methods, 
-    std::vector<std::unique_ptr<TypeNode>> internalTypes
+    std::vector<std::shared_ptr<TypeNode>> internalTypes
 ) : 
     name(std::move(name)), 
     qualities(qualities), 
@@ -48,6 +48,114 @@ TypeNode& TypeNode::operator=(TypeNode&& other) {
     internalTypes = std::move(other.internalTypes);
 
     return *this;
+}
+
+SymbolType TypeNode::getSymbolType(const std::string& name, bool isStatic) const {
+    for (auto& var : fields) {
+        if (var.name == name) {
+            return SymbolType::VARIABLE;
+        }
+    }
+
+    for (auto& fun : methods) {
+        if (fun.prototype.getName() == name) {
+            return SymbolType::FUNCTION;
+        }
+    }
+
+    for (auto& type : internalTypes) {
+        if (type->name == name) {
+            return SymbolType::TYPE;
+        }
+    }
+
+    return SymbolType::NO_SYMBOL;
+}
+
+Function* TypeNode::getMethod(const std::string& name, bool isStatic) {
+    Function* result = nullptr;
+    for (auto& fun : methods) {
+        if (fun.prototype.getName() == name
+            && (fun.prototype.getQualities().getMethodType() == MethodType::STATIC) == isStatic) {
+            if (result != nullptr) {
+                return nullptr;
+            }
+
+            result = &fun;
+        }
+    }
+
+    return result;
+}
+
+Function* TypeNode::getMethod(
+    const std::string& name,
+    const std::vector<std::unique_ptr<Type>>& argTypes,
+    const std::vector<bool>& isCompileTime,
+    bool isStatic
+) {
+    for (auto& fun : methods) {
+        if (fun.prototype.getName() == name
+            && (fun.prototype.getQualities().getMethodType() == MethodType::STATIC) == isStatic) {
+            i32 score = fun.prototype.getSuitableness(argTypes, isCompileTime);
+            if (score == 0) {
+                return &fun;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+Function* TypeNode::chooseMethod(
+    const std::string& name,
+    const std::vector<std::unique_ptr<Type>>& argTypes,
+    const std::vector<bool>& isCompileTime,
+    bool isStatic
+) {
+    Function* result = nullptr;
+    i32 bestScore = -1;
+    for (auto& fun : methods) {
+        if (fun.prototype.getName() == name
+            && (fun.prototype.getQualities().getMethodType() == MethodType::STATIC) == isStatic) {
+            i32 score = fun.prototype.getSuitableness(argTypes, isCompileTime);
+            if (score < 0) {
+                continue;
+            }
+
+            if (result == nullptr || score < bestScore) {
+                bestScore = score;
+                result = &fun;
+
+                if (score == 0) {
+                    return result;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+Variable* TypeNode::getField(const std::string& name, bool isStatic) {
+    for (auto& var : fields) {
+        if (var.name == name
+            && (var.qualities.getVariableType() != VariableType::FIELD) == isStatic) {
+            return &var;
+        }
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<TypeNode> TypeNode::getType(const std::string& name) {
+    for (auto& type : internalTypes) {
+        if (type->name == name) {
+            return type;
+        }
+    }
+
+    return nullptr;
 }
 
 std::unique_ptr<Type> TypeNode::genType(std::shared_ptr<TypeNode> typeNode, bool isConst) {

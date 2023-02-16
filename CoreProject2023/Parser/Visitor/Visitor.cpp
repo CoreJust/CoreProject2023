@@ -1,5 +1,23 @@
 #include "Visitor.h"
 
+void Visitor::visit(TypeDeclaration* decl, std::unique_ptr<Declaration>& node) {
+	for (auto& field : decl->m_fields) {
+		field->accept(this, field);
+	}
+
+	for (auto& method : decl->m_methods) {
+		method->accept(this, method);
+	}
+}
+
+void Visitor::visit(MethodDeclaration* decl, std::unique_ptr<Declaration>& node) {
+	decl->m_body->accept(this, decl->m_body);
+}
+
+void Visitor::visit(FieldDeclaration* decl, std::unique_ptr<Declaration>& node) {
+	decl->m_value->accept(this, decl->m_value);
+}
+
 void Visitor::visit(VariableDeclaration* decl, std::unique_ptr<Declaration>& node) {
 	decl->m_value->accept(this, decl->m_value);
 }
@@ -77,7 +95,9 @@ void Visitor::visit(FieldAccessExpr* expr, std::unique_ptr<Expression>& node) {
 }
 
 void Visitor::visit(TypeConversionExpr* expr, std::unique_ptr<Expression>& node) {
-	expr->m_expr->accept(this, expr->m_expr);
+	for (auto& a : expr->m_args) {
+		a->accept(this, a);
+	}
 }
 
 void Visitor::visit(VariableExpr* expr, std::unique_ptr<Expression>& node) {

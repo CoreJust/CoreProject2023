@@ -365,6 +365,9 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Module\Value.cpp" />
     <ClCompile Include="Module\Symbols\Variable.cpp" />
     <ClCompile Include="Parser\AST\Cycles.cpp" />
+    <ClCompile Include="Parser\AST\Decls\FieldDeclaration.cpp" />
+    <ClCompile Include="Parser\AST\Decls\MethodDeclaration.cpp" />
+    <ClCompile Include="Parser\AST\Decls\TypeDeclaration.cpp" />
     <ClCompile Include="Parser\AST\Decls\VariableDeclaration.cpp" />
     <ClCompile Include="Parser\AST\Exprs\AssignmentExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\BinaryExpr.cpp" />
@@ -412,6 +415,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Module\LLVMUtils.h" />
     <ClInclude Include="Module\Module.h" />
     <ClInclude Include="Module\ModuleSymbols.h" />
+    <ClInclude Include="Module\Symbols\SymbolRef.h" />
     <ClInclude Include="Module\Symbols\Type.h" />
     <ClInclude Include="Module\Symbols\TypeNode.h" />
     <ClInclude Include="Module\Value.h" />
@@ -419,6 +423,9 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Parser\AST\AST.h" />
     <ClInclude Include="Parser\AST\Cycles.h" />
     <ClInclude Include="Parser\AST\Decls\Declaration.h" />
+    <ClInclude Include="Parser\AST\Decls\FieldDeclaration.h" />
+    <ClInclude Include="Parser\AST\Decls\MethodDeclaration.h" />
+    <ClInclude Include="Parser\AST\Decls\TypeDeclaration.h" />
     <ClInclude Include="Parser\AST\Decls\VariableDeclaration.h" />
     <ClInclude Include="Parser\AST\Exprs\AssignmentExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\BinaryExpr.h" />

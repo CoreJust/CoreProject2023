@@ -172,3 +172,9 @@ Initial development
 	Deleted module SymbolTable (its functionality was moved to ModuleList)
 
 	Commited as "Structures (with fields only)"
+
+15.02.2023
+	Added constructors (def type -type-(...), def this(...))
+	Created modules SymbolRef, TypeDeclaration, MethodDeclaration, FieldDeclaration
+
+	Commited as "Constructors"

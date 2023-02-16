@@ -33,26 +33,53 @@ void FunctionDeclaration::generate() {
 			}
 
 			g_module->addLocalVariable(
-				arg.name, 
-				arg.type->copy(), 
+				arg.name,
+				arg.type->copy(),
 				qualities,
 				llvm_utils::genFunctionArgumentValue(
-					m_function, 
-					arg, 
+					m_function,
+					arg,
 					m_function->functionValue->getArg(i)
 				)
 			);
 		}
-		
-		try {
-			m_body->generate();
-			if (m_function->prototype.getReturnType()->basicType == BasicType::NO_TYPE) {
-				g_builder->CreateRetVoid();
+
+		if (m_function->prototype.isUsingThis()) {
+			if (m_function->prototype.isUsingThisAsArgument()) {
+				// For methods and destructor
+			} else {
+				generateConstructor();
 			}
-		} catch (TerminatorAdded*) {}
+		} else {
+			try {
+				m_body->generate();
+				if (m_function->prototype.getReturnType()->basicType == BasicType::NO_TYPE) {
+					g_builder->CreateRetVoid();
+				}
+			} catch (TerminatorAdded*) {}
+		}
 
 		g_module->deleteBlock();
 		llvm::verifyFunction(*fun);
 		g_functionPassManager->run(*fun, *g_functionAnalysisManager);
 	}
+}
+
+void FunctionDeclaration::generateConstructor() {
+	llvm::Function* fun = m_function->functionValue;
+	llvm::Value* thisVar = llvm_utils::createLocalVariable(fun, m_function->prototype.getReturnType(), "this");
+
+	g_module->addLocalVariable(
+		"this",
+		m_function->prototype.getReturnType()->copy(),
+		VariableQualities(),
+		thisVar
+	);
+
+	try {
+		m_body->generate();
+	} catch (TerminatorAdded*) { }
+
+	thisVar = g_builder->CreateLoad(m_function->prototype.getReturnType()->to_llvm(), thisVar);
+	g_builder->CreateRet(thisVar);
 }

@@ -1,5 +1,6 @@
 #include "Type.h"
 #include "TypeNode.h"
+#include <Module/Module.h>
 #include <Module/LLVMGlobals.h>
 
 Type::Type()
@@ -646,12 +647,6 @@ bool isImplicitlyConverible(
 		return isImplicitlyConverible(((PointerType*)from.get())->elementType, to);
 	}
 
-	if (bfrom == BasicType::TYPE_NODE) {
-		return isImplicitlyConverible(((TypeNodeType*)from.get())->node->type, to, isFromCompileTime);
-	} else if (bto == BasicType::TYPE_NODE) {
-		return isImplicitlyConverible(from, ((TypeNodeType*)to.get())->node->type, isFromCompileTime);
-	}
-
 	if (bfrom == BasicType::POINTER && isFromCompileTime
 		&& (bto == BasicType::POINTER || bto == BasicType::FUNCTION || bto == BasicType::OPTIONAL)) {
 		return true;
@@ -689,6 +684,12 @@ bool isImplicitlyConverible(
 		}
 	} else if (bfrom == BasicType::BOOL) {
 		return isInteger(bto);
+	}
+
+	std::vector<std::unique_ptr<Type>> types;
+	types.push_back(from->copy());
+	if (g_module->chooseConstructor(to, types, { isFromCompileTime }, true)) {
+		return true;
 	}
 
 	return false;

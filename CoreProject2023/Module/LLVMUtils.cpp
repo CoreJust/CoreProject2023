@@ -105,7 +105,7 @@ llvm::Value* llvm_utils::addGlobalVariableFromOtherModule(Variable& var, llvm::M
 
 llvm::Value* llvm_utils::genFunctionArgumentValue(
 	Function* func, 
-	Argument& arg, 
+	const Argument& arg, 
 	llvm::Argument* llvmArg
 ) {
 	llvm::Value* result = createLocalVariable(func->functionValue, arg.type, arg.name);
@@ -338,12 +338,6 @@ llvm::Value* llvm_utils::convertValueTo(
 		return convertValueTo(((PointerType*)to.get())->elementType, from, value);
 	}
 
-	if (bfrom == BasicType::TYPE_NODE) {
-		return convertValueTo(((TypeNodeType*)from.get())->node->type, to, value);
-	} else if (bto == BasicType::TYPE_NODE) {
-		return convertValueTo(from, ((TypeNodeType*)to.get())->node->type, value);
-	}
-
 	if (bto == BasicType::BOOL) {
 		return convertToBool(from, value);
 	}
@@ -399,6 +393,18 @@ llvm::Value* llvm_utils::convertValueTo(
 		if (((TupleType*)from.get())->isEquivalentTo(((StructType*)to.get())->fieldTypes)) {
 			return value;
 		}
+	}
+
+	std::vector<std::unique_ptr<Type>> types;
+	types.push_back(from->copy());
+	if (Function* constructor = g_module->chooseConstructor(to, types, { true }, true)) {
+		value = convertValueTo(constructor->prototype.args()[0].type, from, value);
+
+		return g_builder->CreateCall(
+			(llvm::FunctionType*)constructor->prototype.genType()->to_llvmFunctionType(),
+			constructor->functionValue,
+			{ value }
+		);
 	}
 
 	return nullptr;

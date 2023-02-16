@@ -1,4 +1,5 @@
 #pragma once
+#include "SymbolRef.h"
 #include "Type.h"
 #include "Function.h"
 #include "Variable.h"
@@ -13,7 +14,7 @@ struct TypeNode {
 
 	std::vector<Variable> fields;
 	std::vector<Function> methods;
-	std::vector<std::unique_ptr<TypeNode>> internalTypes;
+	std::vector<std::shared_ptr<TypeNode>> internalTypes;
 
 	TypeNode(
 		std::string name, 
@@ -22,13 +23,38 @@ struct TypeNode {
 		llvm::Type* llvmType,
 		std::vector<Variable> fields = { },
 		std::vector<Function> methods = { },
-		std::vector<std::unique_ptr<TypeNode>> internalTypes = { }
+		std::vector<std::shared_ptr<TypeNode>> internalTypes = { }
 	);
 
 	TypeNode(TypeNode& other);
 	TypeNode(TypeNode&& other);
 
 	TypeNode& operator=(TypeNode&& other);
+
+	SymbolType getSymbolType(const std::string& name, bool isStatic) const;
+
+	// Tries to get a function by name
+	// Returns nullptr if nothing found or more than one function with such name exist
+	Function* getMethod(const std::string& name, bool isStatic);
+
+	// Finds the function with the name and exactly argTypes
+	Function* getMethod(
+		const std::string& name,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime,
+		bool isStatic
+	);
+
+	// Chooses the most suitable function with name for argTypes
+	Function* chooseMethod(
+		const std::string& name,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime,
+		bool isStatic
+	);
+
+	Variable* getField(const std::string& name, bool isStatic);
+	std::shared_ptr<TypeNode> getType(const std::string& name);
 
 	static std::unique_ptr<Type> genType(std::shared_ptr<TypeNode> typeNode, bool isConst = false);
 };

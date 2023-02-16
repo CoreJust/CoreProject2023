@@ -52,6 +52,8 @@ enum ErrorID : u32 {
 	E2103_NOT_A_REFERENCE, // Expression expected to be of reference
 	E2104_FUNCTION_BODY_MISMATCHED, // Function has no body
 	E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT, // There are arguments coming after va_args (...)
+	E2106_THIS_USED_OUTSIDE_TYPE, // This is used not in a method/constructor/destructor
+	E2107_TYPE_CONSTRUCTOR_IS_STATIC, // A static constructor/type conversion in a class(or struct/...)
 
 	
 	// Type errors
@@ -70,6 +72,7 @@ enum ErrorID : u32 {
 	E3101_CANNOT_BE_IMPLICITLY_CONVERTED, // Imposible implicit conversion of types
 	E3102_CANNOT_BE_EXPLICITLY_CONVERTED, // Imposible explicit conversion of types
 	E3103_CANNOT_CONVERT_TO_ONE, // Imposible to convert types to one
+	E3104_NO_SUITABLE_CONSTRUCTOR, // Constructor suitable for certain arguments not found
 
 
 	// Internal errors

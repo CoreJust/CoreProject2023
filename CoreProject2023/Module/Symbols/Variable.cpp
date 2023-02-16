@@ -14,6 +14,6 @@ Variable::Variable(
 }
 
 Variable::Variable(Variable& other)
-	: Variable(std::move(other)) {
+	: Variable(other.name, other.type->copy(), other.qualities, other.value) {
 
 }

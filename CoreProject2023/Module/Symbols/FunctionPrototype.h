@@ -20,7 +20,7 @@ public:
 	llvm::Function* generate() const;
 	llvm::Function* generateImportedFromOtherModule(llvm::Module& thisModule) const;
 
-	// 0 is complete coincidence
+	// 0 is complete equalness
 	// Otherwise - the score showing for how much is the function suitable, the lesser the better
 	// A negative value means that the function is not suitable for this arguments at all
 	i32 getSuitableness(
@@ -47,6 +47,14 @@ public:
 	std::vector<std::unique_ptr<Type>> genArgumentTypes() const;
 	std::vector<Argument>& args();
 	const std::unique_ptr<Type>& getReturnType() const;
+
+	// True for a method and destructor
+	bool isUsingThisAsArgument() const;
+
+	// True for a method, destructor and constructor
+	bool isUsingThis() const;
+
+	std::string toString() const;
 
 	static llvm::CallingConv::ID getCallingConvention(CallingConvention conv);
 

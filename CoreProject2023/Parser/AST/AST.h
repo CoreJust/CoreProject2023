@@ -1,4 +1,7 @@
 #pragma once
+#include "Decls/TypeDeclaration.h"
+#include "Decls/MethodDeclaration.h"
+#include "Decls/FieldDeclaration.h"
 #include "Decls/FunctionDeclaration.h"
 #include "Decls/VariableDeclaration.h"
 #include "States/BlockStatement.h"

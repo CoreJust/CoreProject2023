@@ -1,27 +1,12 @@
 #pragma once
 #include <vector>
 #include <map>
+#include "Symbols/SymbolRef.h"
 #include "Symbols/Variable.h"
 #include "Symbols/Function.h"
 #include "Symbols/TypeNode.h"
 
 class ModuleSymbols;
-
-enum class SymbolType : u8 {
-	NO_SYMBOL = 0,
-	VARIABLE,
-	FUNCTION,
-	TYPE,
-	MODULE
-};
-
-// A structure that represents a reference to a symbols in a certain module
-struct SymbolRef {
-	u64 tokenPos; // index in the list of tokens, used to identify the SymbolRef
-	u64 index; // index in corresponding symbol list
-	SymbolType symType;
-	Visibility visibility;
-};
 
 class ModuleSymbolsUnit final {
 	friend class ModuleSymbols;
@@ -29,14 +14,17 @@ class ModuleSymbolsUnit final {
 private:
 	std::vector<Variable> m_variables;
 	std::vector<Function> m_functions;
+	std::vector<Function> m_constructors;
 	std::vector<std::shared_ptr<TypeNode>> m_types;
 
 public:
 	void addType(std::shared_ptr<TypeNode> type);
 	void addFunction(FunctionPrototype prototype);
+	void addConstructor(FunctionPrototype prototype);
 
 	// Intended for adding function duplicates to modules importing the function
 	void addFunction(FunctionPrototype prototype, llvm::Function* value);
+	void addConstructor(FunctionPrototype prototype, llvm::Function* value);
 
 	void addVariable(
 		const std::string& name,
@@ -65,11 +53,20 @@ public:
 		const std::vector<bool>& isCompileTime
 	);
 
+	// Chooses the most suitable function with name for argTypes
+	Function* chooseConstructor(
+		const std::unique_ptr<Type>& type,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime,
+		bool isImplicit
+	);
+
 	Variable* getVariable(const std::string& name);
 	std::shared_ptr<TypeNode> getType(const std::string& name);
 
 	std::vector<Variable>& getVariables();
 	std::vector<Function>& getFunctions();
+	std::vector<Function>& getConstructors();
 	std::vector<std::shared_ptr<TypeNode>>& getTypes();
 
 	bool isEmpty() const;
@@ -86,8 +83,11 @@ public:
 	ModuleSymbolsUnit privateSymbols;
 
 public:
+	void sortSymbolRefs();
+
 	void addType(Visibility visibility, std::shared_ptr<TypeNode> type, u64 tokenPos);
 	void addFunction(Visibility visibility, FunctionPrototype prototype, u64 tokenPos);
+	void addConstructor(Visibility visibility, FunctionPrototype prototype, u64 tokenPos);
 
 	void addVariable(
 		Visibility visibility,
@@ -96,7 +96,7 @@ public:
 		u64 tokenPos
 	);
 
-	Function* getFunction(u64 tokenPos);
+	Function* getFunction(u64 tokenPos); // as well as constructor
 	Variable* getVariable(u64 tokenPos);
 	std::shared_ptr<TypeNode> getType(u64 tokenPos);
 

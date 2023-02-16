@@ -134,6 +134,7 @@ void Compiler::compileModules() {
 		{
 			SymbolLoader loader(toks, module.getPath());
 			loader.loadSymbols();
+			module.getOwnSymbols().sortSymbolRefs();
 		}
 
 		// Parser

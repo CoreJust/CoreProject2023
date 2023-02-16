@@ -30,10 +30,12 @@ llvm::Function* FunctionPrototype::generate() const {
 	}
 
 	llvm::FunctionType* ft = llvm::FunctionType::get(m_returnType->to_llvm(), types, m_isVaArgs);
+
 	llvm::Function* fun = llvm::Function::Create(ft,
 		llvm::Function::ExternalLinkage,
 		getLLVMName(),
-		g_module->getLLVMModule());
+		g_module->getLLVMModule()
+	);
 
 	fun->setCallingConv(getCallingConvention(m_qualities.getCallingConvention()));
 	fun->setDSOLocal(true);
@@ -42,7 +44,7 @@ llvm::Function* FunctionPrototype::generate() const {
 		fun->addFnAttr(llvm::Attribute::NoReturn);
 	}
 	
-	u32 index = 0;
+	i32 index = 0;
 	for (auto& arg : fun->args()) {
 		arg.setName(m_args[index++].name);
 	}
@@ -69,7 +71,7 @@ llvm::Function* FunctionPrototype::generateImportedFromOtherModule(llvm::Module&
 		fun->addFnAttr(llvm::Attribute::NoReturn);
 	}
 
-	u32 index = 0;
+	i32 index = 0;
 	for (auto& arg : fun->args()) {
 		arg.setName(m_args[index++].name);
 	}
@@ -172,6 +174,30 @@ std::vector<Argument>& FunctionPrototype::args() {
 
 const std::unique_ptr<Type>& FunctionPrototype::getReturnType() const {
 	return m_returnType;
+}
+
+bool FunctionPrototype::isUsingThisAsArgument() const {
+	return m_qualities.isMethod() || m_qualities.getFunctionKind() == FunctionKind::DESTRUCTOR;
+}
+
+bool FunctionPrototype::isUsingThis() const {
+	return isUsingThisAsArgument() || m_qualities.getFunctionKind() == FunctionKind::CONSTRUCTOR;
+}
+
+std::string FunctionPrototype::toString() const {
+	std::string result = m_name;
+	result += '<';
+	for (auto& arg : m_args) {
+		result += arg.type->toString();
+		result += ' ';
+		result += arg.name;
+		result += ", ";
+	}
+
+	result.pop_back();
+	result.back() = '>';
+
+	return result;
 }
 
 llvm::CallingConv::ID FunctionPrototype::getCallingConvention(CallingConvention conv) {

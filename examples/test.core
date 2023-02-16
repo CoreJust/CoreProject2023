@@ -7,18 +7,18 @@ struct String {
 	c8* data;
 	u64 capacity;
 	u64 size;
+
+	@implicit
+	def this(str8 str) {
+		this.data = c8*(str.data);
+		this.capacity = str.size;
+		this.size = str.size;
+	}
 }
 
 def main() i32 {
-	String str;
-	str.data = "Hello world";
+	String str = "Hello world";
 	console.println(str.data);
-	
-	cstdlib.lldiv_t div = cstdlib.div(18i64, 5);
-	
-	console.print(div.quot);
-	console.print(" : ");
-	console.println(div.rem);
 	
 	cstdlib.system("pause");
 	return 0;

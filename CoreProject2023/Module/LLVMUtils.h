@@ -20,7 +20,7 @@ namespace llvm_utils {
 	// Creates a variable for function argument in func's body
 	llvm::Value* genFunctionArgumentValue(
 		Function* func, 
-		Argument& arg, 
+		const Argument& arg, 
 		llvm::Argument* llvmArg
 	);
 

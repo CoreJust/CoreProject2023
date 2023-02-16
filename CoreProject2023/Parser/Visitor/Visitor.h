@@ -4,6 +4,9 @@
 
 class Visitor {
 public:
+	virtual void visit(TypeDeclaration* decl, std::unique_ptr<Declaration>& node);
+	virtual void visit(MethodDeclaration* decl, std::unique_ptr<Declaration>& node);
+	virtual void visit(FieldDeclaration* decl, std::unique_ptr<Declaration>& node);
 	virtual void visit(VariableDeclaration* decl, std::unique_ptr<Declaration>& node);
 	virtual void visit(FunctionDeclaration* decl, std::unique_ptr<Declaration>& node);
 

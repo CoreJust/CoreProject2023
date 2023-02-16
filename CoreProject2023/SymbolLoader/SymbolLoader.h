@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include "BasicSymbolLoader.h"
 #include <Module/Module.h>
 
@@ -15,4 +16,8 @@ private:
 	void loadFunction() override;
 	void loadVariable() override;
 	void loadTypeVariable() override;
+
+private:
+	std::optional<FunctionPrototype> loadMethod(TypeQualities parentQualities, std::shared_ptr<TypeNode> parentType);
+	Variable loadField(TypeQualities parentQualities, std::shared_ptr<TypeNode> parentType);
 };

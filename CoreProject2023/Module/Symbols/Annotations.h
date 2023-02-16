@@ -5,7 +5,7 @@ enum class Visibility : u8 {
 	LOCAL = 0,
 	PRIVATE,
 	PUBLIC,
-	DIRECT_IMPORT
+	DIRECT_IMPORT // or ptotected for methods and fields
 };
 
 enum class Safety : u8 {
@@ -93,7 +93,7 @@ public:
 };
 
 enum class MethodType : u8 {
-	COMMOM = 0,
+	COMMON = 0,
 	STATIC,
 	VIRTUAL,
 	ABSTRACT
@@ -109,6 +109,13 @@ enum class CallingConvention : u8 {
 	TAILCALL
 };
 
+enum class FunctionKind : u8 {
+	COMMON = 0,
+	CONSTRUCTOR,
+	DESTRUCTOR,
+	OPERATOR
+};
+
 /*
 * bits starting from common qualities' last one:
 *	4: isMethod
@@ -120,9 +127,10 @@ enum class CallingConvention : u8 {
 *	13: is mangling on
 *	14: is noreturn
 *	15: is noexcept
+*	16-17: function kind
 */
 class FunctionQualities final : public CommonQualities {
-	u8 m_additionalData = 0;
+	u16 m_additionalData = 0;
 
 public:
 	FunctionQualities();
@@ -153,4 +161,7 @@ public:
 
 	bool isNoExcept() const;
 	void setNoExcept(bool isNoExcept);
+
+	FunctionKind getFunctionKind() const;
+	void setFunctionKind(FunctionKind kind);
 };

@@ -10,9 +10,12 @@ public:
 	);
 
 private:
-	void loadUse();
-	void loadClass(); // or another user-defined type
-	void loadFunction();
-	void loadVariable();
-	void loadTypeVariable();
+	void loadUse() override;
+	void loadClass() override; // or another user-defined type
+	void loadFunction() override;
+	void loadVariable() override;
+	void loadTypeVariable() override;
+
+private:
+	void loadMethod(TypeQualities parentQualities);
 };

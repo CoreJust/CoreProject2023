@@ -17,6 +17,8 @@ private:
 	std::unique_ptr<Declaration> declaration();
 	void useDeclaration();
 	std::unique_ptr<Declaration> structDeclaration();
+	std::unique_ptr<Declaration> methodDeclaration(std::shared_ptr<TypeNode> parentType);
+	std::unique_ptr<Declaration> fieldDeclaration(std::shared_ptr<TypeNode> parentType);
 	std::unique_ptr<Declaration> functionDeclaration();
 	std::unique_ptr<Declaration> variableDeclaration();
 

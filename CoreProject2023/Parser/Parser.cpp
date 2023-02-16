@@ -42,9 +42,6 @@ std::unique_ptr<Declaration> Parser::declaration() {
 		} if (match(TokenType::USE)) {
 			useDeclaration();
 			continue;
-		} if (match(TokenType::STRUCT)) {
-			structDeclaration();
-			continue;
 		}
 
 		break;
@@ -54,7 +51,9 @@ std::unique_ptr<Declaration> Parser::declaration() {
 		return nullptr;
 	}
 
-	if (match(TokenType::DEF)) {
+	if (match(TokenType::STRUCT)) {
+		return structDeclaration();
+	} else if (match(TokenType::DEF)) {
 		return functionDeclaration();
 	} else {
 		return variableDeclaration();
@@ -94,26 +93,54 @@ void Parser::useDeclaration() {
 
 std::unique_ptr<Declaration> Parser::structDeclaration() {
 	std::string name = consume(TokenType::WORD).data;
-	TypeNode* typeNode = g_module->getType(name).get();
-
-	// TODO: implement
+	std::shared_ptr<TypeNode> typeNode = g_module->getType(m_pos - 2);
 
 	consume(TokenType::LBRACE);
+
+	std::vector<std::unique_ptr<Declaration>> fields;
+	std::vector<std::unique_ptr<Declaration>> methods;
 	while (!match(TokenType::RBRACE)) {
-		m_pos++;
+		while (match(TokenType::AT)) {
+			skipAnnotation();
+		}
+
+		if (match(TokenType::DEF)) {
+			methods.push_back(methodDeclaration(typeNode));
+		} else {
+			fields.push_back(fieldDeclaration(typeNode));
+		}
 	}
 
-	return std::unique_ptr<Declaration>();
+	return std::make_unique<TypeDeclaration>(typeNode, std::move(fields), std::move(methods));
 }
 
-std::unique_ptr<Declaration> Parser::functionDeclaration() {
-	// read function declaration
-	std::string alias = "";
+std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode> parentType) {
+	u64 tokenPos = m_pos;
+
+	match(TokenType::PUBLIC);
+	match(TokenType::PROTECTED);
+	match(TokenType::PRIVATE);
+
+	bool isStatic = match(TokenType::STATIC);
+	match(TokenType::VIRTUAL);
+	match(TokenType::ABSTRACT);
 
 	match(TokenType::NATIVE);
-	if (match(TokenType::WORD)) { // common function
-		alias = m_toks[m_pos - 1].data;
-	} else { // operator-functions and type conversions
+
+	std::string alias;
+	std::unique_ptr<Type> returnType;
+	bool isTypeConversion = false;
+	if (match(TokenType::TYPE)) {
+		isTypeConversion = true;
+		returnType = TypeParser(m_toks, m_pos).consumeType();
+		alias = "type$" + returnType->toString();
+	} else if (match(TokenType::THIS)) {
+		isTypeConversion = true;
+		alias = "this";
+		returnType = TypeNode::genType(parentType);
+	} else if (match(TokenType::WORD)) {
+		alias = peek(-1).data;
+	} else { // operator-functions
 		alias = m_toks[m_pos].data;
 		if (m_toks[m_pos].type == TokenType::LPAR || m_toks[m_pos].type == TokenType::LBRACKET) {
 			m_pos++;
@@ -123,36 +150,150 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 	}
 
 	// Arguments
-	std::vector<std::unique_ptr<Type>> argTypes;
 	g_module->addBlock();
 	consume(TokenType::LPAR);
+	size_t i = 0;
+
+	std::vector<std::unique_ptr<Type>> argTypes;
+	argTypes.push_back(std::make_unique<PointerType>(BasicType::REFERENCE, TypeNode::genType(parentType)));
 
 	if (!match(TokenType::RPAR)) {
 		do {
-			if (!match(TokenType::ETCETERA))  {
+			if (!match(TokenType::ETCETERA)) {
 				VariableQualities qualities;
-				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+				qualities.setVisibility(Visibility::LOCAL);
+				
+				std::unique_ptr<Type> argType = TypeParser(m_toks, m_pos).consumeType();
 
-				if (type->isConst) {
+				if (argType->isConst) {
 					qualities.setVariableType(VariableType::CONST);
 				}
 
-				argTypes.push_back(type->copy());
 				std::string name = consume(TokenType::WORD).data;
-				g_module->addLocalVariable(name, std::move(type), qualities, nullptr);
+				argTypes.push_back(argType->copy());
+				g_module->addLocalVariable(name, std::move(argType), qualities, nullptr);
 			}
+
+			i++;
 		} while (match(TokenType::COMMA));
 
 		consume(TokenType::RPAR);
 	}
 
-	Function* function = g_module->getFunction("", alias, argTypes, { });
+	Function* function;
+	if (!isTypeConversion) {
+		function = parentType->getMethod(alias, argTypes, {}, isStatic);
+	} else {
+		function = g_module->getFunction(tokenPos);
+	}
+
+	TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
+	if (function->prototype.getQualities().isNative()) {
+		consume(TokenType::SEMICOLON);
+		return std::make_unique<MethodDeclaration>(function, nullptr);
+	} else {
+		if (!isStatic) {
+			g_module->addLocalVariable("this", function->prototype.getReturnType()->copy(), VariableQualities(), nullptr);
+		}
+
+		// Short function, like def a() i32 = 10;
+		if (match(TokenType::EQ)) {
+			std::unique_ptr<Expression> expr = expression();
+			std::unique_ptr<Statement> body = std::make_unique<ReturnStatement>(std::move(expr));
+
+			g_module->deleteBlock();
+			consume(TokenType::SEMICOLON);
+			return std::make_unique<MethodDeclaration>(function, std::move(body));
+		} else if (match(TokenType::LBRACE)) {
+			m_pos--;
+			std::unique_ptr<Statement> body = stateOrBlock();
+
+			g_module->deleteBlock();
+			return std::make_unique<MethodDeclaration>(function, std::move(body));
+		} else {
+			ErrorManager::parserError(
+				ErrorID::E2104_FUNCTION_BODY_MISMATCHED,
+				getCurrLine(),
+				"function: " + function->prototype.toString()
+			);
+
+			return nullptr;
+		}
+	}
+}
+
+std::unique_ptr<Declaration> Parser::fieldDeclaration(std::shared_ptr<TypeNode> parentType) {
+	match(TokenType::PUBLIC);
+	match(TokenType::PROTECTED);
+	match(TokenType::PRIVATE);
+
+	bool isStatic = match(TokenType::STATIC);
+
+	TypeParser(m_toks, m_pos).skipConsumeType();
+
+	std::string alias = consume(TokenType::WORD).data;
+	Variable* variable = parentType->getField(alias, isStatic);
+
+	std::unique_ptr<Expression> expr = nullptr;
+	if (match(TokenType::EQ)) {
+		expr = expression();
+	}
+
+	consume(TokenType::SEMICOLON);
+	return std::make_unique<FieldDeclaration>(variable, std::move(expr));
+}
+
+std::unique_ptr<Declaration> Parser::functionDeclaration() {
+	Function* function = g_module->getFunction(m_pos);
+
+	match(TokenType::NATIVE);
+	if (match(TokenType::TYPE)) {
+		TypeParser(m_toks, m_pos).skipConsumeType();
+	} else if (!match(TokenType::WORD)) { // operator-functions and type conversions
+		if (m_toks[m_pos].type == TokenType::LPAR || m_toks[m_pos].type == TokenType::LBRACKET) {
+			m_pos++;
+		}
+
+		m_pos++;
+	}
+
+	// Arguments
+	g_module->addBlock();
+	consume(TokenType::LPAR);
+	size_t i = 0;
+
+	if (!match(TokenType::RPAR)) {
+		do {
+			if (!match(TokenType::ETCETERA))  {
+				Argument& argument = function->prototype.args()[i];
+				VariableQualities qualities;
+				qualities.setVisibility(Visibility::LOCAL);
+
+				TypeParser(m_toks, m_pos).skipConsumeType();
+
+				if (argument.type->isConst) {
+					qualities.setVariableType(VariableType::CONST);
+				}
+
+				std::string name = consume(TokenType::WORD).data;
+				g_module->addLocalVariable(argument.name, argument.type->copy(), qualities, nullptr);
+			}
+
+			i++;
+		} while (match(TokenType::COMMA));
+
+		consume(TokenType::RPAR);
+	}
 
 	TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
 	if (function->prototype.getQualities().isNative()) {
 		consume(TokenType::SEMICOLON);
 		return std::make_unique<FunctionDeclaration>(function, nullptr);
 	} else {
+		if (function->prototype.getQualities().getFunctionKind() == FunctionKind::CONSTRUCTOR) {
+			g_module->addLocalVariable("this", function->prototype.getReturnType()->copy(), VariableQualities(), nullptr);
+		}
+
 		// Short function, like def a() i32 = 10;
 		if (match(TokenType::EQ)) {
 			std::unique_ptr<Expression> expr = expression();
@@ -171,7 +312,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 			ErrorManager::parserError(
 				ErrorID::E2104_FUNCTION_BODY_MISMATCHED,
 				getCurrLine(), 
-				"function: " + alias
+				"function: " + function->prototype.toString()
 			);
 
 			return nullptr;
@@ -180,12 +321,13 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 }
 
 std::unique_ptr<Declaration> Parser::variableDeclaration() {
+	Variable* variable = g_module->getVariable(m_pos);
+
 	match(TokenType::CONST);
 	match(TokenType::EXTERN);
-	TypeParser(m_toks, m_pos).consumeType();
+	TypeParser(m_toks, m_pos).skipConsumeType();
 
 	std::string alias = consume(TokenType::WORD).data;
-	Variable* variable = g_module->getVariable(alias);
 
 	std::unique_ptr<Expression> expr = nullptr;
 	if (match(TokenType::EQ)) {
@@ -600,12 +742,27 @@ std::unique_ptr<Expression> Parser::primary() {
 		return std::make_unique<ValueExpr>(Value(BasicType::POINTER, _ValueUnion()));
 	}
 
+	if (match(TokenType::THIS)) {
+		if (Variable* thisVar = g_module->getVariable("this")) {
+			return std::make_unique<VariableExpr>("", thisVar);
+		} else {
+			ErrorManager::parserError(
+				ErrorID::E2106_THIS_USED_OUTSIDE_TYPE, 
+				getCurrLine(),
+				""
+			);
+		}
+	}
+
 	// Type conversion or array expression
 	if (auto type = TypeParser(m_toks, m_pos).tryParseType()) {
 		if (match(TokenType::LPAR)) { // type conversion/constructor
-			std::unique_ptr<Expression> expr = expression();
+			std::vector<std::unique_ptr<Expression>> args;
+			do {
+				args.push_back(expression());
+			} while (match(TokenType::COMMA));
 			consume(TokenType::RPAR);
-			return std::make_unique<TypeConversionExpr>(std::move(expr), std::move(type));
+			return std::make_unique<TypeConversionExpr>(std::move(args), std::move(type));
 		} else if (match(TokenType::LBRACE)) { // array expression (like u8 {...})
 			// TODO: implement
 			consume(TokenType::RBRACE);

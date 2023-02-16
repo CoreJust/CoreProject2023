@@ -273,6 +273,34 @@ Function* Module::chooseFunction(
 	return result;
 }
 
+Function* Module::chooseConstructor(
+	const std::unique_ptr<Type>& type,
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime,
+	bool isImplicit
+) {
+	Function* result = nullptr;
+	i32 bestScore = -1;
+
+	for (auto& symbols : m_symbols) {
+		for (ModuleSymbolsUnit* unit : symbols.second) {
+			if (auto fun = unit->chooseConstructor(type, argTypes, isCompileTime, isImplicit); fun != nullptr) {
+				i32 score = fun->prototype.getSuitableness(argTypes, isCompileTime);
+				if (result == nullptr || score < bestScore) {
+					bestScore = score;
+					result = fun;
+
+					if (score == 0) {
+						return fun;
+					}
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
 Variable* Module::getVariable(u64 tokenPos) {
 	return m_ownSymbols->getVariable(tokenPos);
 }
@@ -350,6 +378,16 @@ void Module::loadThisModuleUnit(ModuleSymbolsUnit* unit) {
 	for (Function& func : unit->getFunctions()) {
 		func.functionValue = func.prototype.generate();
 	}
+
+	for (Function& constructor : unit->getConstructors()) {
+		constructor.functionValue = constructor.prototype.generate();
+	}
+
+	for (auto& type : unit->getTypes()) {
+		for (Function& func : type->methods) {
+			func.functionValue = func.prototype.generate();
+		}
+	}
 }
 
 void Module::addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* unit) {
@@ -375,8 +413,35 @@ void Module::loadModuleSymbolsAsLLVM(ModuleSymbolsUnit*& unit) {
 		);
 	}
 
+	for (Function& constructor : unit->getConstructors()) {
+		newUnit->addFunction(
+			constructor.prototype,
+			constructor.prototype.generateImportedFromOtherModule(*m_llvmModule)
+		);
+	}
+
 	for (std::shared_ptr<TypeNode>& typeNode : unit->getTypes()) {
-		newUnit->addType(typeNode);
+		std::shared_ptr<TypeNode> newTypeNode = std::make_shared<TypeNode>(
+			typeNode->name,
+			typeNode->qualities,
+			typeNode->type->copy(),
+			typeNode->llvmType,
+			typeNode->fields,
+			typeNode->methods,
+			typeNode->internalTypes
+		);
+
+		for (Function& func : newTypeNode->methods) {
+			func.functionValue = func.prototype.generateImportedFromOtherModule(*m_llvmModule);
+		}
+		
+		for (Variable& var : newTypeNode->fields) {
+			if (var.qualities.getVariableType() != VariableType::FIELD) {
+				var.value = llvm_utils::addGlobalVariableFromOtherModule(var, *m_llvmModule);
+			}
+		}
+
+		newUnit->addType(newTypeNode);
 	}
 
 	unit = newUnit;

@@ -85,6 +85,8 @@ void VariableQualities::setThreadLocal(bool isThreadLocal) {
 }
 
 FunctionQualities::FunctionQualities() {
+    setFunctionKind(FunctionKind::COMMON);
+    setMethodType(MethodType::COMMON);
     setVisibility(Visibility::PUBLIC);
     setSafety(Safety::SAFE_ONLY);
     setIsMethod(false);
@@ -164,4 +166,12 @@ bool FunctionQualities::isNoExcept() const {
 
 void FunctionQualities::setNoExcept(bool isNoExcept) {
     m_additionalData = (m_additionalData & ~0b10000000) | ((isNoExcept ? 1 : 0) << 7);
+}
+
+FunctionKind FunctionQualities::getFunctionKind() const {
+    return FunctionKind((m_additionalData >> 8) & 3);
+}
+
+void FunctionQualities::setFunctionKind(FunctionKind kind) {
+    m_additionalData = (m_additionalData & ~0b1100000000) | ((u8)kind << 8);
 }

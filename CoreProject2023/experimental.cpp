@@ -10,17 +10,20 @@ int system(const char* fmt);
 extern "C"
 void* malloc(unsigned long size);
 
-struct lldiv_t {
-	long long quot;
-	long long rem;
+struct String {
+	char* data;
+	long long size;
+	
+	static String get(char* str) {
+		String r;
+		r.data = str;
+		return r;
+	}
 };
 
-extern "C"
-lldiv_t lldiv(long long numer, long long denom);
-
 int main() {
-	volatile lldiv_t r = lldiv(18, 5);
-	printf("%lld : %lld", r.quot, r.rem);
+	volatile String r = String::get("Wow");
+	printf("%s", r.data);
 	system("pause");
 	return 0;
 }

@@ -45,11 +45,9 @@ void BasicSymbolLoader::skipCodeInBraces() {
 
 		if (match(TokenType::LBRACE)) {
 			depth++;
-		}
-		else if (match(TokenType::RBRACE)) {
+		} else if (match(TokenType::RBRACE)) {
 			depth--;
-		}
-		else {
+		} else {
 			m_pos++;
 		}
 	}
@@ -67,8 +65,7 @@ void BasicSymbolLoader::skipAssignment() {
 
 		if (match(TokenType::SEMICOLON)) {
 			break;
-		}
-		else if (match(TokenType::LBRACE)) {
+		} else if (match(TokenType::LBRACE)) {
 			skipCodeInBraces();
 		}
 

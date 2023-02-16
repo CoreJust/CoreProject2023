@@ -9,8 +9,16 @@ void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype) {
 	m_functions.push_back(Function{ std::move(prototype), nullptr });
 }
 
+void ModuleSymbolsUnit::addConstructor(FunctionPrototype prototype) {
+	m_constructors.push_back(Function{ std::move(prototype), nullptr });
+}
+
 void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, llvm::Function* value) {
 	m_functions.push_back(Function{ std::move(prototype), value });
+}
+
+void ModuleSymbolsUnit::addConstructor(FunctionPrototype prototype, llvm::Function* value) {
+	m_constructors.push_back(Function{ std::move(prototype), value });
 }
 
 void ModuleSymbolsUnit::addVariable(
@@ -32,6 +40,12 @@ SymbolType ModuleSymbolsUnit::getSymbolType(const std::string& name) const {
 	for (auto& fun : m_functions) {
 		if (fun.prototype.getName() == name) {
 			return SymbolType::FUNCTION;
+		}
+	}
+
+	for (auto& fun : m_constructors) {
+		if (fun.prototype.getName() == name) {
+			return SymbolType::CONSTRUCTOR;
 		}
 	}
 
@@ -104,6 +118,36 @@ Function* ModuleSymbolsUnit::chooseFunction(
 	return result;
 }
 
+Function* ModuleSymbolsUnit::chooseConstructor(
+	const std::unique_ptr<Type>& type,
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime,
+	bool isImlicit
+) {
+	Function* result = nullptr;
+	i32 bestScore = -1;
+	for (auto& fun : m_constructors) {
+		if (fun.prototype.getReturnType()->equalsOrLessConstantThan(type) >= -4096
+			&& fun.prototype.getQualities().isImplicit() >= isImlicit) {
+			i32 score = fun.prototype.getSuitableness(argTypes, isCompileTime);
+			if (score < 0) {
+				continue;
+			}
+
+			if (result == nullptr || score < bestScore) {
+				bestScore = score;
+				result = &fun;
+
+				if (score == 0) {
+					return result;
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
 Variable* ModuleSymbolsUnit::getVariable(const std::string& name) {
 	for (auto& var : m_variables) {
 		if (var.name == name) {
@@ -132,6 +176,10 @@ std::vector<Function>& ModuleSymbolsUnit::getFunctions() {
 	return m_functions;
 }
 
+std::vector<Function>& ModuleSymbolsUnit::getConstructors() {
+	return m_constructors;
+}
+
 std::vector<std::shared_ptr<TypeNode>>& ModuleSymbolsUnit::getTypes() {
 	return m_types;
 }
@@ -152,6 +200,12 @@ ModuleSymbolsUnit& ModuleSymbols::getModuleSymbolsUnit(Visibility visibility) {
 	ASSERT(false, "wrong visibility");
 }
 
+void ModuleSymbols::sortSymbolRefs() {
+	std::sort(m_symbolRefs.begin(), m_symbolRefs.end(), [](const SymbolRef& a, const SymbolRef& b) -> bool {
+		return a.tokenPos < b.tokenPos;
+	});
+}
+
 void ModuleSymbols::addType(Visibility visibility, std::shared_ptr<TypeNode> type, u64 tokenPos) {
 	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
 	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_types.size(), SymbolType::TYPE, visibility });
@@ -164,6 +218,12 @@ void ModuleSymbols::addFunction(Visibility visibility, FunctionPrototype prototy
 	unit.addFunction(std::move(prototype));
 }
 
+void ModuleSymbols::addConstructor(Visibility visibility, FunctionPrototype prototype, u64 tokenPos) {
+	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
+	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_constructors.size(), SymbolType::CONSTRUCTOR, visibility });
+	unit.addConstructor(std::move(prototype));
+}
+
 void ModuleSymbols::addVariable(Visibility visibility, const std::string& name, VariableQualities qualities, u64 tokenPos) {
 	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
 	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_variables.size(), SymbolType::VARIABLE, visibility });
@@ -173,12 +233,19 @@ void ModuleSymbols::addVariable(Visibility visibility, const std::string& name, 
 Function* ModuleSymbols::getFunction(u64 tokenPos) {
 	ASSERT(m_symbolRefs.size(), "No symbol refs");
 	SymbolRef& symbol = getSymbolRefByTokenPos(0, m_symbolRefs.size() - 1, tokenPos);
-	auto& funcsVec = getModuleSymbolsUnit(symbol.visibility).m_functions;
+	std::vector<Function>* funcsVec;
 
-	ASSERT(symbol.symType == SymbolType::FUNCTION, "not a function");
-	ASSERT(symbol.index < funcsVec.size(), "functions: index out of range");
+	if (symbol.symType == SymbolType::FUNCTION) {
+		funcsVec = &getModuleSymbolsUnit(symbol.visibility).m_functions;
+		ASSERT(symbol.index < funcsVec->size(), "functions: index out of range");
+	} else if (symbol.symType == SymbolType::CONSTRUCTOR) {
+		funcsVec = &getModuleSymbolsUnit(symbol.visibility).m_constructors;
+		ASSERT(symbol.index < funcsVec->size(), "constructors: index out of range");
+	} else {
+		ASSERT(false, "not a constructor nor function");
+	}
 
-	return &funcsVec[symbol.index];
+	return &(*funcsVec)[symbol.index];
 }
 
 Variable* ModuleSymbols::getVariable(u64 tokenPos) {

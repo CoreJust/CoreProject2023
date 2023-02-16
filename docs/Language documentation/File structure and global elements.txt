@@ -91,6 +91,7 @@ Consists of elements, where an elements is:
         
         @explicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion explicit (which is default value).
         @implicit - applicable to type conversion functions (def -type-(...)...) only. Makes the conversion implicit.
+			Available only if exactly one argument of constructor is present.
 		
 		@prefer - applicable to functions. Used to make the overloaded function preferable when possible.
 		@nomangle - applicable to function. Turns off mangling (available if only the function is not overloaded).
@@ -101,7 +102,7 @@ Consists of elements, where an elements is:
 		@stdcall - 	applicable to functions. Used to state using of the stdcall calling convention.
 		@ccall - 	applicable to functions. Used to state using of the cdecl calling convention. Default convention.
 		@fastcall - applicable to functions. Used to state using of the fastcall calling convention.
-		@thiscall - applicable to functions. Used to state using of the thiscall calling convention. Default convention for methods.
+		@thiscall - applicable to functions. Used to state using of the thiscall calling convention.
 		@vectorcall - applicable to functions. Used to state using of the vectorcall calling convention.
 		@coldcall - applicable to functions. Used to state using of the llvm coldcall calling convention.
 		@tailcall - applicable to functions. Used to state using of the llvm tailcall calling convention.
@@ -116,7 +117,7 @@ Consists of elements, where an elements is:
             Keyword def is necessary to state that it is a function.
             Keyword native means that the function body is outside (in a library). When used, there cannot be function body. There must be ; after the declaration then.
             -Name- is a necessary part used to refer to the function and to call it. Instead of name, there can be an operator, but it must not overlap with an existing one.
-                Instead of name, there can be a type to declare a type conversion function (explicit by default, use @implicit to make it implicit).
+                Instead of name, there can be a type -type- to declare a type conversion function (explicit by default, use @implicit to make it implicit).
             After -name- there come arguments. There can be none (then function takes no arguments) or any number of them. Each argument has to have a -type- and a -name-.
                 An argument can have a -default value-. Then, when called, the function can have the argument not stated and it will be given the -default value-.
                 To add more than an argument there should be comma (,) before stating the next one.

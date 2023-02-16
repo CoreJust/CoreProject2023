@@ -3,11 +3,11 @@
 #include "../States/Statement.h"
 #include <Module/Symbols/Function.h>
 
-class FunctionDeclaration : public Declaration {
+class MethodDeclaration : public Declaration {
 	FRIEND_CLASS_VISITORS
 
 public:
-	FunctionDeclaration(Function* func, std::unique_ptr<Statement> body);
+	MethodDeclaration(Function* method, std::unique_ptr<Statement> body);
 
 	void accept(Visitor* visitor, std::unique_ptr<Declaration>& node) override;
 	void generate() override;
@@ -16,7 +16,7 @@ private:
 	void generateConstructor();
 
 private:
-	Function* m_function;
+	Function* m_method;
 	std::unique_ptr<Statement> m_body;
 };
 

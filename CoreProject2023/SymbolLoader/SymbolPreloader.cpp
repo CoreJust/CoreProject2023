@@ -42,9 +42,20 @@ void SymbolPreloader::loadClass() {
 		consume(TokenType::LBRACE);
 
 		while (!match(TokenType::RBRACE)) {
+			readAnnotations();
+
 			if (match(TokenType::DEF)) {
-				// TODO: implement method handling
+				loadMethod(qualities);
 			} else {
+				Visibility visibility = Visibility::PUBLIC;
+				if (match(TokenType::PUBLIC)) {
+					visibility = Visibility::PUBLIC;
+				} else if (match(TokenType::PROTECTED)) {
+					visibility = Visibility::DIRECT_IMPORT;
+				} else if (match(TokenType::PRIVATE)) {
+					visibility = Visibility::PRIVATE;
+				}
+
 				match(TokenType::STATIC);
 				TypeParser(m_toks, m_pos).skipConsumeType();
 				consume(TokenType::WORD);
@@ -112,18 +123,24 @@ void SymbolPreloader::loadFunction() {
 		qualities.setNative(true);
 	}
 
-	if (match(TokenType::WORD)) { // common function
+	if (match(TokenType::TYPE)) { // constructor
+		alias = "type$";
+		qualities.setFunctionKind(FunctionKind::CONSTRUCTOR);
+		TypeParser(m_toks, m_pos).skipConsumeType();
+	} else if (match(TokenType::WORD)) { // common function
 		alias = m_toks[m_pos - 1].data;
 	} else if (DEFINABLE_OPERATORS.contains(m_toks[m_pos].type)) { // operator-functions
+		qualities.setFunctionKind(FunctionKind::OPERATOR);
 		alias = m_toks[m_pos].data;
 		if (m_toks[m_pos].type == TokenType::LPAR || m_toks[m_pos].type == TokenType::LBRACKET) {
 			m_pos++;
 		}
 
 		m_pos++;
-	} else {} // type conversions
+	}
 
 	// Arguments
+	bool isVaArgs = false;
 	consume(TokenType::LPAR);
 	if (!match(TokenType::RPAR)) {
 		do {
@@ -135,6 +152,8 @@ void SymbolPreloader::loadFunction() {
 						"incorrect va_args while parsing function " + alias
 					);
 				}
+
+				isVaArgs = true;
 			} else {
 				TypeParser(m_toks, m_pos).skipConsumeType();
 				consume(TokenType::WORD);
@@ -144,20 +163,34 @@ void SymbolPreloader::loadFunction() {
 		consume(TokenType::RPAR);
 	}
 
-	TypeParser(m_toks, m_pos).skipType();
+	if (qualities.getFunctionKind() == FunctionKind::COMMON) { // not a constructor
+		TypeParser(m_toks, m_pos).skipType();
 
-	// Save results
-	m_symbols.addFunction(
-		qualities.getVisibility(),
-		FunctionPrototype(
-			alias,
-			nullptr,
-			{ },
-			qualities,
-			false
-		),
-		tokenPos
-	);
+		// Save results
+		m_symbols.addFunction(
+			qualities.getVisibility(),
+			FunctionPrototype(
+				alias,
+				nullptr,
+				{ },
+				qualities,
+				isVaArgs
+			),
+			tokenPos
+		);
+	} else { // constructor
+		m_symbols.addConstructor(
+			qualities.getVisibility(),
+			FunctionPrototype(
+				alias,
+				nullptr,
+				{ },
+				qualities,
+				false
+			),
+			tokenPos
+		);
+	}
 
 	// skip code
 	if (match(TokenType::EQ)) {
@@ -244,4 +277,78 @@ void SymbolPreloader::loadTypeVariable() {
 
 	std::shared_ptr<TypeNode> typeNode = std::make_shared<TypeNode>(alias, TypeQualities(), nullptr, nullptr);
 	m_symbols.addType(qualities.getVisibility(), std::move(typeNode), tokenPos);
+}
+
+void SymbolPreloader::loadMethod(TypeQualities parentQualities) {
+	if (match(TokenType::PUBLIC));
+	else if (match(TokenType::PROTECTED));
+	else if (match(TokenType::PRIVATE));
+
+	MethodType methodType = MethodType::COMMON;
+	if (match(TokenType::STATIC)) {
+		methodType = MethodType::STATIC;
+	} else if (match(TokenType::VIRTUAL)) {
+		methodType = MethodType::VIRTUAL;
+	} else if (match(TokenType::ABSTRACT)) {
+		methodType = MethodType::ABSTRACT;
+	}
+
+	match(TokenType::NATIVE);
+
+	FunctionKind funcKind = FunctionKind::COMMON;
+	if (methodType != MethodType::STATIC && (match(TokenType::TYPE) || match(TokenType::THIS))) {
+		if (peek(-1).type != TokenType::THIS) {
+			TypeParser(m_toks, m_pos).skipConsumeType();
+		}
+
+		funcKind = FunctionKind::CONSTRUCTOR;
+	} else if (!match(TokenType::WORD) && !match(TokenType::TYPE)
+		&& DEFINABLE_OPERATORS.contains(m_toks[m_pos].type)) { // operator-functions
+		funcKind = FunctionKind::OPERATOR;
+		if (m_toks[m_pos].type == TokenType::LPAR || m_toks[m_pos].type == TokenType::LBRACKET) {
+			m_pos++;
+		}
+
+		m_pos++;
+	} else {
+		ErrorManager::parserError(
+			ErrorID::E2002_UNEXPECTED_TOKEN,
+			getCurrLine(),
+			"expected function name/operator/type"
+		);
+	}
+
+	// Arguments
+	consume(TokenType::LPAR);
+	if (!match(TokenType::RPAR)) {
+		do {
+			if (match(TokenType::ETCETERA)) {
+				if (peek().type != TokenType::RPAR) {
+					ErrorManager::parserError(
+						ErrorID::E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT,
+						getCurrLine(),
+						"incorrect va_args while parsing function"
+					);
+				}
+			} else {
+				TypeParser(m_toks, m_pos).skipConsumeType();
+				consume(TokenType::WORD);
+			}
+		} while (match(TokenType::COMMA));
+
+		consume(TokenType::RPAR);
+	}
+
+	if (funcKind == FunctionKind::COMMON) { // not a constructor
+		TypeParser(m_toks, m_pos).skipType();
+	}
+
+	// skip code
+	if (match(TokenType::EQ)) {
+		skipAssignment();
+	} else if (match(TokenType::LBRACE)) {
+		skipCodeInBraces();
+	} else {
+		consume(TokenType::SEMICOLON);
+	}
 }

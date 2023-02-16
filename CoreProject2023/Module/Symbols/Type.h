@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/DerivedTypes.h>
 #include "Annotations.h"
@@ -19,7 +20,9 @@ public:
 	virtual std::unique_ptr<Type> copy() const;
 
 	virtual bool equals(const std::unique_ptr<Type>& other) const;
-	virtual i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const; // < 0 if not equal, < -4096 if not equal at all
+
+	// < 0 if not equal, < -4096 if not equal at all
+	virtual i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const;
 
 	virtual llvm::Type* to_llvm() const;
 	virtual std::string toString() const;

@@ -15,10 +15,17 @@ void ReturnStatement::accept(Visitor* visitor, std::unique_ptr<Statement>& node)
 }
 
 void ReturnStatement::generate() {
+	std::unique_ptr<Type> returnType;
+	if (g_function->prototype.getQualities().getFunctionKind() == FunctionKind::CONSTRUCTOR) {
+		returnType = std::make_unique<Type>(BasicType::NO_TYPE);
+	} else {
+		returnType = g_function->prototype.getReturnType()->copy();
+	}
+
 	if (m_expr) {
 		llvm::Value* value = m_expr->generate();
 		value = llvm_utils::tryImplicitlyConvertTo(
-			g_function->prototype.getReturnType(),
+			returnType,
 			m_expr->getType(),
 			value,
 			m_errLine,
@@ -31,7 +38,7 @@ void ReturnStatement::generate() {
 			g_builder->CreateRet(value);
 		}
 	} else {
-		if (g_function->prototype.getReturnType()->basicType != BasicType::NO_TYPE) {
+		if (returnType->basicType != BasicType::NO_TYPE) {
 			ErrorManager::typeError(
 				ErrorID::E3101_CANNOT_BE_IMPLICITLY_CONVERTED, 
 				m_errLine,

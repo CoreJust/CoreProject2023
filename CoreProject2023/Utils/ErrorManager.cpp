@@ -48,6 +48,8 @@ std::string ErrorIDStrings[] = {
 	"E2103: Expression is not a reference; cannot be modified",
 	"E2104: Function does not have a body",
 	"E2105: Varying arguments (...) can only be the last argument of a function",
+	"E2106: Keyword 'this' can only be used inside methods/constructors/destructors",
+	"E2107: Type constructor cannot be static",
 
 
 	"E3001: Type not specified; type expression expected",
@@ -65,6 +67,7 @@ std::string ErrorIDStrings[] = {
 	"E3101: Type cannot be implicitly converted",
 	"E3102: Type cannot be explicitly converted",
 	"E3103: Types cannot be converted to single type",
+	"E3103: Constructor not found",
 
 
 	"E4001: String conversion error; cannot convert string from utf32 when its size is not multiple of 4",

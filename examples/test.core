@@ -1,6 +1,7 @@
 import core.io.console;
 import core.crt.cstdlib;
 import core.crt.cstring;
+import core.time.timer;
 
 use console;
 
@@ -30,21 +31,18 @@ struct String {
 	public static str8 typeName = "String";
 }
 
-struct Printer {
-	def public static out(i32 val) {
-		print("Printer: ");
-		println(val);
-	}
-}
-
 def main() i32 {
 	String str = "Hello ";
 	str.append("world from ");
 	str.append(String.typeName);
 	
-	console.println(str.data);
-	
-	Printer.out(10);
+	timer.Timer timer = timer.Timer();
+	while (true) {
+		if (timer.elapsedTimeAsSeconds() > 2.5) {
+			console.println(str.data);
+			timer.start();
+		}
+	}
 	
 	cstdlib.system("pause");
 	return 0;

@@ -190,3 +190,10 @@ Initial development
 	Fixed bug with global str variables
 
 	Commited as "Static methods and fields"
+
+	Implemented core.crt.ctime, core.time.timer
+	Fixed bug with conversions to aliased types
+	Fixed bug when constructor was saved to functions when importing module and thus not found
+
+	Commited as "Bug fixes, core.crt.ctime, core.time.timer"
+	

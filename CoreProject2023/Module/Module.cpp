@@ -414,7 +414,7 @@ void Module::loadModuleSymbolsAsLLVM(ModuleSymbolsUnit*& unit) {
 	}
 
 	for (Function& constructor : unit->getConstructors()) {
-		newUnit->addFunction(
+		newUnit->addConstructor(
 			constructor.prototype,
 			constructor.prototype.generateImportedFromOtherModule(*m_llvmModule)
 		);

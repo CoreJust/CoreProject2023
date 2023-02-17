@@ -350,6 +350,12 @@ llvm::Value* llvm_utils::convertValueTo(
 		return convertValueTo(((PointerType*)to.get())->elementType, from, value);
 	}
 
+	if (bfrom == BasicType::TYPE_NODE && ((TypeNodeType*)from.get())->node->type->basicType < BasicType::CLASS) {
+		return convertValueTo(to, ((TypeNodeType*)from.get())->node->type, value);
+	} else if (bto == BasicType::TYPE_NODE && ((TypeNodeType*)to.get())->node->type->basicType < BasicType::CLASS) {
+		return convertValueTo(((TypeNodeType*)to.get())->node->type, from, value);
+	}
+
 	if (bto == BasicType::BOOL) {
 		return convertToBool(from, value);
 	}

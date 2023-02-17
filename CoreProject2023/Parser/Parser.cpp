@@ -791,10 +791,12 @@ std::unique_ptr<Expression> Parser::primary() {
 	if (auto type = TypeParser(m_toks, m_pos).tryParseType()) {
 		if (match(TokenType::LPAR)) { // type conversion/constructor
 			std::vector<std::unique_ptr<Expression>> args;
-			do {
-				args.push_back(expression());
-			} while (match(TokenType::COMMA));
-			consume(TokenType::RPAR);
+			if (!match(TokenType::RPAR)) {
+				do {
+					args.push_back(expression());
+				} while (match(TokenType::COMMA));
+				consume(TokenType::RPAR);
+			}
 			return std::make_unique<TypeConversionExpr>(std::move(args), std::move(type));
 		} else if (match(TokenType::LBRACE)) { // array expression (like u8 {...})
 			// TODO: implement

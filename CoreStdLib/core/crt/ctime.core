@@ -1,0 +1,38 @@
+# ctime.core - the standard core library module that is an interface with C time functions.
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+# Time-containing types
+type clock_t = i64; # platform-specific
+type time_t = i64; # platform-specific
+
+struct tm {
+    i32 tm_sec;   # seconds after the minute - [0, 60] including leap second
+    i32 tm_min;   # minutes after the hour - [0, 59]
+    i32 tm_hour;  # hours since midnight - [0, 23]
+    i32 tm_mday;  # day of the month - [1, 31]
+    i32 tm_mon;   # months since January - [0, 11]
+    i32 tm_year;  # years since 1900
+    i32 tm_wday;  # days since Sunday - [0, 6]
+    i32 tm_yday;  # days since January 1 - [0, 365]
+    i32 tm_isdst; # daylight savings time flag
+}
+
+
+# Number of processor clock ticks per second
+const clock_t CLOCKS_PER_SEC = 1000; # platform-specific
+
+
+# Time manipulation functions
+def native clock() clock_t;
+def native time(time_t* arg) time_t;
+def native difftime(time_t time_end, time_t time_beg) f64;
+
+# Format conversion functions
+def native ctime(const time_t* time) c8*;
+def native asctime(const tm* timeptr) c8*;
+def native strftime(c8* s, u64 maxsize, const c8* format, const tm* timeptr) u64;
+def native gmtime(const time_t* timer) tm*;
+def native localtime(const time_t* timer) tm*;
+def native mktime(tm* timeptr) time_t;

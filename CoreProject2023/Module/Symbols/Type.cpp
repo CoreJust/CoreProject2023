@@ -663,6 +663,12 @@ bool isImplicitlyConverible(
 		return isImplicitlyConverible(((PointerType*)from.get())->elementType, to);
 	}
 
+	if (bfrom == BasicType::TYPE_NODE && ((TypeNodeType*)from.get())->node->type->basicType < BasicType::CLASS) {
+		return isImplicitlyConverible(((TypeNodeType*)from.get())->node->type, to, isFromCompileTime);
+	} else if (bto == BasicType::TYPE_NODE && ((TypeNodeType*)to.get())->node->type->basicType < BasicType::CLASS) {
+		return isImplicitlyConverible(from, ((TypeNodeType*)to.get())->node->type, isFromCompileTime);
+	}
+
 	if (bfrom == BasicType::POINTER && isFromCompileTime
 		&& (bto == BasicType::POINTER || bto == BasicType::FUNCTION || bto == BasicType::OPTIONAL)) {
 		return true;

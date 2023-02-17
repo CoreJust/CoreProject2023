@@ -3,7 +3,6 @@
 @set safety unsafe
 @set mangling nomangle
 
-# After user-defined types are presented: add div_t, ldiv_t, etc
 # TODO: add constants (macros in original C header file)
 
 struct div_t {

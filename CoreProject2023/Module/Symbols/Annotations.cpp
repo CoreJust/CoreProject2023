@@ -114,6 +114,7 @@ FunctionQualities::FunctionQualities() {
     setMangling(true);
     setNoReturn(false);
     setNoExcept(false);
+    setImplicit(false);
 }
 
 bool FunctionQualities::isMethod() const {

@@ -42,7 +42,7 @@ llvm::Value* TypeConversionExpr::generate() {
 		}
 		
 		return g_builder->CreateCall(
-			(llvm::FunctionType*)constructor->prototype.genType()->to_llvm(),
+			(llvm::FunctionType*)constructor->prototype.genType()->to_llvmFunctionType(),
 			funcVal,
 			argValues
 		);
@@ -86,11 +86,15 @@ Function* TypeConversionExpr::chooseConstructor() {
 			error += ", ";
 		}
 
-		error.pop_back();
-		error.back() = ')';
+		if (argTypes.size()) {
+			error.pop_back();
+			error.pop_back();
+		}
+
+		error += ')';
 		error += " not found";
 
-		ErrorManager::parserError(
+		ErrorManager::typeError(
 			ErrorID::E3104_NO_SUITABLE_CONSTRUCTOR,
 			m_errLine,
 			error

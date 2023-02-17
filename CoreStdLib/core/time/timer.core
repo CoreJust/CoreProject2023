@@ -1,0 +1,35 @@
+@set safety safe
+import core.crt.ctime;
+
+struct Timer {
+	private ctime.clock_t start_time;
+	private ctime.clock_t end_time;
+	private bool is_running;
+	
+	def this() {
+		this.start();
+	}
+
+	def public start() {
+		this.start_time = ctime.clock();
+		this.is_running = true;
+	}
+	
+	def public stop() {
+		this.end_time = ctime.clock();
+		this.is_running = false;
+	}
+	
+	def public elapsedTime() ctime.clock_t {
+		ctime.clock_t end_time = this.end_time;
+		if this.is_running {
+			end_time = ctime.clock();
+		}
+		
+		return end_time - this.start_time;
+	}
+	
+	def public elapsedTimeAsSeconds() f64 {
+		return this.elapsedTime() / ctime.CLOCKS_PER_SEC;
+	}
+}

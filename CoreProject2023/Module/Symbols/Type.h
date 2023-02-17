@@ -188,7 +188,6 @@ public:
 };
 
 
-// TODO: add consideration of user-defined types
 bool isImplicitlyConverible(
 	const std::unique_ptr<Type>& from, 
 	const std::unique_ptr<Type>& to, 

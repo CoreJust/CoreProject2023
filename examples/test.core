@@ -16,7 +16,6 @@ struct String {
 		this.data = c8*(cstdlib.malloc(this.size));
 		cstring.strncpy(this.data, str.data, str.size);
 	}
-
 	
 	def public append(str8 str) {
 		u64 newSize = this.size + str.size;
@@ -27,13 +26,25 @@ struct String {
 		
 		cstring.strncat(this.data, str.data, str.size);
 	}
+	
+	public static str8 typeName = "String";
+}
+
+struct Printer {
+	def public static out(i32 val) {
+		print("Printer: ");
+		println(val);
+	}
 }
 
 def main() i32 {
 	String str = "Hello ";
-	str.append("world");
+	str.append("world from ");
+	str.append(String.typeName);
 	
 	console.println(str.data);
+	
+	Printer.out(10);
 	
 	cstdlib.system("pause");
 	return 0;

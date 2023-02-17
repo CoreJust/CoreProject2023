@@ -386,11 +386,13 @@ std::unique_ptr<Type> TypeParser::parseType() {
 	return result;
 }
 
-bool TypeParser::isType() {
+bool TypeParser::isType(bool isFalseOnDot) {
 	savePos();
 	if (parseType()) {
-		loadPos();
-		return true;
+		if (!isFalseOnDot || !match(TokenType::DOT)) {
+			loadPos();
+			return true;
+		}
 	}
 
 	loadPos();

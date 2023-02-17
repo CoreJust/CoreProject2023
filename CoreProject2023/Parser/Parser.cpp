@@ -159,7 +159,10 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 	size_t i = 0;
 
 	std::vector<std::unique_ptr<Type>> argTypes;
-	argTypes.push_back(std::make_unique<PointerType>(BasicType::REFERENCE, TypeNode::genType(parentType)));
+
+	if (!isStatic) {
+		argTypes.push_back(std::make_unique<PointerType>(BasicType::REFERENCE, TypeNode::genType(parentType)));
+	}
 
 	if (!match(TokenType::RPAR)) {
 		do {
@@ -246,6 +249,7 @@ std::unique_ptr<Declaration> Parser::fieldDeclaration(std::shared_ptr<TypeNode> 
 		? Visibility::PRIVATE : Visibility::PUBLIC;
 
 	Variable* variable = parentType->getField(alias, visibility, isStatic);
+	ASSERT(variable, "cannot be null");
 
 	std::unique_ptr<Expression> expr = nullptr;
 	if (match(TokenType::EQ)) {
@@ -253,7 +257,7 @@ std::unique_ptr<Declaration> Parser::fieldDeclaration(std::shared_ptr<TypeNode> 
 	}
 
 	consume(TokenType::SEMICOLON);
-	return std::make_unique<FieldDeclaration>(variable, std::move(expr));
+	return std::make_unique<FieldDeclaration>(parentType, variable, std::move(expr));
 }
 
 std::unique_ptr<Declaration> Parser::functionDeclaration() {
@@ -374,7 +378,7 @@ std::unique_ptr<Statement> Parser::statement() {
 	} else if (peek().type == TokenType::LBRACE) {
 		return stateOrBlock();
 	} else if (peek().type == TokenType::VAR || peek().type == TokenType::CONST
-		|| TypeParser(m_toks, m_pos).isType()) {
+		|| TypeParser(m_toks, m_pos).isType(true)) {
 		return variableDefStatement();
 	}
 
@@ -795,6 +799,39 @@ std::unique_ptr<Expression> Parser::primary() {
 		} else if (match(TokenType::LBRACE)) { // array expression (like u8 {...})
 			// TODO: implement
 			consume(TokenType::RBRACE);
+		} else if (match(TokenType::DOT)) { // static members
+			if (std::unique_ptr<Type>& containingType = Type::getTheVeryType(type);
+				containingType->basicType == BasicType::TYPE_NODE) {
+				std::shared_ptr<TypeNode> typeNode = ((TypeNodeType*)containingType.get())->node;
+				Visibility visibility = (g_type && g_type->isEquals(typeNode))
+					? Visibility::PRIVATE : Visibility::PUBLIC;
+
+				std::string name = consume(TokenType::WORD).data;
+				SymbolType symType = typeNode->getSymbolType(name, visibility, true);
+
+				// Variable
+				if (symType == SymbolType::VARIABLE) {
+					Variable* variable = typeNode->getField(name, visibility, true);
+					if (variable) {
+						return std::make_unique<VariableExpr>(typeNode, variable);
+					}
+				} else if (symType == SymbolType::FUNCTION) { // Function
+					return parseMethodCall(typeNode, nullptr, name, true);
+				}
+				
+				// No such symbol
+				ErrorManager::parserError(
+					ErrorID::E2006_NO_SUCH_MEMBER,
+					getCurrLine(),
+					"identifier: " + typeNode->name + name
+				);
+			} else {
+				ErrorManager::parserError(
+					ErrorID::E2006_NO_SUCH_MEMBER,
+					getCurrLine(),
+					"non-user-defined types do not have static members"
+				);
+			}
 		}
 	}
 	
@@ -865,8 +902,10 @@ std::unique_ptr<Expression> Parser::parseMethodCall(
 		std::vector<std::unique_ptr<Type>> argTypes;
 		std::vector<bool> isCompileTime;
 
-		argTypes.push_back(std::make_unique<PointerType>(BasicType::REFERENCE, std::make_unique<TypeNodeType>(typeNode)));
-		isCompileTime.push_back(expr->isCompileTime());
+		if (!isStatic) {
+			argTypes.push_back(std::make_unique<PointerType>(BasicType::REFERENCE, std::make_unique<TypeNodeType>(typeNode)));
+			isCompileTime.push_back(expr->isCompileTime());
+		}
 
 		while (!match(TokenType::RPAR)) {
 			args.push_back(expression());
@@ -883,7 +922,11 @@ std::unique_ptr<Expression> Parser::parseMethodCall(
 			return nullptr;
 		}
 
-		return std::make_unique<MethodCallExpr>(func, std::move(expr), std::move(args));
+		if (!isStatic) {
+			return std::make_unique<MethodCallExpr>(func, std::move(expr), std::move(args));
+		} else {
+			return std::make_unique<FunctionCallExpr>(std::make_unique<FunctionExpr>(func), std::move(args));
+		}
 	} else {
 		Visibility visibility = (g_type && g_type->isEquals(typeNode))
 			? Visibility::PRIVATE : Visibility::PUBLIC;

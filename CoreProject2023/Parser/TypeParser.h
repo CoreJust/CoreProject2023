@@ -25,7 +25,8 @@ public:
 	// Returns nullptr if there is no type expression
 	std::unique_ptr<Type> parseType();
 
-	bool isType();
+	// isFalseOnDot - whether the -type-. is counted as not a type here
+	bool isType(bool isFalseOnDot = false);
 
 private:
 	void savePos();

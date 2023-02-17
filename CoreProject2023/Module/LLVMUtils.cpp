@@ -35,6 +35,7 @@ llvm::Value* llvm_utils::createGlobalVariable(Variable& var, Expression* initial
 	llvm::GlobalValue::ThreadLocalMode threadLocalMode = var.qualities.isThreadLocal() ?
 		llvm::GlobalValue::GeneralDynamicTLSModel :
 		llvm::GlobalValue::NotThreadLocal;
+
 	llvm::GlobalVariable* varValue = new llvm::GlobalVariable(
 		g_module->getLLVMModule(), // current llvm::Module
 		var.type->to_llvm(), // variable type
@@ -123,6 +124,23 @@ llvm::Value* llvm_utils::createLocalVariable(
 	return tmpBuilder.CreateAlloca(type->to_llvm(), 0, name);
 }
 
+llvm::Constant* llvm_utils::createGlobalValue(llvm::Type* type, llvm::Constant* value) {
+	llvm::GlobalVariable* globalValue = new llvm::GlobalVariable(
+		g_module->getLLVMModule(), // current llvm::Module
+		type, // gloval value type
+		false, // is constant
+		llvm::GlobalValue::LinkageTypes::InternalLinkage, // linkage
+		value, // default value
+		"global$", // variable name
+		nullptr, // insert before
+		llvm::GlobalValue::NotThreadLocal, // is it thread-local
+		0, // address space
+		false // is externally initialized
+	);
+
+	return globalValue;
+}
+
 llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type) {
 	llvm::Type* llvmType = type->to_llvm();
 	switch (type->basicType) {
@@ -197,7 +215,6 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 			return llvm::ConstantStruct::get((llvm::StructType*)llvmType, init);
 		};
 		case BasicType::TYPE_NODE: return getDefaultValueOf(((TypeNodeType*)type.get())->node->type);
-			// TODO: implement for user-defined types
 	default: break;
 	}
 
@@ -237,59 +254,56 @@ llvm::Constant* llvm_utils::getConstantString(
 	ASSERT(symbol_width == 8 || symbol_width == 16 || symbol_width == 32, "Impossible symbol width");
 
 	if (symbol_width == 8) {
+		llvm::Constant* llvmValue = llvm::ConstantDataArray::getString(g_context, value);
+		llvmValue = createGlobalValue(llvmValue->getType(), llvmValue);
+
 		return llvm::ConstantStruct::get(
 			(llvm::StructType*)basicTypeToLLVM(BasicType::STR8), // string type (struct { c8* data, u64 size })
 			llvm::ArrayRef<llvm::Constant*>({ // string value
-				g_builder->CreateGlobalString(value),
+				llvmValue,
 				getConstantInt(value.size(), 64, false)
 			})
 		);
-	} else if (symbol_width == 16) {
-		ASSERT(value.size() % 2 == 0, "Incorrect value");
+	} else {
+		u8 symbolByteWidth = symbol_width / 8;
+		ASSERT(value.size() % symbolByteWidth == 0, "Incorrect value");
 
-		// Getting the value as u16 array
+		// Getting the value as u16/u32 array
 		std::vector<llvm::Constant*> buffer;
-		for (size_t i = 0; i < value.size(); i += 2) {
-			buffer.push_back(getConstantInt(*(i16*)&value[i], 16, true));
+		for (size_t i = 0; i < value.size(); i += symbolByteWidth) {
+			if (symbol_width == 16) {
+				buffer.push_back(getConstantInt(*(i16*)&value[i], 16, true));
+			} else { // symbol_width == 32
+				buffer.push_back(getConstantInt(*(i32*)&value[i], 32, true));
+			}
 		}
 
-		buffer.push_back(getConstantInt(0, 16, true)); // terminating zero
+		buffer.push_back(getConstantInt(0, symbol_width, true)); // terminating zero
 
 		llvm::Constant* llvmValue = llvm::ConstantArray::get(
-			llvm::ArrayType::get(llvm::Type::getInt16Ty(g_context), value.size() / 2 + 1),
+			llvm::ArrayType::get(llvm::Type::getIntNTy(g_context, symbol_width), value.size() / symbolByteWidth + 1),
 			buffer
 		);
 
-		return llvm::ConstantStruct::get(
-			(llvm::StructType*)basicTypeToLLVM(BasicType::STR16), // string type (struct { c16* data, u64 size })
-			llvm::ArrayRef<llvm::Constant*>({ // string value
-				llvmValue,
-				getConstantInt(value.size() / 2, 64, false)
-			})
-		);
-	} else { // symbol_width == 32
-		ASSERT(value.size() % 4 == 0, "Incorrect value");
+		llvmValue = createGlobalValue(llvmValue->getType(), llvmValue);
 
-		// Getting the value as u32 array
-		std::vector<llvm::Constant*> buffer;
-		for (size_t i = 0; i < value.size(); i += 4) {
-			buffer.push_back(getConstantInt(*(i32*)&value[i], 32, true));
+		if (symbol_width == 16) {
+			return llvm::ConstantStruct::get(
+				(llvm::StructType*)basicTypeToLLVM(BasicType::STR16), // string type (struct { c16* data, u64 size })
+				llvm::ArrayRef<llvm::Constant*>({ // string value
+					llvmValue,
+					getConstantInt(value.size() / 2, 64, false)
+					})
+			);
+		} else { // symbol_width == 32
+			return llvm::ConstantStruct::get(
+				(llvm::StructType*)basicTypeToLLVM(BasicType::STR32), // string type (struct { c32* data, u64 size })
+				llvm::ArrayRef<llvm::Constant*>({ // string value
+					llvmValue,
+					getConstantInt(value.size() / 4, 64, false)
+					})
+			);
 		}
-
-		buffer.push_back(getConstantInt(0, 32, true)); // terminating zero
-
-		llvm::Constant* llvmValue = llvm::ConstantArray::get(
-			llvm::ArrayType::get(llvm::Type::getInt32Ty(g_context), value.size() / 4 + 1),
-			buffer
-		);
-
-		return llvm::ConstantStruct::get(
-			(llvm::StructType*)basicTypeToLLVM(BasicType::STR32), // string type (struct { c32* data, u64 size })
-			llvm::ArrayRef<llvm::Constant*>({ // string value
-				llvmValue,
-				getConstantInt(value.size() / 4, 64, false)
-			})
-		);
 	}
 }
 
@@ -328,8 +342,6 @@ llvm::Value* llvm_utils::convertValueTo(
 	if (bfrom == bto && bfrom <= BasicType::STR32) {
 		return value;
 	}
-
-	// TODO: user-defined types
 
 	// For integral (non-user-defined) types
 	if (isReference(bfrom)) {

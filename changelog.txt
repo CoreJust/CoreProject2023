@@ -185,3 +185,8 @@ Initial development
 	Added public/private qualities of struct members
 
 	Commited as "Methods"
+
+	Added static fields/methods
+	Fixed bug with global str variables
+
+	Commited as "Static methods and fields"

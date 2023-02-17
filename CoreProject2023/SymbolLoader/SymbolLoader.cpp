@@ -42,7 +42,6 @@ void SymbolLoader::loadUse() {
 	skipAssignment();
 }
 
-// TODO: implement
 void SymbolLoader::loadClass() {
 	std::shared_ptr<TypeNode> typeNode = m_symbols.getType(m_pos);
 
@@ -339,7 +338,7 @@ Variable SymbolLoader::loadField(TypeQualities parentQualities, std::shared_ptr<
 	VariableQualities fieldQualities;
 	fieldQualities.setSafety(parentType->qualities.getSafety());
 	fieldQualities.setVisibility(visibility);
-	fieldQualities.setVariableType(VariableType::FIELD);
+	fieldQualities.setVariableType(isStatic ? VariableType::COMMON : VariableType::FIELD);
 
 	return Variable(fieldName, std::move(type), fieldQualities, nullptr);
 }

@@ -158,8 +158,9 @@ void Compiler::compileLLVM() {
 
 	std::string error;
 	const llvm::Target* target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
-	if (!target)
+	if (!target) {
 		std::cout << error;
+	}
 
 	llvm::TargetMachine* targetMachine = target->createTargetMachine(targetTriple, "generic", "", options, RM);
 

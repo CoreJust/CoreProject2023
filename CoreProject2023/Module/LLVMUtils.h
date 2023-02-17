@@ -31,6 +31,12 @@ namespace llvm_utils {
 		const std::string& name
 	);
 
+	// Creates a value in an unnamed global constant, used for arrays and strings
+	llvm::Constant* createGlobalValue(
+		llvm::Type* type,
+		llvm::Constant* value
+	);
+
 
 	// Returns the default value of the type
 	llvm::Constant* getDefaultValueOf(

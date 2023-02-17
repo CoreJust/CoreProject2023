@@ -19,8 +19,9 @@ struct String {
 	}
 };
 
+volatile String r("Wow");
+
 int main() {
-	volatile String r("Wow");
 	printf("%s", r.data);
 	system("pause");
 	return 0;

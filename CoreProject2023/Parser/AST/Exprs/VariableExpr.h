@@ -7,12 +7,19 @@ class VariableExpr final : public Expression {
 
 public:
 	VariableExpr(std::string moduleName, Variable* variable);
+	VariableExpr(std::shared_ptr<TypeNode> typeNode, Variable* variable);
+	~VariableExpr();
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;
 	llvm::Value* generateRValue() override;
 
 private:
-	std::string m_moduleName;
+	bool m_isStaticTypeMember;
+	union {
+		std::string m_moduleName;
+		std::shared_ptr<TypeNode> m_typeNode;
+	};
+
 	std::string m_name;
 };

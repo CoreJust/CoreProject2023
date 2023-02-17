@@ -10,6 +10,7 @@
 #include "States/VariableDefStatement.h"
 #include "States/ReturnStatement.h"
 #include "States/ExpressionStatement.h"
+#include "Exprs/MethodCallExpr.h"
 #include "Exprs/FunctionCallExpr.h"
 #include "Exprs/FunctionExpr.h"
 #include "Exprs/AssignmentExpr.h"

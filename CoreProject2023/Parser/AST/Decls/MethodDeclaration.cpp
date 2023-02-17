@@ -46,19 +46,16 @@ void MethodDeclaration::generate() {
 			);
 		}
 
-		if (m_method->prototype.isUsingThis()) {
-			if (m_method->prototype.isUsingThisAsArgument()) {
-				// For methods and destructor
-			} else {
-				generateConstructor();
-			}
-		} else {
+		if (m_method->prototype.isUsingThisAsArgument()) {
 			try {
 				m_body->generate();
 				if (m_method->prototype.getReturnType()->basicType == BasicType::NO_TYPE) {
 					g_builder->CreateRetVoid();
 				}
-			} catch (TerminatorAdded*) {}
+			}
+			catch (TerminatorAdded*) {}
+		} else {
+			generateConstructor();
 		}
 
 		g_module->deleteBlock();
@@ -82,10 +79,6 @@ void MethodDeclaration::generateConstructor() {
 		m_body->generate();
 	} catch (TerminatorAdded*) {}
 
-	thisVar = g_builder->CreateLoad(
-		m_method->prototype.getReturnType()->to_llvm(), 
-		thisVar
-	);
-
+	thisVar = g_builder->CreateLoad(m_method->prototype.getReturnType()->to_llvm(), thisVar);
 	g_builder->CreateRet(thisVar);
 }

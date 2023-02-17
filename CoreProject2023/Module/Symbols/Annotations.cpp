@@ -1,5 +1,9 @@
 #include "Annotations.h"
 
+bool isAccessible(Visibility from, Visibility symbol) {
+    return from <= symbol;
+}
+
 Visibility CommonQualities::getVisibility() const {
     return Visibility(m_data & 3);
 }
@@ -16,6 +20,10 @@ void CommonQualities::setSafety(Safety visibility) {
     m_data = (m_data & ~12) | ((u8)visibility << 2);
 }
 
+u64 CommonQualities::getData() const {
+    return m_data;
+}
+
 ModuleQualities::ModuleQualities() {
     setVisibility(Visibility::PUBLIC);
     setSafety(Safety::SAFE_ONLY);
@@ -28,6 +36,10 @@ bool ModuleQualities::isManglingOn() const {
 
 void ModuleQualities::setMangling(bool isToMangle) {
     m_data = (m_data & ~0b10000) | (u8(isToMangle ? 1 : 0) << 4);
+}
+
+u64 ModuleQualities::getData() const {
+    return m_data;
 }
 
 TypeQualities::TypeQualities() {
@@ -62,6 +74,10 @@ void TypeQualities::setConst(bool isConst) {
     m_data = (m_data & ~0b10000000) | (u8(isConst ? 1 : 0) << 7);
 }
 
+u64 TypeQualities::getData() const {
+    return m_data;
+}
+
 VariableQualities::VariableQualities() {
     setVisibility(Visibility::PUBLIC);
     setSafety(Safety::SAFE_ONLY);
@@ -82,6 +98,10 @@ bool VariableQualities::isThreadLocal() const {
 
 void VariableQualities::setThreadLocal(bool isThreadLocal) {
     m_data = (m_data & ~0b1000000) | (u8(isThreadLocal ? 1 : 0) << 6);
+}
+
+u64 VariableQualities::getData() const {
+    return m_data;
 }
 
 FunctionQualities::FunctionQualities() {
@@ -174,4 +194,8 @@ FunctionKind FunctionQualities::getFunctionKind() const {
 
 void FunctionQualities::setFunctionKind(FunctionKind kind) {
     m_additionalData = (m_additionalData & ~0b1100000000) | ((u8)kind << 8);
+}
+
+u64 FunctionQualities::getData() const {
+    return m_data | (m_additionalData << 8);
 }

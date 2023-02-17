@@ -30,6 +30,11 @@ public:
 
 	virtual u64 getBitSize() const;
 	u64 getAlignment() const;
+
+public:
+	// returns contained type for references, or returns the argument
+	static std::unique_ptr<Type>& getTheVeryType(std::unique_ptr<Type>& type);
+	static const std::unique_ptr<Type>& getTheVeryType(const std::unique_ptr<Type>& type);
 };
 
 

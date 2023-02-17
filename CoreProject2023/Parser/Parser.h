@@ -41,6 +41,7 @@ private:
 	std::unique_ptr<Expression> postfix();
 	std::unique_ptr<Expression> primary();
 
+	std::unique_ptr<Expression> parseMethodCall(std::shared_ptr<TypeNode> typeNode, std::unique_ptr<Expression> expr, std::string memberName, bool isStatic);
 	std::unique_ptr<Expression> parseFunctionValue(std::string moduleName, std::string name);
 
 private:

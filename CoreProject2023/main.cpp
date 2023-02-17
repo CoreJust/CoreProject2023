@@ -4,7 +4,7 @@
 
 // TODO: refactor operation expressions, arguments' default values, try replace unique_ptr with shared_ptr for Type
 // Long term TODO: project settings file, implement optionals, add ct preprocesing
-// Current tasks: constructors and struct methods, private/public, static, implement crt, expressions, safe/unsafe code, templates
+// Current tasks: static, implement crt, expressions, safe/unsafe code, templates, for, do-while
 // To test: strings, format strings, str's convertions
 
 int main() {

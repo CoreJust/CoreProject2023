@@ -147,7 +147,7 @@ void FunctionPrototype::setVaArgs(bool isVaArgs) {
 	m_isVaArgs = isVaArgs;
 }
 
-FunctionQualities& FunctionPrototype::getQualities() {
+const FunctionQualities& FunctionPrototype::getQualities() const {
 	return m_qualities;
 }
 

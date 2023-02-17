@@ -31,11 +31,13 @@ struct TypeNode {
 
 	TypeNode& operator=(TypeNode&& other);
 
-	SymbolType getSymbolType(const std::string& name, bool isStatic) const;
+	bool isEquals(std::shared_ptr<TypeNode> other);
+
+	SymbolType getSymbolType(const std::string& name, Visibility visibility, bool isStatic) const;
 
 	// Tries to get a function by name
 	// Returns nullptr if nothing found or more than one function with such name exist
-	Function* getMethod(const std::string& name, bool isStatic);
+	Function* getMethod(const std::string& name, Visibility visibility, bool isStatic);
 
 	// Finds the function with the name and exactly argTypes
 	Function* getMethod(
@@ -50,11 +52,12 @@ struct TypeNode {
 		const std::string& name,
 		const std::vector<std::unique_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
+		Visibility visibility,
 		bool isStatic
 	);
 
-	Variable* getField(const std::string& name, bool isStatic);
-	std::shared_ptr<TypeNode> getType(const std::string& name);
+	Variable* getField(const std::string& name, Visibility visibility, bool isStatic);
+	std::shared_ptr<TypeNode> getType(const std::string& name, Visibility visibility);
 
 	static std::unique_ptr<Type> genType(std::shared_ptr<TypeNode> typeNode, bool isConst = false);
 };

@@ -59,6 +59,13 @@ void Visitor::visit(ExpressionStatement* state, std::unique_ptr<Statement>& node
 	state->m_expression->accept(this, state->m_expression);
 }
 
+void Visitor::visit(MethodCallExpr* expr, std::unique_ptr<Expression>& node) {
+	expr->m_thisExpr->accept(this, expr->m_thisExpr);
+	for (auto& arg : expr->m_argExprs) {
+		arg->accept(this, arg);
+	}
+}
+
 void Visitor::visit(FunctionCallExpr* expr, std::unique_ptr<Expression>& node) {
 	expr->m_funcExpr->accept(this, expr->m_funcExpr);
 	for (auto& arg : expr->m_argExprs) {

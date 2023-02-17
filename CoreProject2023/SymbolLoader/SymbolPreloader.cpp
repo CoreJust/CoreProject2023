@@ -296,13 +296,14 @@ void SymbolPreloader::loadMethod(TypeQualities parentQualities) {
 	match(TokenType::NATIVE);
 
 	FunctionKind funcKind = FunctionKind::COMMON;
-	if (methodType != MethodType::STATIC && (match(TokenType::TYPE) || match(TokenType::THIS))) {
+	if (match(TokenType::WORD));
+	else if (methodType != MethodType::STATIC && (match(TokenType::TYPE) || match(TokenType::THIS))) {
 		if (peek(-1).type != TokenType::THIS) {
 			TypeParser(m_toks, m_pos).skipConsumeType();
 		}
 
 		funcKind = FunctionKind::CONSTRUCTOR;
-	} else if (!match(TokenType::WORD) && !match(TokenType::TYPE)
+	} else if (!match(TokenType::TYPE)
 		&& DEFINABLE_OPERATORS.contains(m_toks[m_pos].type)) { // operator-functions
 		funcKind = FunctionKind::OPERATOR;
 		if (m_toks[m_pos].type == TokenType::LPAR || m_toks[m_pos].type == TokenType::LBRACKET) {

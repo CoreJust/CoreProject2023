@@ -1,45 +1,39 @@
-#include "FunctionCallExpr.h"
+#include "MethodCallExpr.h"
 #include <Parser/Visitor/Visitor.h>
 #include <Utils/ErrorManager.h>
 #include <Module/LLVMGlobals.h>
 #include <Module/LLVMUtils.h>
 
-FunctionCallExpr::FunctionCallExpr(
-	std::unique_ptr<Expression> func, 
-	std::vector<std::unique_ptr<Expression>> args
-) : 
-	m_funcExpr(std::move(func)), 
-	m_argExprs(std::move(args)) 
-{
-	if (m_funcExpr->getType()->basicType != BasicType::FUNCTION) {
-		ErrorManager::parserError(
-			ErrorID::E2102_CANNOT_BE_CALLED, 
-			m_errLine, 
-			""
-		);
-	} else {
-		m_type = ((FunctionType*)m_funcExpr->getType().get())->returnType->copy();
-		if (isReference(m_type->basicType)) {
-			m_isRVal = true;
-		}
+MethodCallExpr::MethodCallExpr(
+	Function* func,
+	std::unique_ptr<Expression> thisExpr,
+	std::vector<std::unique_ptr<Expression>> args)
+	: m_func(func), m_thisExpr(std::move(thisExpr)), m_argExprs(std::move(args)) {
+	ASSERT(m_func, "function cannot be no-null");
+	ASSERT(m_thisExpr, "this expression cannot be no-null");
+
+	m_type = m_func->prototype.getReturnType()->copy();
+	if (isReference(m_type->basicType)) {
+		m_isRVal = true;
 	}
 }
 
-void FunctionCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
+void MethodCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
 	visitor->visit(this, node);
 }
 
-llvm::Value* FunctionCallExpr::generate() {
-	llvm::Function* funcVal = (llvm::Function*)m_funcExpr->generate();
-	FunctionType* funcType = (FunctionType*)m_funcExpr->getType().get();
+llvm::Value* MethodCallExpr::generate() {
+	std::unique_ptr<FunctionType> funcType = m_func->prototype.genType();
 
 	std::vector<llvm::Value*> argValues;
+	argValues.push_back(m_thisExpr->generateRValue());
+
 	for (size_t i = 0; i < m_argExprs.size(); i++) {
 		argValues.push_back(m_argExprs[i]->generate());
 
 		if (i < funcType->argTypes.size()) { // not va_args
 			argValues.back() = llvm_utils::tryImplicitlyConvertTo(
-				funcType->argTypes[i], // to type
+				funcType->argTypes[i + 1], // to type
 				m_argExprs[i]->getType(), // from type
 				argValues.back(), // llvm value to be converted
 				m_errLine, // the line the expression is at
@@ -48,9 +42,19 @@ llvm::Value* FunctionCallExpr::generate() {
 		}
 	}
 
+	/*
+	for (auto& arg : argValues) {
+		arg->print(llvm::errs());
+		llvm::errs() << "\n";
+	}
+
+	m_func->functionValue->print(llvm::errs());
+	llvm::errs() << "\n";
+	*/
+
 	llvm::Value* result = g_builder->CreateCall(
-		funcType->to_llvmFunctionType(), 
-		funcVal,
+		funcType->to_llvmFunctionType(),
+		m_func->functionValue,
 		argValues
 	);
 
@@ -62,19 +66,20 @@ llvm::Value* FunctionCallExpr::generate() {
 	return result;
 }
 
-llvm::Value* FunctionCallExpr::generateRValue() {
+llvm::Value* MethodCallExpr::generateRValue() {
 	if (m_type->basicType != BasicType::REFERENCE) {
 		ErrorManager::parserError(
-			ErrorID::E2103_NOT_A_REFERENCE, 
-			m_errLine, 
+			ErrorID::E2103_NOT_A_REFERENCE,
+			m_errLine,
 			"function does not return a reference"
 		);
 	}
 
-	llvm::Function* funcVal = (llvm::Function*)m_funcExpr->generate();
-	FunctionType* funcType = (FunctionType*)m_funcExpr->getType().get();
+	std::unique_ptr<FunctionType> funcType = m_func->prototype.genType();
 
 	std::vector<llvm::Value*> argValues;
+	argValues.push_back(m_thisExpr->generate());
+
 	for (size_t i = 0; i < m_argExprs.size(); i++) {
 		argValues.push_back(m_argExprs[i]->generate());
 
@@ -90,8 +95,8 @@ llvm::Value* FunctionCallExpr::generateRValue() {
 	}
 
 	return g_builder->CreateCall(
-		(llvm::FunctionType*)funcType->to_llvm(), 
-		funcVal, 
+		(llvm::FunctionType*)funcType->to_llvm(),
+		m_func->functionValue,
 		argValues
 	);
 }

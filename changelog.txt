@@ -177,4 +177,11 @@ Initial development
 	Added constructors (def type -type-(...), def this(...))
 	Created modules SymbolRef, TypeDeclaration, MethodDeclaration, FieldDeclaration
 
+16.02.2023
 	Commited as "Constructors"
+
+17.02.2023
+	Created module MethodCallExpr
+	Added public/private qualities of struct members
+
+	Commited as "Methods"

@@ -1,5 +1,6 @@
 import core.io.console;
 import core.crt.cstdlib;
+import core.crt.cstring;
 
 use console;
 
@@ -8,16 +9,30 @@ struct String {
 	u64 capacity;
 	u64 size;
 
+
 	@implicit
 	def this(str8 str) {
-		this.data = c8*(str.data);
-		this.capacity = str.size;
-		this.size = str.size;
+		this.size = this.capacity = str.size;
+		this.data = c8*(cstdlib.malloc(this.size));
+		cstring.strncpy(this.data, str.data, str.size);
+	}
+
+	
+	def public append(str8 str) {
+		u64 newSize = this.size + str.size;
+		if (newSize > this.capacity) {
+			this.data = c8*(cstdlib.realloc(u8*(this.data), newSize));
+			this.capacity = newSize;
+		}
+		
+		cstring.strncat(this.data, str.data, str.size);
 	}
 }
 
 def main() i32 {
-	String str = "Hello world";
+	String str = "Hello ";
+	str.append("world");
+	
 	console.println(str.data);
 	
 	cstdlib.system("pause");

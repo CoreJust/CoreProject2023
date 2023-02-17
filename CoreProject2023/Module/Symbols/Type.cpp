@@ -65,6 +65,22 @@ u64 Type::getAlignment() const {
 	return (this->getBitSize() + 7) / 8;
 }
 
+std::unique_ptr<Type>& Type::getTheVeryType(std::unique_ptr<Type>& type) {
+	if (isReference(type->basicType)) {
+		return ((PointerType*)type.get())->elementType;
+	}
+
+	return type;
+}
+
+const std::unique_ptr<Type>& Type::getTheVeryType(const std::unique_ptr<Type>& type) {
+	if (isReference(type->basicType)) {
+		return ((PointerType*)type.get())->elementType;
+	}
+
+	return type;
+}
+
 ArrayType::ArrayType(std::unique_ptr<Type> elementType, u64 size, bool isConst)
 	: elementType(std::move(elementType)), size(size), Type(BasicType::ARRAY, isConst) {
 

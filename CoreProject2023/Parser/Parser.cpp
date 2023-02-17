@@ -95,6 +95,9 @@ std::unique_ptr<Declaration> Parser::structDeclaration() {
 	std::string name = consume(TokenType::WORD).data;
 	std::shared_ptr<TypeNode> typeNode = g_module->getType(m_pos - 2);
 
+	std::shared_ptr<TypeNode> previousGType = g_type;
+	g_type = typeNode;
+
 	consume(TokenType::LBRACE);
 
 	std::vector<std::unique_ptr<Declaration>> fields;
@@ -111,6 +114,7 @@ std::unique_ptr<Declaration> Parser::structDeclaration() {
 		}
 	}
 
+	g_type = previousGType;
 	return std::make_unique<TypeDeclaration>(typeNode, std::move(fields), std::move(methods));
 }
 
@@ -187,13 +191,19 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 		function = g_module->getFunction(tokenPos);
 	}
 
+	ASSERT(function, "cannot be null");
+
 	TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
 	if (function->prototype.getQualities().isNative()) {
 		consume(TokenType::SEMICOLON);
 		return std::make_unique<MethodDeclaration>(function, nullptr);
 	} else {
 		if (!isStatic) {
-			g_module->addLocalVariable("this", function->prototype.getReturnType()->copy(), VariableQualities(), nullptr);
+			if (function->prototype.getQualities().getFunctionKind() == FunctionKind::CONSTRUCTOR) {
+				g_module->addLocalVariable("this", function->prototype.getReturnType()->copy(), VariableQualities(), nullptr);
+			} else {
+				g_module->addLocalVariable("this", argTypes[0]->copy(), VariableQualities(), nullptr);
+			}
 		}
 
 		// Short function, like def a() i32 = 10;
@@ -232,7 +242,10 @@ std::unique_ptr<Declaration> Parser::fieldDeclaration(std::shared_ptr<TypeNode> 
 	TypeParser(m_toks, m_pos).skipConsumeType();
 
 	std::string alias = consume(TokenType::WORD).data;
-	Variable* variable = parentType->getField(alias, isStatic);
+	Visibility visibility = (g_type && g_type->isEquals(parentType))
+		? Visibility::PRIVATE : Visibility::PUBLIC;
+
+	Variable* variable = parentType->getField(alias, visibility, isStatic);
 
 	std::unique_ptr<Expression> expr = nullptr;
 	if (match(TokenType::EQ)) {
@@ -681,9 +694,25 @@ std::unique_ptr<Expression> Parser::postfix() {
 			expr = std::make_unique<UnaryExpr>(std::move(expr), UnaryExpr::POST_DEC);
 			continue;
 		} if (match(TokenType::DOT)) { // member access
-			// TODO: add consideration of methods
 			m_pos++;
 			std::string memberName = peek(-1).data; // it can be WORD or any number
+			const std::unique_ptr<Type>& thisType = Type::getTheVeryType(expr->getType());
+
+			if (thisType->basicType == BasicType::TYPE_NODE) { // can be method
+				std::shared_ptr<TypeNode> typeNode = ((TypeNodeType*)thisType.get())->node;
+				Visibility visibility = (g_type && g_type->isEquals(typeNode)) 
+					? Visibility::PRIVATE : Visibility::PUBLIC;
+
+				SymbolType symType = typeNode->getSymbolType(memberName, visibility, false);
+				if (symType == SymbolType::VARIABLE) {
+					expr = std::make_unique<FieldAccessExpr>(std::move(expr), memberName);
+					continue;
+				} else if (symType == SymbolType::FUNCTION) {
+					expr = parseMethodCall(typeNode, std::move(expr), memberName, false);
+					continue;
+				}
+			}
+
 			expr = std::make_unique<FieldAccessExpr>(std::move(expr), memberName);
 			continue;
 		}
@@ -805,6 +834,68 @@ std::unique_ptr<Expression> Parser::primary() {
 	);
 
 	return nullptr;
+}
+
+std::unique_ptr<Expression> Parser::parseMethodCall(
+	std::shared_ptr<TypeNode> typeNode, 
+	std::unique_ptr<Expression> expr, 
+	std::string memberName, 
+	bool isStatic
+) {
+	if (match(TokenType::LESS)) { // template
+		std::vector<std::unique_ptr<Type>> argTypes;
+		argTypes.push_back(std::make_unique<TypeNodeType>(typeNode));
+
+		if (!match(TokenType::GREATER)) {
+			do {
+				argTypes.push_back(TypeParser(m_toks, m_pos).consumeType());
+			} while (match(TokenType::COMMA));
+			consume(TokenType::GREATER);
+		}
+
+		Function* func = typeNode->getMethod(memberName, argTypes, {}, isStatic);
+		if (func == nullptr) {
+			functionCallError(typeNode->name, memberName, argTypes, true);
+			return nullptr;
+		} else {
+			return std::make_unique<FunctionExpr>(func);
+		}
+	} else if (match(TokenType::LPAR)) { // function call
+		std::vector<std::unique_ptr<Expression>> args;
+		std::vector<std::unique_ptr<Type>> argTypes;
+		std::vector<bool> isCompileTime;
+
+		argTypes.push_back(std::make_unique<PointerType>(BasicType::REFERENCE, std::make_unique<TypeNodeType>(typeNode)));
+		isCompileTime.push_back(expr->isCompileTime());
+
+		while (!match(TokenType::RPAR)) {
+			args.push_back(expression());
+			argTypes.push_back(args.back()->getType()->copy());
+			isCompileTime.push_back(args.back()->isCompileTime());
+			if (peek().type != TokenType::RPAR) {
+				consume(TokenType::COMMA);
+			}
+		}
+
+		Function* func = typeNode->getMethod(memberName, argTypes, isCompileTime, isStatic);
+		if (func == nullptr) {
+			functionCallError(typeNode->name, memberName, argTypes, false);
+			return nullptr;
+		}
+
+		return std::make_unique<MethodCallExpr>(func, std::move(expr), std::move(args));
+	} else {
+		Visibility visibility = (g_type && g_type->isEquals(typeNode))
+			? Visibility::PRIVATE : Visibility::PUBLIC;
+
+		Function* func = typeNode->getMethod(memberName, visibility, isStatic);
+		if (func == nullptr) {
+			functionCallError(typeNode->name, memberName, {}, true);
+			return nullptr;
+		} else {
+			return std::make_unique<FunctionExpr>(func);
+		}
+	}
 }
 
 std::unique_ptr<Expression> Parser::parseFunctionValue(std::string moduleName, std::string name) {

@@ -46,7 +46,7 @@ void FunctionDeclaration::generate() {
 
 		if (m_function->prototype.isUsingThis()) {
 			if (m_function->prototype.isUsingThisAsArgument()) {
-				// For methods and destructor
+				// Methods and destructor, shall not be called
 			} else {
 				generateConstructor();
 			}

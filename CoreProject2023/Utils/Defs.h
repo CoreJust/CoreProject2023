@@ -1,11 +1,13 @@
 #pragma once
 #include <cstdint>
-#include <iostream>
+#include <string>
+
+void _assertion_failed(std::string message);
 
 #ifdef _DEBUG
 #define ASSERT(expr, message)\
 	if (!(expr)) {\
-		std::cout << __FILE__ << ": assertion failed on line " << __LINE__ << " : " << (message) << std::endl;\
+		_assertion_failed(std::string(__FILE__) + ": assertion failed on line " + std::to_string(__LINE__) + " : " + std::string(message));\
 	}
 #else
 #define ASSERT(expr, message)

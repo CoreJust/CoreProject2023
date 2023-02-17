@@ -41,7 +41,8 @@ std::string ErrorIDStrings[] = {
 	"E2003: Unknown identifier; there is no such variable/function",
 	"E2004: There are multiple functions with such name; specify its argument types",
 	"E2005: No function exists that can be called with such arguments",
-	"E2006: No member of the type with such name exists",
+	"E2006: No member of the type with such name exists or the member is inaccessible",
+	"E2007: No access to the member",
 
 	"E2101: Variable declared via keyword var must be initialized",
 	"E2102: Expression cannot be called; no operator () defined",

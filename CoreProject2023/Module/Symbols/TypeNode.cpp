@@ -50,21 +50,30 @@ TypeNode& TypeNode::operator=(TypeNode&& other) {
     return *this;
 }
 
-SymbolType TypeNode::getSymbolType(const std::string& name, bool isStatic) const {
+bool TypeNode::isEquals(std::shared_ptr<TypeNode> other) {
+    return name == other->name
+        && qualities.getData() == other->qualities.getData()
+        && type->equals(other->type)
+        && fields.size() == other->fields.size()
+        && methods.size() == other->methods.size()
+        && internalTypes.size() == other->internalTypes.size();
+}
+
+SymbolType TypeNode::getSymbolType(const std::string& name, Visibility visibility, bool isStatic) const {
     for (auto& var : fields) {
-        if (var.name == name) {
+        if (var.name == name && isAccessible(visibility, var.qualities.getVisibility())) {
             return SymbolType::VARIABLE;
         }
     }
 
     for (auto& fun : methods) {
-        if (fun.prototype.getName() == name) {
+        if (fun.prototype.getName() == name && isAccessible(visibility, fun.prototype.getQualities().getVisibility())) {
             return SymbolType::FUNCTION;
         }
     }
 
     for (auto& type : internalTypes) {
-        if (type->name == name) {
+        if (type->name == name && isAccessible(visibility, type->qualities.getVisibility())) {
             return SymbolType::TYPE;
         }
     }
@@ -72,10 +81,11 @@ SymbolType TypeNode::getSymbolType(const std::string& name, bool isStatic) const
     return SymbolType::NO_SYMBOL;
 }
 
-Function* TypeNode::getMethod(const std::string& name, bool isStatic) {
+Function* TypeNode::getMethod(const std::string& name, Visibility visibility, bool isStatic) {
     Function* result = nullptr;
     for (auto& fun : methods) {
         if (fun.prototype.getName() == name
+            && isAccessible(visibility, fun.prototype.getQualities().getVisibility())
             && (fun.prototype.getQualities().getMethodType() == MethodType::STATIC) == isStatic) {
             if (result != nullptr) {
                 return nullptr;
@@ -111,12 +121,14 @@ Function* TypeNode::chooseMethod(
     const std::string& name,
     const std::vector<std::unique_ptr<Type>>& argTypes,
     const std::vector<bool>& isCompileTime,
+    Visibility visibility,
     bool isStatic
 ) {
     Function* result = nullptr;
     i32 bestScore = -1;
     for (auto& fun : methods) {
         if (fun.prototype.getName() == name
+            && isAccessible(visibility, fun.prototype.getQualities().getVisibility())
             && (fun.prototype.getQualities().getMethodType() == MethodType::STATIC) == isStatic) {
             i32 score = fun.prototype.getSuitableness(argTypes, isCompileTime);
             if (score < 0) {
@@ -137,9 +149,10 @@ Function* TypeNode::chooseMethod(
     return result;
 }
 
-Variable* TypeNode::getField(const std::string& name, bool isStatic) {
+Variable* TypeNode::getField(const std::string& name, Visibility visibility, bool isStatic) {
     for (auto& var : fields) {
         if (var.name == name
+            && isAccessible(visibility, var.qualities.getVisibility())
             && (var.qualities.getVariableType() != VariableType::FIELD) == isStatic) {
             return &var;
         }
@@ -148,9 +161,9 @@ Variable* TypeNode::getField(const std::string& name, bool isStatic) {
     return nullptr;
 }
 
-std::shared_ptr<TypeNode> TypeNode::getType(const std::string& name) {
+std::shared_ptr<TypeNode> TypeNode::getType(const std::string& name, Visibility visibility) {
     for (auto& type : internalTypes) {
-        if (type->name == name) {
+        if (type->name == name && isAccessible(visibility, type->qualities.getVisibility())) {
             return type;
         }
     }

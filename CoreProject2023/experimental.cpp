@@ -14,15 +14,13 @@ struct String {
 	char* data;
 	long long size;
 	
-	static String get(char* str) {
-		String r;
-		r.data = str;
-		return r;
+	String(char* str) {
+		this->data = str;
 	}
 };
 
 int main() {
-	volatile String r = String::get("Wow");
+	volatile String r("Wow");
 	printf("%s", r.data);
 	system("pause");
 	return 0;

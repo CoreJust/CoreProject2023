@@ -376,6 +376,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Parser\AST\Exprs\FunctionCallExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\FunctionExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\FieldAccessExpr.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\MethodCallExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\TypeConversionExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\UnaryExpr.cpp" />
     <ClCompile Include="Parser\AST\Exprs\VariableExpr.cpp" />
@@ -397,6 +398,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="SymbolLoader\BasicSymbolLoader.cpp" />
     <ClCompile Include="SymbolLoader\SymbolLoader.cpp" />
     <ClCompile Include="SymbolLoader\SymbolPreloader.cpp" />
+    <ClCompile Include="Utils\Defs.cpp" />
     <ClCompile Include="Utils\ErrorManager.cpp" />
     <ClCompile Include="Utils\File.cpp" />
     <ClCompile Include="Utils\String.cpp" />
@@ -434,6 +436,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Parser\AST\Exprs\FunctionCallExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\FunctionExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\FieldAccessExpr.h" />
+    <ClInclude Include="Parser\AST\Exprs\MethodCallExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\TypeConversionExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\UnaryExpr.h" />
     <ClInclude Include="Parser\AST\Exprs\VariableExpr.h" />

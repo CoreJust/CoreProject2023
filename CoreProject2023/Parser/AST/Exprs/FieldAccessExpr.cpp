@@ -10,7 +10,7 @@ FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string m
 	m_isRVal = m_expr->isRVal();
 
 	// Getting the resulting type
-	const std::unique_ptr<Type>& type = m_expr->getType();
+	const std::unique_ptr<Type>& type = Type::getTheVeryType(m_expr->getType());
 	if (isString(type->basicType)) {
 		if (m_memberName == "data") {
 			BasicType basicType = BasicType((u8)type->basicType - (u8)BasicType::STR8 + (u8)BasicType::C8);
@@ -67,7 +67,7 @@ void FieldAccessExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node
 }
 
 llvm::Value* FieldAccessExpr::generate() {
-	const std::unique_ptr<Type>& type = m_expr->getType();
+	const std::unique_ptr<Type>& type = Type::getTheVeryType(m_expr->getType());
 	if (type->basicType == BasicType::ARRAY) {
 		if (m_memberName == "size") { // compile time
 			return llvm_utils::getConstantInt(((ArrayType*)type.get())->size, 64);
@@ -113,7 +113,7 @@ llvm::Value* FieldAccessExpr::generateRValue() {
 		return nullptr;
 	}
 
-	const std::unique_ptr<Type>& type = m_expr->getType();
+	const std::unique_ptr<Type>& type = Type::getTheVeryType(m_expr->getType());
 	llvm::Value* value = m_expr->generateRValue();
 	llvm::Constant* zeroInt = llvm_utils::getConstantInt(0, 32);
 	if (isString(type->basicType)) {

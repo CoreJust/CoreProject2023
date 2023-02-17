@@ -4,9 +4,12 @@
 enum class Visibility : u8 {
 	LOCAL = 0,
 	PRIVATE,
-	PUBLIC,
-	DIRECT_IMPORT // or ptotected for methods and fields
+	DIRECT_IMPORT, // or ptotected for methods and fields
+	PUBLIC
 };
+
+// Whether the symbol is visible with -from- access
+bool isAccessible(Visibility from, Visibility symbol);
 
 enum class Safety : u8 {
 	UNSAFE = 0,
@@ -29,6 +32,8 @@ public:
 
 	Safety getSafety() const;
 	void setSafety(Safety visibility);
+
+	virtual u64 getData() const;
 };
 
 /*
@@ -41,6 +46,8 @@ public:
 
 	bool isManglingOn() const;
 	void setMangling(bool isToMangle);
+
+	u64 getData() const override;
 };
 
 enum class ClassType : u8 {
@@ -67,6 +74,8 @@ public:
 
 	bool isConst() const;
 	void setConst(bool isConst);
+
+	u64 getData() const override;
 };
 
 enum class VariableType : u8 {
@@ -90,6 +99,8 @@ public:
 
 	bool isThreadLocal() const;
 	void setThreadLocal(bool isThreadLocal);
+
+	u64 getData() const override;
 };
 
 enum class MethodType : u8 {
@@ -164,4 +175,6 @@ public:
 
 	FunctionKind getFunctionKind() const;
 	void setFunctionKind(FunctionKind kind);
+
+	u64 getData() const override;
 };

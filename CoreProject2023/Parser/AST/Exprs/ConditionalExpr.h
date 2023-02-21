@@ -1,5 +1,6 @@
 #pragma once
 #include "Expression.h"
+#include <Module/Symbols/Function.h>
 
 // ==, !=, <, >, >=, <=
 class ConditionalExpr final : public Expression {
@@ -16,6 +17,10 @@ public:
 	};
 
 public:
+	// Returns the string the corresponding token would have had
+	static std::string conditionOpToString(ConditionOp op);
+
+public:
 	ConditionalExpr(
 		std::vector<std::unique_ptr<Expression>> exprs,
 		std::vector<ConditionOp> ops
@@ -23,9 +28,9 @@ public:
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;
-	llvm::Value* generateRValue() override;
 
 private:
 	std::vector<std::unique_ptr<Expression>> m_exprs;
+	std::vector<Function*> m_operatorFuncs;
 	std::vector<ConditionOp> m_ops;
 };

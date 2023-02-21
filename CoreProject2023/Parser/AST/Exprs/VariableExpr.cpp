@@ -5,14 +5,12 @@
 
 VariableExpr::VariableExpr(std::string moduleName, Variable* variable)
 	: m_isStaticTypeMember(false), m_moduleName(std::move(moduleName)), m_name(variable->name) {
-	m_type = variable->type->copy();
-	m_isRVal = true;
+	m_type = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, variable->type->copy());
 }
 
 VariableExpr::VariableExpr(std::shared_ptr<TypeNode> typeNode, Variable* variable)
 	: m_isStaticTypeMember(true), m_typeNode(std::move(typeNode)), m_name(variable->name) {
-	m_type = variable->type->copy();
-	m_isRVal = true;
+	m_type = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, variable->type->copy());
 }
 
 VariableExpr::~VariableExpr() {
@@ -34,23 +32,5 @@ llvm::Value* VariableExpr::generate() {
 		m_typeNode->getField(m_name, Visibility::PRIVATE, true)->value
 		: g_module->getVariable(m_moduleName, m_name)->value;
 
-	llvm::Value* result = g_builder->CreateLoad(m_type->to_llvm(), varVal);
-
-	if (m_type->basicType == BasicType::REFERENCE) {
-		result = g_builder->CreateLoad(((PointerType*)m_type.get())->elementType->to_llvm(), result);
-	}
-
-	return result;
-}
-
-llvm::Value* VariableExpr::generateRValue() {
-	llvm::Value* result = m_isStaticTypeMember ?
-		m_typeNode->getField(m_name, Visibility::PRIVATE, true)->value
-		: g_module->getVariable(m_moduleName, m_name)->value;
-
-	if (m_type->basicType == BasicType::REFERENCE) {
-		result = g_builder->CreateLoad(m_type->to_llvm(), result);
-	}
-
-	return result;
+	return varVal;
 }

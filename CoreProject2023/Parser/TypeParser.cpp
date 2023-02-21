@@ -376,7 +376,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				break;
 			}
 
-			result = std::make_unique<PointerType>(BasicType::REFERENCE, std::move(result), isConst);
+			result = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, std::move(result), isConst);
 			continue;
 		}
 

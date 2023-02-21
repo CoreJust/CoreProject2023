@@ -56,16 +56,6 @@ llvm::Value* TypeConversionExpr::generate() {
 	}
 }
 
-llvm::Value* TypeConversionExpr::generateRValue() {
-	ErrorManager::parserError(
-		ErrorID::E2103_NOT_A_REFERENCE, 
-		m_errLine, 
-		"converted value cannot be a reference"
-	);
-
-	return nullptr;
-}
-
 Function* TypeConversionExpr::chooseConstructor() {
 	std::vector<std::unique_ptr<Type>> argTypes;
 	std::vector<bool> isCompileTime;

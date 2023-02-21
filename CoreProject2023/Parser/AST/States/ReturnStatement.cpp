@@ -24,6 +24,8 @@ void ReturnStatement::generate() {
 
 	if (m_expr) {
 		llvm::Value* value = m_expr->generate();
+		ASSERT(value, "cannot be null");
+
 		value = llvm_utils::tryImplicitlyConvertTo(
 			returnType,
 			m_expr->getType(),

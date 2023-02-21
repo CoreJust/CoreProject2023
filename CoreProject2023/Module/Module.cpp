@@ -301,6 +301,34 @@ Function* Module::chooseConstructor(
 	return result;
 }
 
+Function* Module::chooseOperator(
+	const std::string& name,
+	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<bool>& isCompileTime,
+	bool mustReturnReference
+) {
+	Function* result = nullptr;
+	i32 bestScore = -1;
+
+	for (auto& symbols : m_symbols) {
+		for (ModuleSymbolsUnit* unit : symbols.second) {
+			if (auto fun = unit->chooseOperator(name, argTypes, isCompileTime, mustReturnReference); fun != nullptr) {
+				i32 score = fun->prototype.getSuitableness(argTypes, isCompileTime);
+				if (result == nullptr || score < bestScore) {
+					bestScore = score;
+					result = fun;
+
+					if (score == 0) {
+						return fun;
+					}
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
 Variable* Module::getVariable(u64 tokenPos) {
 	return m_ownSymbols->getVariable(tokenPos);
 }
@@ -383,6 +411,10 @@ void Module::loadThisModuleUnit(ModuleSymbolsUnit* unit) {
 		constructor.functionValue = constructor.prototype.generate();
 	}
 
+	for (Function& op : unit->getOperators()) {
+		op.functionValue = op.prototype.generate();
+	}
+
 	for (auto& type : unit->getTypes()) {
 		for (Function& func : type->methods) {
 			func.functionValue = func.prototype.generate();
@@ -417,6 +449,13 @@ void Module::loadModuleSymbolsAsLLVM(ModuleSymbolsUnit*& unit) {
 		newUnit->addConstructor(
 			constructor.prototype,
 			constructor.prototype.generateImportedFromOtherModule(*m_llvmModule)
+		);
+	}
+
+	for (Function& op : unit->getOperators()) {
+		newUnit->addOperator(
+			op.prototype,
+			op.prototype.generateImportedFromOtherModule(*m_llvmModule)
 		);
 	}
 

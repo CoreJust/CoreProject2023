@@ -15,16 +15,20 @@ private:
 	std::vector<Variable> m_variables;
 	std::vector<Function> m_functions;
 	std::vector<Function> m_constructors;
+	std::vector<Function> m_operators;
 	std::vector<std::shared_ptr<TypeNode>> m_types;
 
 public:
 	void addType(std::shared_ptr<TypeNode> type);
 	void addFunction(FunctionPrototype prototype);
 	void addConstructor(FunctionPrototype prototype);
+	void addDestructor(FunctionPrototype prototype);
+	void addOperator(FunctionPrototype prototype);
 
 	// Intended for adding function duplicates to modules importing the function
 	void addFunction(FunctionPrototype prototype, llvm::Function* value);
 	void addConstructor(FunctionPrototype prototype, llvm::Function* value);
+	void addOperator(FunctionPrototype prototype, llvm::Function* value);
 
 	void addVariable(
 		const std::string& name,
@@ -53,12 +57,20 @@ public:
 		const std::vector<bool>& isCompileTime
 	);
 
-	// Chooses the most suitable function with name for argTypes
+	// Chooses the most suitable constructor of type for argTypes
 	Function* chooseConstructor(
 		const std::unique_ptr<Type>& type,
 		const std::vector<std::unique_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		bool isImplicit
+	);
+
+	// Chooses the most suitable operator with operator-name for argTypes
+	Function* chooseOperator(
+		const std::string& name,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime,
+		bool mustReturnReference
 	);
 
 	Variable* getVariable(const std::string& name);
@@ -67,6 +79,7 @@ public:
 	std::vector<Variable>& getVariables();
 	std::vector<Function>& getFunctions();
 	std::vector<Function>& getConstructors();
+	std::vector<Function>& getOperators();
 	std::vector<std::shared_ptr<TypeNode>>& getTypes();
 
 	bool isEmpty() const;
@@ -83,11 +96,13 @@ public:
 	ModuleSymbolsUnit privateSymbols;
 
 public:
+	// deprecated
 	void sortSymbolRefs();
 
 	void addType(Visibility visibility, std::shared_ptr<TypeNode> type, u64 tokenPos);
 	void addFunction(Visibility visibility, FunctionPrototype prototype, u64 tokenPos);
 	void addConstructor(Visibility visibility, FunctionPrototype prototype, u64 tokenPos);
+	void addOperator(Visibility visibility, FunctionPrototype prototype, u64 tokenPos);
 
 	void addVariable(
 		Visibility visibility,
@@ -96,7 +111,7 @@ public:
 		u64 tokenPos
 	);
 
-	Function* getFunction(u64 tokenPos); // as well as constructor
+	Function* getFunction(u64 tokenPos); // as well as constructor, or operator
 	Variable* getVariable(u64 tokenPos);
 	std::shared_ptr<TypeNode> getType(u64 tokenPos);
 

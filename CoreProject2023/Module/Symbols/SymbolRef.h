@@ -4,8 +4,12 @@
 enum class SymbolType : u8 {
 	NO_SYMBOL = 0,
 	VARIABLE,
+
 	FUNCTION,
 	CONSTRUCTOR,
+	DESTRUCTOR,
+	OPERATOR,
+
 	TYPE,
 	MODULE
 };

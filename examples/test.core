@@ -5,12 +5,13 @@ import core.time.timer;
 
 use console;
 
-struct String {
+struct DynamicString {
 	c8* data;
 	u64 capacity;
 	u64 size;
 
 
+	# Constructors
 	@implicit
 	def this(str8 str) {
 		this.size = this.capacity = str.size;
@@ -18,32 +19,116 @@ struct String {
 		cstring.strncpy(this.data, str.data, str.size);
 	}
 	
+	def this() {
+		this.size = 0;
+		this.capacity = 24;
+		this.data = c8*(cstdlib.calloc(this.capacity, 1));
+	}
+	
+	# Member functions
 	def public append(str8 str) {
-		u64 newSize = this.size + str.size;
-		if (newSize > this.capacity) {
-			this.data = c8*(cstdlib.realloc(u8*(this.data), newSize));
-			this.capacity = newSize;
+		c8* insert_from = this.data + this.size;
+		this.size = this.size + str.size;
+		if (this.size > this.capacity) {
+			this.data = c8*(cstdlib.realloc(u8*(this.data), this.size));
+			this.capacity = this.size;
 		}
 		
-		cstring.strncat(this.data, str.data, str.size);
+		cstring.strncpy(insert_from, str.data, str.size);
+	}
+	
+	def public append(const DynamicString& str) {
+		c8* insert_from = this.data + this.size;
+		this.size = this.size + str.size;
+		if (this.size > this.capacity) {
+			this.data = c8*(cstdlib.realloc(u8*(this.data), this.size));
+			this.capacity = this.size;
+		}
+		
+		cstring.strncpy(insert_from, str.data, str.size);
+	}
+	
+	def public finalize() {
+		this.append("\0");
+	}
+	
+	# Operators
+	def public +=(str8 str) DynamicString& {
+		this.append(str);
+		return this;
+	}
+	
+	def public +=(const DynamicString& other) DynamicString& {
+		this.append(other);
+		return this;
+	}
+	
+	def public *() c8* {
+		return this.data;
+	}
+	
+	def public +(const DynamicString& other) DynamicString {
+		DynamicString result = DynamicString();
+		result.append(this);
+		result.append(other);
+		
+		return result;
+	}
+	
+	def public ==(const DynamicString& other) bool {
+		if this.size != other.size
+			return false;
+			
+		return cstring.strncmp(this.data, other.data, this.size) == 0;
 	}
 	
 	public static str8 typeName = "String";
 }
 
+struct Inc {
+	private i64 data;
+	
+	@implicit
+	def this(i64 data) {
+		this.data = data;
+	}
+	
+	def ++() {
+		console.println("Post increment");
+		this.data++;
+	}
+	
+	def ++() Inc& {
+		console.println("Pre increment");
+		++this.data;
+		return this;
+	}
+	
+	def public print() {
+		console.println(this.data);
+	}
+}
+
 def main() i32 {
-	String str = "Hello ";
-	str.append("world from ");
-	str.append(String.typeName);
+	Inc inc = 0;
+	inc++;
+	(++inc).print();
+
+	DynamicString str = "Hello ";
+	str += "world from ";
+	str += DynamicString(DynamicString.typeName);
+	str.finalize();
+	
+	console.println(str == "Hello world from String");
 	
 	timer.Timer timer = timer.Timer();
 	while (true) {
 		if (timer.elapsedTimeAsSeconds() > 2.5) {
-			console.println(str.data);
+			console.println(*str);
 			timer.start();
 		}
 	}
 	
-	cstdlib.system("pause");
+	console.pause();
 	return 0;
 }

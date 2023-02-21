@@ -57,7 +57,7 @@ public:
 	SymbolType getSymbolType(const std::string& name) const;
 	SymbolType getSymbolType(const std::string& moduleAlias, const std::string& name) const;
 
-	Function* getFunction(u64 tokenPos); // as well as constructor
+	Function* getFunction(u64 tokenPos); // as well as constructor, or operator
 
 	// Tries to get a function by name
 	// Returns nullptr if nothing found or more than one function with such name exist
@@ -84,6 +84,13 @@ public:
 		const std::vector<std::unique_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		bool isImplicit
+	);
+
+	Function* chooseOperator(
+		const std::string& name,
+		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<bool>& isCompileTime,
+		bool mustReturnReference = false
 	);
 
 	Variable* getVariable(u64 tokenPos);

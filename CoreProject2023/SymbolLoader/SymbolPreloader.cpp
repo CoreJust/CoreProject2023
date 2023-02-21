@@ -123,6 +123,7 @@ void SymbolPreloader::loadFunction() {
 		qualities.setNative(true);
 	}
 
+	TokenType opType = TokenType::NO_TOKEN; // for operators
 	if (match(TokenType::TYPE)) { // constructor
 		alias = "type$";
 		qualities.setFunctionKind(FunctionKind::CONSTRUCTOR);
@@ -132,6 +133,7 @@ void SymbolPreloader::loadFunction() {
 	} else if (DEFINABLE_OPERATORS.contains(m_toks[m_pos].type)) { // operator-functions
 		qualities.setFunctionKind(FunctionKind::OPERATOR);
 		alias = m_toks[m_pos].data;
+		opType = m_toks[m_pos].type;
 		if (m_toks[m_pos].type == TokenType::LPAR || m_toks[m_pos].type == TokenType::LBRACKET) {
 			m_pos++;
 		}
@@ -141,6 +143,7 @@ void SymbolPreloader::loadFunction() {
 
 	// Arguments
 	bool isVaArgs = false;
+	u32 numArgs = 0;
 	consume(TokenType::LPAR);
 	if (!match(TokenType::RPAR)) {
 		do {
@@ -154,7 +157,9 @@ void SymbolPreloader::loadFunction() {
 				}
 
 				isVaArgs = true;
+				numArgs++;
 			} else {
+				numArgs++;
 				TypeParser(m_toks, m_pos).skipConsumeType();
 				consume(TokenType::WORD);
 			}
@@ -163,8 +168,19 @@ void SymbolPreloader::loadFunction() {
 		consume(TokenType::RPAR);
 	}
 
-	if (qualities.getFunctionKind() == FunctionKind::COMMON) { // not a constructor
+	 if (qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR
+		 && qualities.getFunctionKind() != FunctionKind::DESTRUCTOR) { // common function or operator
 		TypeParser(m_toks, m_pos).skipType();
+
+		if (qualities.getFunctionKind() == FunctionKind::OPERATOR) {
+			if (!isPossibleNumArgumentsOfOperator(opType, numArgs)) {
+				ErrorManager::parserError(
+					ErrorID::E2108_OPERATOR_IMPOSSIBLE_ARGUMENTS_NUMBER,
+					getCurrLine(),
+					"operator: " + alias
+				);
+			}
+		}
 
 		// Save results
 		m_symbols.addFunction(
@@ -340,7 +356,7 @@ void SymbolPreloader::loadMethod(TypeQualities parentQualities) {
 		consume(TokenType::RPAR);
 	}
 
-	if (funcKind == FunctionKind::COMMON) { // not a constructor
+	if (funcKind != FunctionKind::CONSTRUCTOR && funcKind != FunctionKind::DESTRUCTOR) {
 		TypeParser(m_toks, m_pos).skipType();
 	}
 

@@ -46,7 +46,11 @@ bool isUserDefined(BasicType type) {
 }
 
 bool isReference(BasicType type) {
-    return type == BasicType::REFERENCE || type == BasicType::RVAL_REFERENCE;
+    return type >= BasicType::XVAL_REFERENCE && type <= BasicType::RVAL_REFERENCE;
+}
+
+bool isTrueReference(BasicType type) {
+    return type == BasicType::LVAL_REFERENCE || type == BasicType::XVAL_REFERENCE;
 }
 
 bool isPointer(BasicType type) {
@@ -63,7 +67,7 @@ int getBasicTypeSize(BasicType type) {
         32, 64,
         1, 8, 16, 32,
         128, 128, 128,
-        64, 128, 64, 64, -1, -1, -1, 64,
+        64, 128, 64, 64, 64, -1, -1, -1, 64,
         -1, -1, -1, -1, -1
     };
 

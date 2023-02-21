@@ -55,6 +55,8 @@ enum ErrorID : u32 {
 	E2105_VA_ARGS_MUST_BE_THE_LAST_ARGUMENT, // There are arguments coming after va_args (...)
 	E2106_THIS_USED_OUTSIDE_TYPE, // This is used not in a method/constructor/destructor
 	E2107_TYPE_CONSTRUCTOR_IS_STATIC, // A static constructor/type conversion in a class(or struct/...)
+	E2108_OPERATOR_IMPOSSIBLE_ARGUMENTS_NUMBER, // An impossible number of arguments of an operator
+	E2109_CONDITIONAL_OPERATOR_MUST_RETURN_BOOL, // A conditional user-defined operator must be of bool type
 
 	
 	// Type errors

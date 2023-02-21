@@ -8,6 +8,6 @@ bool Expression::isCompileTime() const {
     return false;
 }
 
-bool Expression::isRVal() const {
-    return m_isRVal;
+bool Expression::isLVal() const {
+    return isReference(m_type->basicType);
 }

@@ -197,3 +197,13 @@ Initial development
 
 	Commited as "Bug fixes, core.crt.ctime, core.time.timer"
 	
+19.02.2023
+	Started implementing operator-functions (for unary and binary expressions)
+	Reviewed type system in regard of references
+	Deleted operator ref
+
+21.02.2023
+	Added assignment operators (like +=, -=)
+	Finished implementing operatot-functions (conditionals and assignments)
+
+	Commited as "Operator-functions, complex assignment (+=, ...), operator ref removed"

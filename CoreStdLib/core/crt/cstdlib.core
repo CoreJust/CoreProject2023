@@ -92,7 +92,7 @@ def native lldiv(lldiv_t& result, i64 numer, i64 denom);
 @mangle
 def div(i64 numer, i64 denom) lldiv_t {
 	lldiv_t result;
-	lldiv(ref result, numer, denom);
+	lldiv(result, numer, denom);
 	return result;
 }
 

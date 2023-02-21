@@ -51,6 +51,8 @@ std::string ErrorIDStrings[] = {
 	"E2105: Varying arguments (...) can only be the last argument of a function",
 	"E2106: Keyword 'this' can only be used inside methods/constructors/destructors",
 	"E2107: Type constructor cannot be static",
+	"E2108: Impossible number of arguments of operator-function",
+	"E2109: Conditional operator must return bool",
 
 
 	"E3001: Type not specified; type expression expected",

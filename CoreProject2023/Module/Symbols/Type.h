@@ -8,6 +8,13 @@
 
 struct TypeNode;
 
+class ArrayType;
+class PointerType;
+class TupleType;
+class FunctionType;
+class TypeNodeType;
+class StructType;
+
 class Type {
 public:
 	BasicType basicType;
@@ -21,8 +28,16 @@ public:
 
 	virtual bool equals(const std::unique_ptr<Type>& other) const;
 
-	// < 0 if not equal, < -4096 if not equal at all
+	// < 0 if not equal, < -4096 if not equal at all (not equal not considering constantness)
 	virtual i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const;
+
+	// returns this as a corresponding type is it is such (according to the basicType) and nullptr otherwise
+	ArrayType* asArrayType();
+	PointerType* asPointerType();
+	TupleType* asTupleType();
+	FunctionType* asFunctionType();
+	TypeNodeType* asTypeNodeType();
+	StructType* asStructType();
 
 	virtual llvm::Type* to_llvm() const;
 	virtual std::string toString() const;

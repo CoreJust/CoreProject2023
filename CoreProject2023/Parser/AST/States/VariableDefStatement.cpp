@@ -17,18 +17,14 @@ void VariableDefStatement::accept(Visitor* visitor, std::unique_ptr<Statement>& 
 void VariableDefStatement::generate() {
 	llvm::Value* val;
 	if (m_expr) {
-		if (m_variable.type->basicType == BasicType::REFERENCE) {
-			val = m_expr->generateRValue();
-		} else {
-			val = m_expr->generate();
-			val = llvm_utils::tryImplicitlyConvertTo(
-				m_variable.type,
-				m_expr->getType(),
-				val,
-				m_errLine,
-				m_expr->isCompileTime()
-			);
-		}
+		val = m_expr->generate();
+		val = llvm_utils::tryImplicitlyConvertTo(
+			m_variable.type,
+			m_expr->getType(),
+			val,
+			m_errLine,
+			m_expr->isCompileTime()
+		);
 	} else {
 		val = llvm_utils::getDefaultValueOf(m_variable.type);
 	}

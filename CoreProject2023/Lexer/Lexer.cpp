@@ -16,7 +16,7 @@ std::vector<std::string> KEY_WORDS{
 	"for", "while", "do",
 	"break", "continue",
 	"true", "false", "null",
-	"new", "delete", "in", "is", "as", "typeof", "ref", "move", "type",
+	"new", "delete", "in", "is", "as", "typeof", "move", "type",
 	"bool", "c8", "c16", "c32", "str8", "str16", "str32", "i8", "i16", "i32", "i64",
 	"u8", "u16", "u32", "u64", "f32", "f64", "func"
 };

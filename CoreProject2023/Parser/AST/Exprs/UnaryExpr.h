@@ -1,5 +1,6 @@
 #pragma once
 #include "Expression.h"
+#include <Module/Symbols/Function.h>
 
 class UnaryExpr final : public Expression {
 	FRIEND_CLASS_VISITORS
@@ -20,17 +21,19 @@ public:
 		ADRESS,
 		DEREF,
 
-		REF,
-		REF_CONST,
 		MOVE
 	};
+
+public:
+	// Returns the string the corresponding token would have had
+	static std::string unaryOpToString(UnaryOp op);
+	static bool isUnaryOpDefinable(UnaryOp op);
 
 public:
 	UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op);
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;
-	llvm::Value* generateRValue() override;
 
 private:
 	llvm::Value* createIncOrDecrement(
@@ -42,5 +45,6 @@ private:
 
 private:
 	std::unique_ptr<Expression> m_expr;
+	Function* m_operatorFunc = nullptr; // in case the operator is defined as a function
 	UnaryOp m_op;
 };

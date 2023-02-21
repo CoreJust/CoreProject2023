@@ -112,7 +112,6 @@ llvm::Value* llvm_utils::genFunctionArgumentValue(
 	llvm::Value* result = createLocalVariable(func->functionValue, arg.type, arg.name);
 	g_builder->CreateStore(llvmArg, result);
 	return result;
-
 }
 
 llvm::Value* llvm_utils::createLocalVariable(
@@ -164,7 +163,7 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 		case BasicType::STR32: return getConstantString("", 32);
 		case BasicType::ARRAY: {
 			std::vector<llvm::Constant*> init;
-			ArrayType* arrType = (ArrayType*)type.get();
+			ArrayType* arrType = type->asArrayType();
 			init.reserve(arrType->size);
 			for (size_t i = 0; i < arrType->size; i++) {
 				init.push_back(getDefaultValueOf(arrType->elementType));
@@ -177,26 +176,27 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 				(llvm::StructType*)llvmType,
 				llvm::ArrayRef<llvm::Constant*>({ // default value: { null, 0 }
 					llvm::ConstantPointerNull::get(
-						llvm::PointerType::get(((PointerType*)type.get())->elementType->to_llvm(), 0)
+						llvm::PointerType::get(type->asPointerType()->elementType->to_llvm(), 0)
 					),
 					getConstantInt(0, 64, false)
 				})
 			);
 		case BasicType::FUNCTION:
 		case BasicType::POINTER: return llvm::ConstantPointerNull::get((llvm::PointerType*)llvmType);
-		case BasicType::REFERENCE: return nullptr; // no default value
+		case BasicType::LVAL_REFERENCE: return nullptr; // no default value
+		case BasicType::XVAL_REFERENCE: return nullptr; // no default value
 		case BasicType::RVAL_REFERENCE: return nullptr; // no default value
 		case BasicType::OPTIONAL:
 			return llvm::ConstantStruct::get(
 				(llvm::StructType*)llvmType,
 				llvm::ArrayRef<llvm::Constant*>({ // default value: { 0 as type, false }
-					getZeroedValueOf(((PointerType*)type.get())->elementType),
+					getZeroedValueOf(type->asPointerType()->elementType),
 					getConstantInt(0, 1, false)
 				})
 			);
 		case BasicType::TUPLE: {
 			std::vector<llvm::Constant*> init;
-			TupleType* tupType = (TupleType*)type.get();
+			TupleType* tupType = type->asTupleType();
 			init.reserve(tupType->subTypes.size());
 			for (auto& subType : tupType->subTypes) {
 				init.push_back(getDefaultValueOf(subType));
@@ -206,7 +206,7 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 		};
 		case BasicType::STRUCT: {
 			std::vector<llvm::Constant*> init;
-			StructType* structType = (StructType*)type.get();
+			StructType* structType = type->asStructType();
 			init.reserve(structType->fieldTypes.size());
 			for (auto& fieldType : structType->fieldTypes) {
 				init.push_back(getDefaultValueOf(fieldType));
@@ -214,7 +214,7 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 
 			return llvm::ConstantStruct::get((llvm::StructType*)llvmType, init);
 		};
-		case BasicType::TYPE_NODE: return getDefaultValueOf(((TypeNodeType*)type.get())->node->type);
+		case BasicType::TYPE_NODE: return getDefaultValueOf(type->asTypeNodeType()->node->type);
 	default: break;
 	}
 
@@ -344,16 +344,28 @@ llvm::Value* llvm_utils::convertValueTo(
 	}
 
 	// For integral (non-user-defined) types
-	if (isReference(bfrom)) {
-		return convertValueTo(to, ((PointerType*)from.get())->elementType, value);
-	} else if (isReference(bto)) {
-		return convertValueTo(((PointerType*)to.get())->elementType, from, value);
+	if (isTrueReference(bfrom)) {
+		if (isTrueReference(bto) && !isTrueReference(from->asPointerType()->elementType->basicType)) {
+			return value;
+		} else {
+			value = g_builder->CreateLoad(from->asPointerType()->elementType->to_llvm(), value);
+			return convertValueTo(to, from->asPointerType()->elementType, value);
+		}
+	} else {
+		if (bto == BasicType::XVAL_REFERENCE) {
+			value = convertValueTo(to->asPointerType()->elementType, from, value);
+			llvm::Value* var = createLocalVariable(g_builder->GetInsertBlock()->getParent(), from, "xval_tmp");
+			g_builder->CreateStore(value, var);
+			return var;
+		} else if (bto == BasicType::RVAL_REFERENCE) {
+			return convertValueTo(to->asPointerType()->elementType, from, value);
+		}
 	}
 
-	if (bfrom == BasicType::TYPE_NODE && ((TypeNodeType*)from.get())->node->type->basicType < BasicType::CLASS) {
-		return convertValueTo(to, ((TypeNodeType*)from.get())->node->type, value);
-	} else if (bto == BasicType::TYPE_NODE && ((TypeNodeType*)to.get())->node->type->basicType < BasicType::CLASS) {
-		return convertValueTo(((TypeNodeType*)to.get())->node->type, from, value);
+	if (bfrom == BasicType::TYPE_NODE && from->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return convertValueTo(to, from->asTypeNodeType()->node->type, value);
+	} else if (bto == BasicType::TYPE_NODE && to->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return convertValueTo(to->asTypeNodeType()->node->type, from, value);
 	}
 
 	if (bto == BasicType::BOOL) {
@@ -404,11 +416,11 @@ llvm::Value* llvm_utils::convertValueTo(
 	}
 
 	if (bfrom == BasicType::STRUCT && bto == BasicType::TUPLE) {
-		if (((StructType*)from.get())->isEquivalentTo(((TupleType*)to.get())->subTypes)) {
+		if (from->asStructType()->isEquivalentTo(to->asTupleType()->subTypes)) {
 			return value;
 		}
 	} else if (bfrom == BasicType::TUPLE && bto == BasicType::STRUCT) {
-		if (((TupleType*)from.get())->isEquivalentTo(((StructType*)to.get())->fieldTypes)) {
+		if (from->asTupleType()->isEquivalentTo(to->asStructType()->fieldTypes)) {
 			return value;
 		}
 	}
@@ -441,7 +453,11 @@ llvm::Value* llvm_utils::convertToBool(const std::unique_ptr<Type>& from, llvm::
 	}
 
 	if (isReference(from->basicType)) {
-		return convertToBool(((PointerType*)from.get())->elementType, value);
+		if (isTrueReference(from->basicType)) {
+			value = g_builder->CreateLoad(from->asPointerType()->elementType->to_llvm(), value);
+		}
+
+		return convertToBool(from->asPointerType()->elementType, value);
 	}
 
 	if (isInteger(from->basicType) || isChar(from->basicType)) {

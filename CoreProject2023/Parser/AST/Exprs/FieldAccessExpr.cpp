@@ -7,7 +7,6 @@
 
 FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string memberName)
 	: m_expr(std::move(expr)), m_memberName(std::move(memberName)) {
-	m_isRVal = m_expr->isRVal();
 
 	// Getting the resulting type
 	const std::unique_ptr<Type>& type = Type::getTheVeryType(m_expr->getType());
@@ -15,10 +14,8 @@ FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string m
 		if (m_memberName == "data") {
 			BasicType basicType = BasicType((u8)type->basicType - (u8)BasicType::STR8 + (u8)BasicType::C8);
 			m_type = std::make_unique<PointerType>(BasicType::POINTER, std::make_unique<Type>(basicType), true);
-			return;
 		} else if (m_memberName == "size") {
 			m_type = std::make_unique<Type>(BasicType::U64, true);
-			return;
 		}
 	} else if (type->basicType == BasicType::ARRAY) {
 		if (m_memberName == "size") { // compile time
@@ -30,10 +27,8 @@ FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string m
 			m_type = type->copy();
 			m_type->basicType = BasicType::POINTER;
 			m_type->isConst = true;
-			return;
 		} else if (m_memberName == "size") {
 			m_type = std::make_unique<Type>(BasicType::U64, true);
-			return;
 		}
 	} else if (type->basicType == BasicType::TUPLE) {
 		if (std::all_of(m_memberName.begin(), m_memberName.end(), isdigit)) {
@@ -41,7 +36,6 @@ FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string m
 			if (size_t i = std::stoull(m_memberName); i < tupType->subTypes.size()) {
 				m_type = tupType->subTypes[i]->copy();
 				m_type->isConst = type->isConst;
-				return;
 			}
 		}
 	} else if (type->basicType == BasicType::TYPE_NODE) {
@@ -50,9 +44,17 @@ FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string m
 			if (var.name == m_memberName) {
 				m_type = var.type->copy();
 				m_type->isConst = type->isConst;
-				return;
 			}
 		}
+	}
+
+	if (m_type) {
+		if (m_expr->isLVal()) {
+			bool isConst = m_expr->getType()->isConst;
+			m_type = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, std::move(m_type));
+		}
+
+		return;
 	}
 
 	ErrorManager::parserError(
@@ -75,71 +77,66 @@ llvm::Value* FieldAccessExpr::generate() {
 	}
 
 	llvm::Value* value = m_expr->generate();
-	if (isString(type->basicType)) {
-		if (m_memberName == "data") {
-			return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(0));
-		} else if (m_memberName == "size") {
-			return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(1));
-		}
-	} else if (type->basicType == BasicType::DYN_ARRAY) {
-		if (m_memberName == "data") {
-			return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(0));
-		} else if (m_memberName == "size") {
-			return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(1));
-		}
-	} else if (type->basicType == BasicType::TUPLE) {
-		if (std::all_of(m_memberName.begin(), m_memberName.end(), isdigit)) {
-			TupleType* tupType = (TupleType*)type.get();
-			if (size_t i = std::stoull(m_memberName); i < tupType->subTypes.size()) {
-				return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(i));
-			}
-		}
-	} else if (type->basicType == BasicType::TYPE_NODE) {
-		TypeNode* typeNode = ((TypeNodeType*)type.get())->node.get();
-		for (size_t i = 0; i < typeNode->fields.size(); i++) {
-			if (typeNode->fields[i].name == m_memberName) {
-				return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(i));
-			}
-		}
+	if (isTrueReference(m_expr->getType()->basicType)
+		&& isTrueReference(m_expr->getType()->asPointerType()->elementType->basicType)) {
+		value = g_builder->CreateLoad(m_expr->getType()->asPointerType()->elementType->to_llvm(), value);
 	}
 
-	ASSERT(false, "Something went wrong");
-	return nullptr;
-}
-
-llvm::Value* FieldAccessExpr::generateRValue() {
-	if (!m_isRVal) {
-		ASSERT(false, "Something went wrong");
-		return nullptr;
-	}
-
-	const std::unique_ptr<Type>& type = Type::getTheVeryType(m_expr->getType());
-	llvm::Value* value = m_expr->generateRValue();
-	llvm::Constant* zeroInt = llvm_utils::getConstantInt(0, 32);
-	if (isString(type->basicType)) {
-		if (m_memberName == "data") {
-			return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(0, 32) });
-		} else if (m_memberName == "size") {
-			return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(1, 32) });
-		}
-	} else if (type->basicType == BasicType::DYN_ARRAY) {
-		if (m_memberName == "data") {
-			return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(0, 32) });
-		} else if (m_memberName == "size") {
-			return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(1, 32) });
-		}
-	} else if (type->basicType == BasicType::TUPLE) {
-		if (std::all_of(m_memberName.begin(), m_memberName.end(), isdigit)) {
-			TupleType* tupType = (TupleType*)type.get();
-			if (size_t i = std::stoull(m_memberName); i < tupType->subTypes.size()) {
-				return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(i, 32) });
+	if (isTrueReference(m_type->basicType)) {
+		llvm::Constant* zeroInt = llvm_utils::getConstantInt(0, 32);
+		if (isString(type->basicType)) {
+			if (m_memberName == "data") {
+				return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(0, 32) });
+			} else if (m_memberName == "size") {
+				return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(1, 32) });
+			}
+		} else if (type->basicType == BasicType::DYN_ARRAY) {
+			if (m_memberName == "data") {
+				return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(0, 32) });
+			} else if (m_memberName == "size") {
+				return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(1, 32) });
+			}
+		} else if (type->basicType == BasicType::TUPLE) {
+			if (std::all_of(m_memberName.begin(), m_memberName.end(), isdigit)) {
+				TupleType* tupType = (TupleType*)type.get();
+				if (size_t i = std::stoull(m_memberName); i < tupType->subTypes.size()) {
+					return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(i, 32) });
+				}
+			}
+		} else if (type->basicType == BasicType::TYPE_NODE) {
+			TypeNode* typeNode = ((TypeNodeType*)type.get())->node.get();
+			for (size_t i = 0; i < typeNode->fields.size(); i++) {
+				if (typeNode->fields[i].name == m_memberName) {
+					return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(i, 32) });
+				}
 			}
 		}
-	} else if (type->basicType == BasicType::TYPE_NODE) {
-		TypeNode* typeNode = ((TypeNodeType*)type.get())->node.get();
-		for (size_t i = 0; i < typeNode->fields.size(); i++) {
-			if (typeNode->fields[i].name == m_memberName) {
-				return g_builder->CreateGEP(type->to_llvm(), value, { zeroInt, llvm_utils::getConstantInt(i, 32) });
+	} else {
+		if (isString(type->basicType)) {
+			if (m_memberName == "data") {
+				return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(0));
+			} else if (m_memberName == "size") {
+				return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(1));
+			}
+		} else if (type->basicType == BasicType::DYN_ARRAY) {
+			if (m_memberName == "data") {
+				return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(0));
+			} else if (m_memberName == "size") {
+				return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(1));
+			}
+		} else if (type->basicType == BasicType::TUPLE) {
+			if (std::all_of(m_memberName.begin(), m_memberName.end(), isdigit)) {
+				TupleType* tupType = (TupleType*)type.get();
+				if (size_t i = std::stoull(m_memberName); i < tupType->subTypes.size()) {
+					return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(i));
+				}
+			}
+		} else if (type->basicType == BasicType::TYPE_NODE) {
+			TypeNode* typeNode = ((TypeNodeType*)type.get())->node.get();
+			for (size_t i = 0; i < typeNode->fields.size(); i++) {
+				if (typeNode->fields[i].name == m_memberName) {
+					return g_builder->CreateExtractValue(value, llvm::ArrayRef<u32>(i));
+				}
 			}
 		}
 	}

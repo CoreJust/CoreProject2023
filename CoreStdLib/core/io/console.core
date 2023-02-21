@@ -2,8 +2,10 @@
 import core.crt.cstdio;
 import core.crt.cstdlib;
 
+def pause() i32 = cstdlib.system("pause");
+
 # Prints the value to the console
-def print(const str8 str) i32 = print(str.data);
+def print(const str8 str) i32 = cstdio.printf("%.*s", str.size, str.data);
 def print(const c8* str) i32 = cstdio.printf("%s", str);
 def print(c8 ch) i32 = cstdio.putchar(i32(ch));
 def print(i32 i) i32 = cstdio.printf("%d", i);
@@ -16,7 +18,7 @@ def print(bool b) i32 {
 }
 
 # Prints the value to console and prints a new line
-def println(const str8 str) i32 = println(str.data);
+def println(const str8 str) i32 = cstdio.printf("%.*s\n", str.size, str.data);
 def println(const c8* str) i32 = cstdio.printf("%s\n", str);
 def println(c8 ch) i32 = cstdio.printf("%c\n", ch);
 def println(i32 i) i32 = cstdio.printf("%d\n", i);

@@ -13,12 +13,20 @@ void ModuleSymbolsUnit::addConstructor(FunctionPrototype prototype) {
 	m_constructors.push_back(Function{ std::move(prototype), nullptr });
 }
 
+void ModuleSymbolsUnit::addOperator(FunctionPrototype prototype) {
+	m_operators.push_back(Function{ std::move(prototype), nullptr });
+}
+
 void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, llvm::Function* value) {
 	m_functions.push_back(Function{ std::move(prototype), value });
 }
 
 void ModuleSymbolsUnit::addConstructor(FunctionPrototype prototype, llvm::Function* value) {
 	m_constructors.push_back(Function{ std::move(prototype), value });
+}
+
+void ModuleSymbolsUnit::addOperator(FunctionPrototype prototype, llvm::Function* value) {
+	m_operators.push_back(Function{ std::move(prototype), value });
 }
 
 void ModuleSymbolsUnit::addVariable(
@@ -31,27 +39,42 @@ void ModuleSymbolsUnit::addVariable(
 }
 
 SymbolType ModuleSymbolsUnit::getSymbolType(const std::string& name) const {
-	for (auto& var : m_variables) {
-		if (var.name == name) {
-			return SymbolType::VARIABLE;
-		}
-	}
+	static std::set<std::string> OPERATOR_STRINGS = { 
+		"in", "is", "=", "+=", "-=", "*=", "/=", "//=", "%=", "**=", "&=", "|=",
+		"^=", ">>=", "<<=", "++", "--", "+", "-", "*", "/", "//", "**",
+		"&", "|", "^", ">>", "<<", "~", "!", "!=", "<", ">", "==", "<=", ">=",
+		"(", "[", ".."
+	};
 
-	for (auto& fun : m_functions) {
-		if (fun.prototype.getName() == name) {
-			return SymbolType::FUNCTION;
+	if (OPERATOR_STRINGS.contains(name)) {
+		for (auto& fun : m_operators) {
+			if (fun.prototype.getName() == name) {
+				return SymbolType::OPERATOR;
+			}
 		}
-	}
-
-	for (auto& fun : m_constructors) {
-		if (fun.prototype.getName() == name) {
-			return SymbolType::CONSTRUCTOR;
+	} else {
+		for (auto& var : m_variables) {
+			if (var.name == name) {
+				return SymbolType::VARIABLE;
+			}
 		}
-	}
 
-	for (auto& type : m_types) {
-		if (type->name == name) {
-			return SymbolType::TYPE;
+		for (auto& fun : m_functions) {
+			if (fun.prototype.getName() == name) {
+				return SymbolType::FUNCTION;
+			}
+		}
+
+		for (auto& fun : m_constructors) {
+			if (fun.prototype.getName() == name) {
+				return SymbolType::CONSTRUCTOR;
+			}
+		}
+
+		for (auto& type : m_types) {
+			if (type->name == name) {
+				return SymbolType::TYPE;
+			}
 		}
 	}
 
@@ -148,6 +171,35 @@ Function* ModuleSymbolsUnit::chooseConstructor(
 	return result;
 }
 
+Function* ModuleSymbolsUnit::chooseOperator(
+	const std::string& name, 
+	const std::vector<std::unique_ptr<Type>>& argTypes, 
+	const std::vector<bool>& isCompileTime,
+	bool mustReturnReference
+) {
+	Function* result = nullptr;
+	i32 bestScore = -1;
+	for (auto& fun : m_operators) {
+		if (fun.prototype.getName() == name && (!mustReturnReference || isReference(fun.prototype.getReturnType()->basicType))) {
+			i32 score = fun.prototype.getSuitableness(argTypes, isCompileTime);
+			if (score < 0) {
+				continue;
+			}
+
+			if (result == nullptr || score < bestScore) {
+				bestScore = score;
+				result = &fun;
+
+				if (score == 0) {
+					return result;
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
 Variable* ModuleSymbolsUnit::getVariable(const std::string& name) {
 	for (auto& var : m_variables) {
 		if (var.name == name) {
@@ -178,6 +230,10 @@ std::vector<Function>& ModuleSymbolsUnit::getFunctions() {
 
 std::vector<Function>& ModuleSymbolsUnit::getConstructors() {
 	return m_constructors;
+}
+
+std::vector<Function>& ModuleSymbolsUnit::getOperators() {
+	return m_operators;
 }
 
 std::vector<std::shared_ptr<TypeNode>>& ModuleSymbolsUnit::getTypes() {
@@ -224,6 +280,12 @@ void ModuleSymbols::addConstructor(Visibility visibility, FunctionPrototype prot
 	unit.addConstructor(std::move(prototype));
 }
 
+void ModuleSymbols::addOperator(Visibility visibility, FunctionPrototype prototype, u64 tokenPos) {
+	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
+	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_operators.size(), SymbolType::OPERATOR, visibility });
+	unit.addOperator(std::move(prototype));
+}
+
 void ModuleSymbols::addVariable(Visibility visibility, const std::string& name, VariableQualities qualities, u64 tokenPos) {
 	ModuleSymbolsUnit& unit = getModuleSymbolsUnit(visibility);
 	m_symbolRefs.push_back(SymbolRef{ tokenPos, unit.m_variables.size(), SymbolType::VARIABLE, visibility });
@@ -241,6 +303,9 @@ Function* ModuleSymbols::getFunction(u64 tokenPos) {
 	} else if (symbol.symType == SymbolType::CONSTRUCTOR) {
 		funcsVec = &getModuleSymbolsUnit(symbol.visibility).m_constructors;
 		ASSERT(symbol.index < funcsVec->size(), "constructors: index out of range");
+	} else if (symbol.symType == SymbolType::OPERATOR) {
+		funcsVec = &getModuleSymbolsUnit(symbol.visibility).m_operators;
+		ASSERT(symbol.index < funcsVec->size(), "operators: index out of range");
 	} else {
 		ASSERT(false, "not a constructor nor function");
 	}
@@ -271,22 +336,12 @@ std::shared_ptr<TypeNode> ModuleSymbols::getType(u64 tokenPos) {
 }
 
 SymbolRef& ModuleSymbols::getSymbolRefByTokenPos(u64 from, u64 to, u64 tokenPos) {
-	if (from == to) {
-		SymbolRef& val = m_symbolRefs[from];
+	for (size_t i = from; i <= to; i++) {
+		SymbolRef& val = m_symbolRefs[i];
 		if (val.tokenPos == tokenPos) {
 			return val;
-		} else {
-			ASSERT(false, "no such value found");
 		}
 	}
 
-	u64 middle = from + (to - from) / 2;
-	SymbolRef& val = m_symbolRefs[middle];
-	if (val.tokenPos == tokenPos) {
-		return val;
-	} else if (val.tokenPos < tokenPos) {
-		return getSymbolRefByTokenPos(middle + 1, to, tokenPos);
-	} else {
-		return getSymbolRefByTokenPos(from, middle, tokenPos);
-	}
+	ASSERT(false, "No such symbol");
 }

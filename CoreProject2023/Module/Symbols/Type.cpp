@@ -36,6 +36,54 @@ i32 Type::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
 	return other->isConst ? 1 : 0;
 }
 
+ArrayType* Type::asArrayType() {
+	if (basicType != BasicType::ARRAY) {
+		return nullptr;
+	}
+
+	return (ArrayType*)this;
+}
+
+PointerType* Type::asPointerType() {
+	if (basicType < BasicType::DYN_ARRAY || basicType > BasicType::OPTIONAL) {
+		return nullptr;
+	}
+
+	return (PointerType*)this;
+}
+
+TupleType* Type::asTupleType() {
+	if (basicType != BasicType::TUPLE) {
+		return nullptr;
+	}
+
+	return (TupleType*)this;
+}
+
+FunctionType* Type::asFunctionType() {
+	if (basicType != BasicType::FUNCTION) {
+		return nullptr;
+	}
+
+	return (FunctionType*)this;
+}
+
+TypeNodeType* Type::asTypeNodeType() {
+	if (basicType != BasicType::TYPE_NODE) {
+		return nullptr;
+	}
+
+	return (TypeNodeType*)this;
+}
+
+StructType* Type::asStructType() {
+	if (basicType != BasicType::STRUCT) {
+		return nullptr;
+	}
+
+	return (StructType*)this;
+}
+
 llvm::Type* Type::to_llvm() const {
 	return basicTypeToLLVM(basicType);
 }
@@ -67,7 +115,7 @@ u64 Type::getAlignment() const {
 
 std::unique_ptr<Type>& Type::getTheVeryType(std::unique_ptr<Type>& type) {
 	if (isReference(type->basicType)) {
-		return ((PointerType*)type.get())->elementType;
+		return getTheVeryType(type->asPointerType()->elementType);
 	}
 
 	return type;
@@ -75,7 +123,7 @@ std::unique_ptr<Type>& Type::getTheVeryType(std::unique_ptr<Type>& type) {
 
 const std::unique_ptr<Type>& Type::getTheVeryType(const std::unique_ptr<Type>& type) {
 	if (isReference(type->basicType)) {
-		return ((PointerType*)type.get())->elementType;
+		return getTheVeryType(type->asPointerType()->elementType);
 	}
 
 	return type;
@@ -93,7 +141,7 @@ std::unique_ptr<Type> ArrayType::copy() const {
 bool ArrayType::equals(const std::unique_ptr<Type>& other) const {
 	if (!Type::equals(other)) return false;
 
-	const ArrayType* arrType = (ArrayType*)other.get();
+	const ArrayType* arrType = other->asArrayType();
 	if (!elementType->equals(arrType->elementType))
 		return false;
 
@@ -105,7 +153,7 @@ i32 ArrayType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) cons
 		return -4097;
 	}
 
-	const ArrayType* arrType = (ArrayType*)other.get();
+	const ArrayType* arrType = other->asArrayType();
 	if (arrType->size != size) {
 		return -4097;
 	}
@@ -141,6 +189,14 @@ u64 ArrayType::getBitSize() const {
 PointerType::PointerType(BasicType basicType, std::unique_ptr<Type> elementType, bool isConst)
 	: elementType(std::move(elementType)), Type(basicType, isConst) {
 	ASSERT(basicType >= BasicType::DYN_ARRAY && basicType <= BasicType::OPTIONAL, "wrong basic type");
+	
+	if (isReference(this->basicType) && this->elementType->isConst) {
+		this->isConst = true;
+	}
+
+	if (this->basicType == BasicType::LVAL_REFERENCE && this->isConst) {
+		this->basicType = BasicType::XVAL_REFERENCE;
+	}
 }
 
 std::unique_ptr<Type> PointerType::copy() const {
@@ -152,7 +208,7 @@ bool PointerType::equals(const std::unique_ptr<Type>& other) const {
 		return false;
 	}
 
-	const PointerType* ptrType = (PointerType*)other.get();
+	const PointerType* ptrType = other->asPointerType();
 	if (!elementType->equals(ptrType->elementType))
 		return false;
 
@@ -164,7 +220,7 @@ i32 PointerType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) co
 		return -4097;
 	}
 
-	const PointerType* ptrType = (PointerType*)other.get();
+	const PointerType* ptrType = other->asPointerType();
 	i32 value = elementType->equalsOrLessConstantThan(ptrType->elementType);
 	if (value < 0) {
 		return value;
@@ -189,7 +245,8 @@ llvm::Type* PointerType::to_llvm() const {
 				true // is packed
 			);
 		case BasicType::POINTER:
-		case BasicType::REFERENCE: return llvm::PointerType::get(elementType->to_llvm(), 0);
+		case BasicType::LVAL_REFERENCE:
+		case BasicType::XVAL_REFERENCE: return llvm::PointerType::get(elementType->to_llvm(), 0);
 		case BasicType::RVAL_REFERENCE: return elementType->to_llvm();
 		case BasicType::OPTIONAL:
 			return llvm::StructType::get(
@@ -205,7 +262,7 @@ llvm::Type* PointerType::to_llvm() const {
 }
 
 std::string POINTER_TYPE_MANGLE_STRING[] = { // starting from 19
-	"[]", "*", "&", "&&", "?"
+	"[]", "*", "(&)", "&", "&&", "?"
 };
 
 std::string PointerType::toString() const {
@@ -246,7 +303,7 @@ bool TupleType::equals(const std::unique_ptr<Type>& other) const {
 		return false;
 	}
 
-	const TupleType* tupType = (TupleType*)other.get();
+	const TupleType* tupType = other->asTupleType();
 	if (subTypes.size() != tupType->subTypes.size()) {
 		return false;
 	}
@@ -265,7 +322,7 @@ i32 TupleType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) cons
 		return -4097;
 	}
 
-	const TupleType* tupType = (TupleType*)other.get();
+	const TupleType* tupType = other->asTupleType();
 	if (subTypes.size() != tupType->subTypes.size())
 		return -4097;
 
@@ -365,7 +422,7 @@ std::unique_ptr<Type> FunctionType::copy() const {
 bool FunctionType::equals(const std::unique_ptr<Type>& other) const {
 	if (!Type::equals(other)) return false;
 
-	const FunctionType* funcType = (FunctionType*)other.get();
+	const FunctionType* funcType = other->asFunctionType();
 	if (isVaArgs != funcType->isVaArgs) {
 		return false;
 	}
@@ -392,7 +449,7 @@ i32 FunctionType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) c
 		return -4097;
 	}
 
-	const FunctionType* funcType = (FunctionType*)other.get();
+	const FunctionType* funcType = other->asFunctionType();
 	if (isVaArgs != funcType->isVaArgs) {
 		return -4097;
 	}
@@ -484,8 +541,8 @@ bool TypeNodeType::equals(const std::unique_ptr<Type>& other) const {
 		return false;
 	}
 
-	TypeNodeType* typeNT = (TypeNodeType*)other.get();
-	if (node->name != typeNT->node->name) {
+	TypeNodeType* typeNT = other->asTypeNodeType();
+	if (!node->isEquals(typeNT->node)) {
 		return false;
 	}
 
@@ -497,12 +554,12 @@ i32 TypeNodeType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) c
 		return -4097;
 	}
 
-	const TypeNodeType* typeNT = (TypeNodeType*)other.get();
-	i32 value = typeNT->node->type->equalsOrLessConstantThan(typeNT->node->type);
-	if (value < 0) {
-		return value;
+	const TypeNodeType* typeNT = other->asTypeNodeType();
+	if (!node->isEquals(typeNT->node)) {
+		return -4097;
 	}
 
+	i32 value = 0;
 	if (isConst) {
 		return value + (other->isConst ? 0 : -1);
 	}
@@ -547,7 +604,7 @@ bool StructType::equals(const std::unique_ptr<Type>& other) const {
 		return false;
 	}
 
-	const StructType* structType = (StructType*)other.get();
+	const StructType* structType = other->asStructType();
 	if (fieldTypes.size() != structType->fieldTypes.size()) {
 		return false;
 	}
@@ -566,7 +623,7 @@ i32 StructType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) con
 		return -4097;
 	}
 
-	const StructType* structType = (StructType*)other.get();
+	const StructType* structType = other->asStructType();
 	if (fieldTypes.size() != structType->fieldTypes.size())
 		return -4097;
 
@@ -657,16 +714,34 @@ bool isImplicitlyConverible(
 		return true;
 	}
 
-	if (isReference(bto)) {
-		return from->equals(to);
-	} else if (isReference(bfrom)) {
-		return isImplicitlyConverible(((PointerType*)from.get())->elementType, to);
+	if (isTrueReference(bfrom) && isTrueReference(bto) && isReference(from->asPointerType()->elementType->basicType)) {
+		return isImplicitlyConverible(from->asPointerType()->elementType, to);
 	}
 
-	if (bfrom == BasicType::TYPE_NODE && ((TypeNodeType*)from.get())->node->type->basicType < BasicType::CLASS) {
-		return isImplicitlyConverible(((TypeNodeType*)from.get())->node->type, to, isFromCompileTime);
-	} else if (bto == BasicType::TYPE_NODE && ((TypeNodeType*)to.get())->node->type->basicType < BasicType::CLASS) {
-		return isImplicitlyConverible(from, ((TypeNodeType*)to.get())->node->type, isFromCompileTime);
+	if (bto == BasicType::XVAL_REFERENCE) {
+		const std::unique_ptr<Type>& nextFrom = isReference(bfrom) ?
+			from->asPointerType()->elementType
+			: from;
+		return isImplicitlyConverible(nextFrom, to->asPointerType()->elementType);
+	}
+
+	if (bto == BasicType::RVAL_REFERENCE) {
+		return isImplicitlyConverible(from, to->asPointerType()->elementType);
+	}
+
+	if (bto == BasicType::LVAL_REFERENCE) {
+		return isTrueReference(bfrom) && from->asPointerType()->elementType
+			->equalsOrLessConstantThan(to->asPointerType()->elementType) >= 0;
+	}
+
+	if (isReference(bfrom)) {
+		return isImplicitlyConverible(from->asPointerType()->elementType, to);
+	}
+
+	if (bfrom == BasicType::TYPE_NODE && from->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return isImplicitlyConverible(from->asTypeNodeType()->node->type, to, isFromCompileTime);
+	} else if (bto == BasicType::TYPE_NODE && to->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return isImplicitlyConverible(from, to->asTypeNodeType()->node->type, isFromCompileTime);
 	}
 
 	if (bfrom == BasicType::POINTER && isFromCompileTime
@@ -679,7 +754,7 @@ bool isImplicitlyConverible(
 	}
 
 	if (isString(bfrom) && bto == BasicType::POINTER && isFromCompileTime) {
-		if (BasicType charType = ((PointerType*)to.get())->elementType->basicType; isChar(charType)) {
+		if (BasicType charType = to->asPointerType()->elementType->basicType; isChar(charType)) {
 			return u8(bfrom) - u8(charType) == u8(BasicType::STR8) - u8(BasicType::C8);
 		}
 	}
@@ -726,7 +801,7 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	BasicType bto = to->basicType;
 
 	if (isReference(bfrom)) {
-		return isExplicitlyConverible(to, ((PointerType*)from.get())->elementType);
+		return isExplicitlyConverible(to, from->asPointerType()->elementType);
 	}
 
 	if (!isReference(bto) && from->equalsOrLessConstantThan(to) >= -4096) { // equals not considering constantness
@@ -734,9 +809,9 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	}
 
 	if (bfrom == BasicType::TYPE_NODE) {
-		return isExplicitlyConverible(((TypeNodeType*)from.get())->node->type, to);
+		return isExplicitlyConverible(from->asTypeNodeType()->node->type, to);
 	} else if (bto == BasicType::TYPE_NODE) {
-		return isExplicitlyConverible(from, ((TypeNodeType*)to.get())->node->type);
+		return isExplicitlyConverible(from, to->asTypeNodeType()->node->type);
 	}
 
 	if (bto == BasicType::BOOL) {
@@ -763,9 +838,9 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	}
 
 	if (bfrom == BasicType::STRUCT && bto == BasicType::TUPLE) {
-		return ((StructType*)from.get())->isEquivalentTo(((TupleType*)to.get())->subTypes);
+		return from->asStructType()->isEquivalentTo(to->asTupleType()->subTypes);
 	} else if (bfrom == BasicType::TUPLE && bto == BasicType::STRUCT) {
-		return ((TupleType*)from.get())->isEquivalentTo(((StructType*)to.get())->fieldTypes);
+		return from->asTupleType()->isEquivalentTo(to->asStructType()->fieldTypes);
 	}
 
 	return false;
@@ -783,18 +858,22 @@ i32 evaluateConvertibility(
 		return 0;
 	}
 
-	if (isReference(bfrom) && !isReference(bto)) {
-		return evaluateConvertibility(((PointerType*)from.get())->elementType, to);
-	}
-
-	if (bfrom == BasicType::TYPE_NODE) {
-		return evaluateConvertibility(((TypeNodeType*)from.get())->node->type, to, isFromCompileTime);
-	} else if (bto == BasicType::TYPE_NODE) {
-		return evaluateConvertibility(from, ((TypeNodeType*)to.get())->node->type, isFromCompileTime);
+	if (isReference(bfrom)) {
+		if (!isReference(bto)) {
+			return evaluateConvertibility(from->asPointerType()->elementType, to);
+		} else if (bfrom == bto) {
+			return evaluateConvertibility(from->asPointerType()->elementType, to->asPointerType()->elementType);
+		}
 	}
 
 	if (i32 value = from->equalsOrLessConstantThan(to); value >= 0) {
 		return value;
+	}
+
+	if (bfrom == BasicType::TYPE_NODE && from->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return evaluateConvertibility(from->asTypeNodeType()->node->type, to, isFromCompileTime);
+	} else if (bto == BasicType::TYPE_NODE && to->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return evaluateConvertibility(from, to->asTypeNodeType()->node->type, isFromCompileTime);
 	}
 
 	// Prefered implicit conversions
@@ -828,10 +907,16 @@ std::unique_ptr<Type> findCommonType(
 	BasicType bfirst = first->basicType;
 	BasicType bsecond = second->basicType;
 
-	if (bfirst == BasicType::TYPE_NODE) {
-		return findCommonType(((TypeNodeType*)first.get())->node->type, second, isFirstCompileTime, isSecondCompileTime);
-	} else if (bsecond == BasicType::TYPE_NODE) {
-		return findCommonType(first, ((TypeNodeType*)second.get())->node->type, isFirstCompileTime, isSecondCompileTime);
+	if (isReference(bfirst)) {
+		return findCommonType(first->asPointerType()->elementType, second);
+	} else if (isReference(bsecond)) {
+		return findCommonType(first, second->asPointerType()->elementType);
+	}
+
+	if (bfirst == BasicType::TYPE_NODE && first->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return findCommonType(first->asTypeNodeType()->node->type, second, isFirstCompileTime, isSecondCompileTime);
+	} else if (bsecond == BasicType::TYPE_NODE && second->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
+		return findCommonType(first, second->asTypeNodeType()->node->type, isFirstCompileTime, isSecondCompileTime);
 	}
 
 	if ((isInteger(bfirst) && isInteger(bsecond))
@@ -845,9 +930,10 @@ std::unique_ptr<Type> findCommonType(
 
 	if (bfirst == BasicType::POINTER && isInteger(bsecond)) {
 		return first->copy();
-	} if (bfirst == BasicType::POINTER && isInteger(bsecond)) {
+	} if (bsecond == BasicType::POINTER && isInteger(bfirst)) {
 		return second->copy();
 	}
+
 	if (isImplicitlyConverible(second, first, isSecondCompileTime)) {
 		return first->copy();
 	} else if (isImplicitlyConverible(first, second, isFirstCompileTime)) {

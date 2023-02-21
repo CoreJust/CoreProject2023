@@ -22,13 +22,10 @@ std::set<TokenType> DEFINABLE_OPERATORS = {
 	TokenType::GREATER, TokenType::EQEQ, TokenType::LESSEQ,
 	TokenType::GREATEREQ,
 
-	TokenType::ANDAND, TokenType::OROR,
-
 	TokenType::LPAR, // ()
 	TokenType::LBRACKET, // []
 
-	TokenType::RANGEDOT,
-	TokenType::ETCETERA,
+	TokenType::RANGEDOT
 };
 
 
@@ -61,7 +58,10 @@ void SymbolLoader::loadClass() {
 				}
 			} else {
 				Variable field = loadField(typeNode->qualities, typeNode);
-				fieldTypes.push_back(field.type->copy());
+				if (field.qualities.getVariableType() == VariableType::FIELD) {
+					fieldTypes.push_back(field.type->copy());
+				}
+
 				fields.push_back(std::move(field));
 			}
 		}
@@ -223,6 +223,7 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 
 	std::string alias;
 	std::unique_ptr<Type> returnType;
+	TokenType opType = TokenType::NO_TOKEN; // for operators
 	if (match(TokenType::TYPE)) {
 		returnType = TypeParser(m_toks, m_pos).consumeType();
 		alias = "type$" + returnType->toString();
@@ -251,6 +252,7 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 	} else if (DEFINABLE_OPERATORS.contains(m_toks[m_pos].type)) { // operator-functions
 		qualities.setFunctionKind(FunctionKind::OPERATOR);
 		alias = m_toks[m_pos].data;
+		opType = m_toks[m_pos].type;
 		if (m_toks[m_pos].type == TokenType::LPAR || m_toks[m_pos].type == TokenType::LBRACKET) {
 			m_pos++;
 		}
@@ -263,7 +265,7 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 	std::vector<Argument> args;
 
 	if (qualities.getMethodType() != MethodType::STATIC && qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR) {
-		args.push_back(Argument("this", std::make_unique<PointerType>(BasicType::REFERENCE, TypeNode::genType(parentType))));
+		args.push_back(Argument("this", std::make_unique<PointerType>(BasicType::XVAL_REFERENCE, TypeNode::genType(parentType))));
 	}
 
 	consume(TokenType::LPAR);
@@ -289,7 +291,8 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 		consume(TokenType::RPAR);
 	}
 
-	if (qualities.getFunctionKind() == FunctionKind::COMMON) { // not a constructor
+	if (qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR
+		&& qualities.getFunctionKind() != FunctionKind::DESTRUCTOR) { // common method or operator
 		returnType = TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
 	}
 
@@ -304,6 +307,22 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 
 	if (qualities.getFunctionKind() == FunctionKind::CONSTRUCTOR) {
 		m_symbols.addConstructor(
+			qualities.getVisibility(),
+			FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs),
+			tokenPos
+		);
+
+		return std::nullopt;
+	} else if (qualities.getFunctionKind() == FunctionKind::OPERATOR) {
+		if (!isPossibleNumArgumentsOfOperator(opType, (u32)args.size())) {
+			ErrorManager::parserError(
+				ErrorID::E2108_OPERATOR_IMPOSSIBLE_ARGUMENTS_NUMBER,
+				getCurrLine(),
+				"operator: " + alias
+			);
+		}
+
+		m_symbols.addOperator(
 			qualities.getVisibility(),
 			FunctionPrototype(alias, std::move(returnType), std::move(args), qualities, isVaArgs),
 			tokenPos

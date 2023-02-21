@@ -179,7 +179,6 @@ Operator precedence(from highest to lowest):
         ~a - bitwise NOT. Applcable to integer and boolean types.
         *a - dereference of a pointer. Unsafe. Applcable to pointers.
         &a - address of. Unsafe. Applcable to any rvalue.
-		ref [const] a - reference to. Applcable to any rvalue, needed to get a reference to a value.
 		move a - commiting a movement of a value. a, if it is not a simple type, would be null after that. The resulting types is -type-&&.
         new -type-([-arguments...-]), new -type-[-size-] - allocation of memory and call of a constructor. new() is used for classes(safe)
             and for pointers(unsafe). new[] is used for dynamic arrays.

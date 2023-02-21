@@ -86,7 +86,6 @@ enum class TokenType : u8 {
 	AS,
 	TYPEOF,
 
-	REF,
 	MOVE,
 
 	TYPE,
@@ -177,6 +176,9 @@ enum class TokenType : u8 {
 constexpr u8 operator+(TokenType t) {
 	return u8(t);
 }
+
+// Is the number of arguments possible for this operator
+bool isPossibleNumArgumentsOfOperator(TokenType op, u32 num);
 
 struct Token {
 	std::string data;

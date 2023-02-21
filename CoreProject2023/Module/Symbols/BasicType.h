@@ -27,7 +27,8 @@ enum class BasicType : u8 {
 	ARRAY, // static array
 	DYN_ARRAY, // dynamic array, structure: -type-* data, u64 size
 	POINTER,
-	REFERENCE, // &, actually a pointer
+	XVAL_REFERENCE, // used for 'this' in methods, any kind of reference
+	LVAL_REFERENCE, // &, reference value (actually a pointer)
 	RVAL_REFERENCE, // &&, actually the type itself
 	OPTIONAL, // structure: -type- data, bool has
 	TUPLE,
@@ -58,6 +59,7 @@ bool hasSubtypes(BasicType type);
 bool isUserDefined(BasicType type);
 
 bool isReference(BasicType type);
+bool isTrueReference(BasicType type); // is represented by a pointer: lval_reference, xval_reference
 bool isPointer(BasicType type); // is pointer-like
 bool isTruePointer(BasicType type); // is actually a pointer: static array, pointer, function
 

@@ -307,6 +307,21 @@ llvm::Constant* llvm_utils::getConstantString(
 	}
 }
 
+llvm::Value* llvm_utils::getStructValue(const std::vector<llvm::Value*> values, const std::unique_ptr<Type>& type) {
+	ASSERT(type->basicType == BasicType::STRUCT || isString(type->basicType) || type->basicType == BasicType::TUPLE, "");
+
+	llvm::Value* alloc = createLocalVariable(g_builder->GetInsertBlock()->getParent(), type, "value");
+	llvm::Type* llvmType = type->to_llvm();
+	
+	for (size_t i = 0; i < values.size(); i++) {
+		llvm::Value* elementPtr = g_builder->CreateGEP(llvmType, alloc, { getConstantInt(0, 32), getConstantInt(i, 32) });
+		g_builder->CreateStore(values[i], elementPtr);
+	}
+
+	alloc = g_builder->CreateLoad(llvmType, alloc);
+	return alloc;
+}
+
 llvm::Value* llvm_utils::tryImplicitlyConvertTo(
 	const std::unique_ptr<Type>& to, 
 	const std::unique_ptr<Type>& from,

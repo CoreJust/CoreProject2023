@@ -207,3 +207,8 @@ Initial development
 	Finished implementing operatot-functions (conditionals and assignments)
 
 	Commited as "Operator-functions, complex assignment (+=, ...), operator ref removed"
+
+	Added tuple and str constructors by default
+	Created module ArrayElementAccessExpr
+
+	Commited as "Array elements access, tuple and str constructors"

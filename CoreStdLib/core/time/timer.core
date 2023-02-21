@@ -7,10 +7,10 @@ struct Timer {
 	private bool is_running;
 	
 	def this() {
-		this.start();
+		this.restart();
 	}
 
-	def public start() {
+	def public restart() {
 		this.start_time = ctime.clock();
 		this.is_running = true;
 	}

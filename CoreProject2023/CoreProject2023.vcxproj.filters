@@ -180,6 +180,9 @@
     <ClCompile Include="Utils\Defs.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Parser\AST\Exprs\ArrayElementAccessExpr.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h">
@@ -360,6 +363,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Parser\AST\Exprs\MethodCallExpr.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser\AST\Exprs\ArrayElementAccessExpr.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

@@ -6,9 +6,9 @@ import core.time.timer;
 use console;
 
 struct DynamicString {
-	c8* data;
-	u64 capacity;
-	u64 size;
+	private c8* data;
+	private u64 capacity;
+	private u64 size;
 
 
 	# Constructors
@@ -48,11 +48,10 @@ struct DynamicString {
 		cstring.strncpy(insert_from, str.data, str.size);
 	}
 	
-	def public finalize() {
-		this.append("\0");
-	}
+	def public size() u64 = this.size;
 	
 	# Operators
+	# Assignment
 	def public +=(str8 str) DynamicString& {
 		this.append(str);
 		return this;
@@ -63,8 +62,21 @@ struct DynamicString {
 		return this;
 	}
 	
-	def public *() c8* {
-		return this.data;
+	# Comparison
+	def public ==(const DynamicString& other) bool {
+		if this.size != other.size
+			return false;
+			
+		return cstring.strncmp(this.data, other.data, this.size) == 0;
+	}
+	
+	# Other
+	def public [](u64 idx) c8& {
+		return this.data[idx];
+	}
+	
+	def public *() str8 {
+		return str8(this.data, this.size);
 	}
 	
 	def public +(const DynamicString& other) DynamicString {
@@ -75,57 +87,25 @@ struct DynamicString {
 		return result;
 	}
 	
-	def public ==(const DynamicString& other) bool {
-		if this.size != other.size
-			return false;
-			
-		return cstring.strncmp(this.data, other.data, this.size) == 0;
-	}
-	
 	public static str8 typeName = "String";
 }
 
-struct Inc {
-	private i64 data;
-	
-	@implicit
-	def this(i64 data) {
-		this.data = data;
-	}
-	
-	def ++() {
-		console.println("Post increment");
-		this.data++;
-	}
-	
-	def ++() Inc& {
-		console.println("Pre increment");
-		++this.data;
-		return this;
-	}
-	
-	def public print() {
-		console.println(this.data);
-	}
-}
-
 def main() i32 {
-	Inc inc = 0;
-	inc++;
-	(++inc).print();
-
 	DynamicString str = "Hello ";
 	str += "world from ";
 	str += DynamicString(DynamicString.typeName);
-	str.finalize();
 	
-	console.println(str == "Hello world from String");
+	i32 i = 0;
+	while i < str.size() {
+		console.println(str[i]);
+		i++;
+	}
 	
 	timer.Timer timer = timer.Timer();
 	while (true) {
 		if (timer.elapsedTimeAsSeconds() > 2.5) {
 			console.println(*str);
-			timer.start();
+			timer.restart();
 		}
 	}
 	

@@ -689,6 +689,11 @@ std::unique_ptr<Expression> Parser::postfix() {
 
 			expr = std::make_unique<FunctionCallExpr>(std::move(expr), std::move(args));
 			continue;
+		} if (match(TokenType::LBRACKET)) {
+			std::unique_ptr<Expression> index = expression();
+			consume(TokenType::RBRACKET);
+
+			return std::make_unique<ArrayElementAccessExpr>(std::move(expr), std::move(index));
 		} if (match(TokenType::INCREMENT)) {
 			expr = std::make_unique<UnaryExpr>(std::move(expr), UnaryExpr::POST_INC);
 			continue;

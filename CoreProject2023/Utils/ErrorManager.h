@@ -47,6 +47,7 @@ enum ErrorID : u32 {
 	E2005_NO_SUITABLE_FUNCTION, // No function can be called with such argument types
 	E2006_NO_SUCH_MEMBER, // The type has no member with such name
 	E2007_MEMBER_IS_INACCESSIBLE, // The member's visibility makes the member inaccessible here
+	E2008_INCORRECT_ARRAY_ELEMENT_ACCESS, // Incorrect expression of getting an array element by index (arr[idx])
 
 	E2101_VAR_HAS_NO_INIT, // Variable declared through var cannot deduce type without initial value
 	E2102_CANNOT_BE_CALLED, // Expression cannot be called through -expr-(...)

@@ -10,6 +10,10 @@ TypeConversionExpr::TypeConversionExpr(std::vector<std::unique_ptr<Expression>> 
 	m_type = std::move(type);
 	if (m_args.size() == 1 && isExplicitlyConverible(m_args[0]->getType(), m_type)) {
 		return;
+	} else if (isString(m_type->basicType) && m_args.size() == 2) {
+		return;
+	} else if (m_type->basicType == BasicType::TUPLE && m_args.size() == m_type->asTupleType()->subTypes.size()) {
+		return;
 	} else {
 		m_isConstructor = true;
 	}
@@ -22,6 +26,38 @@ void TypeConversionExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& n
 llvm::Value* TypeConversionExpr::generate() {
 	if (m_args.size() == 0 && !isUserDefined(m_type->basicType)) { // e.g. i32()
 		return llvm_utils::getDefaultValueOf(m_type);
+	} else if (isString(m_type->basicType) && m_args.size() == 2) { // strx(data, size)
+		const std::unique_ptr<Type>& dataType = Type::getTheVeryType(m_args[0]->getType());
+		const std::unique_ptr<Type>& sizeType = Type::getTheVeryType(m_args[1]->getType());
+
+		llvm::Value* dataVal = m_args[0]->generate();
+		llvm::Value* sizeVal = m_args[1]->generate();
+
+		dataVal = llvm_utils::convertValueTo(dataType, m_args[0]->getType(), dataVal); // removing references
+		sizeVal = llvm_utils::convertValueTo(sizeType, m_args[1]->getType(), sizeVal); // removing references
+
+		BasicType charType = BasicType((u8)m_type->basicType - (u8)BasicType::STR8 + (u8)BasicType::C8);
+		std::unique_ptr<Type> charPtrType = std::make_unique<PointerType>(BasicType::POINTER, std::make_unique<Type>(charType));
+		std::unique_ptr<Type> u64Type = std::make_unique<Type>(BasicType::U64);
+
+		dataVal = llvm_utils::tryImplicitlyConvertTo(charPtrType, dataType, dataVal, m_errLine, m_args[0]->isCompileTime());
+		sizeVal = llvm_utils::tryImplicitlyConvertTo(u64Type, sizeType, sizeVal, m_errLine, m_args[1]->isCompileTime());
+
+		return llvm_utils::getStructValue({ dataVal, sizeVal }, m_type);
+	} else if (m_type->basicType == BasicType::TUPLE && m_args.size() == m_type->asTupleType()->subTypes.size()) { // tuple<...>(...)
+		std::vector<llvm::Value*> values;
+		for (size_t i = 0; i < m_args.size(); i++) {
+			values.push_back(m_args[i]->generate());
+			values.back() = llvm_utils::tryImplicitlyConvertTo(
+				m_type->asTupleType()->subTypes[i],
+				m_args[i]->getType(),
+				values.back(),
+				m_errLine,
+				m_args[i]->isCompileTime()
+			);
+		}
+
+		return llvm_utils::getStructValue(values, m_type);
 	} else if (m_isConstructor) {
 		Function* constructor = chooseConstructor();
 		llvm::Function* funcVal = constructor->functionValue;

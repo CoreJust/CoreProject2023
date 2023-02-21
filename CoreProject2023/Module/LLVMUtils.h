@@ -67,6 +67,12 @@ namespace llvm_utils {
 		u8 symbol_width = 8
 	);
 
+	// Returns the value of a struct filled with values
+	llvm::Value* getStructValue(
+		const std::vector<llvm::Value*> values,
+		const std::unique_ptr<Type>& type
+	);
+
 
 	// Converts the value to type -to- from type -from- if it is possible implicitly and returns the converted value
 	// If conversion is not possible, return nullptr

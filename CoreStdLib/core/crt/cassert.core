@@ -1,0 +1,19 @@
+# cassert.core - the standard core library module that is an interface with C assert functions.
+@set visibility direct_import
+
+import core.crt.cstdio;
+import core.crt.cstdlib;
+
+# TODO: after ct is presented, make assert empty in case of non-debug mode
+
+def assert(bool expr) {
+	assert(expr, "");
+}
+
+def assert(bool expr, str8 message) {
+	if (!expr) {
+		cstdio.printf("Assertion failed %s\n", message.data);
+		cstdlib.system("pause");
+		cstdlib.abort();
+	}
+}

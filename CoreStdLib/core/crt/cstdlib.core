@@ -3,8 +3,6 @@
 @set safety unsafe
 @set mangling nomangle
 
-# TODO: add constants (macros in original C header file)
-
 struct div_t {
 	i32 quot;
 	i32 rem;

@@ -81,7 +81,7 @@ llvm::Value* AssignmentExpr::generate() {
 	llvm::Value* lval = m_lval->generate();
 	llvm::Value* value;
 	if (m_op != AssignmentOp::EQUATE) {
-		value = BinaryExpr::generateBinaryOperation(m_lval, m_expr, m_type, BinaryExpr::BinaryOp(m_op - 1), true);
+		value = BinaryExpr::generateBinaryOperation(m_lval, m_expr, Type::getTheVeryType(m_type), BinaryExpr::BinaryOp(m_op - 1), true);
 	} else {
 		value = m_expr->generate();
 

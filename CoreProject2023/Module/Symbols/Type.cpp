@@ -826,7 +826,7 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 	}
 
 	if (isInteger(bfrom)) {
-		return isNumeric(bto) || isChar(bto);
+		return isNumeric(bto) || isChar(bto) || isTruePointer(bto);
 	} else if (isFloat(bfrom)) {
 		return isNumeric(bto);
 	} else if (isChar(bfrom)) {

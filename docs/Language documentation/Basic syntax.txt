@@ -63,7 +63,7 @@ Explicit type conversions:
     4. Strings can be converted to other strings (e.g. str16(str8)).
     5. Characters can be casted to string (e.g. str8(c8)).
     6. Character and numbers are mutually convertible (e.g. c8(u8), i32(c16)).
-    7. Pointers/functions/arrays are convertible to integers (e.g. u64(i8*)).
+    7. Pointers/functions/arrays are convertible to integers and vice versa (e.g. u64(i8*)).
     8. Functions, arrays, classes can be casted to each other (e.g. u8*(func(), i32*(i32[8])).
     9. Numbers, pointers, arrays, tuples, bool and enums can be casted to string.
     10. Bool can be converted to character and float.

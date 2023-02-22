@@ -1,0 +1,175 @@
+# DynamicString - the type used for operations with strings that need them to change in size in the process
+@set safety safe
+import core.crt.cstring;
+import core.crt.cstdlib;
+import core.crt.cassert;
+
+# TODO: implement other methods
+
+const u64 NOT_FOUND = 0xffffffffffffffff;
+
+struct DynamicString {
+	private c8* data;
+	private u64 capacity;
+	private u64 size;
+
+
+	# Constructors
+	@implicit
+	def this(str8 str) {
+		this.size = this.capacity = str.size;
+		this.data = c8*(cstdlib.malloc(this.size));
+		cstring.strncpy(this.data, str.data, str.size);
+	}
+	
+	def this(const DynamicString& other) {
+		this.size = this.capacity = other.size;
+		this.data = c8*(cstdlib.malloc(this.size));
+		cstring.strncpy(this.data, other.data, other.size);
+	}
+	
+	def this() {
+		this.size = 0;
+		this.capacity = 24;
+		this.data = c8*(cstdlib.calloc(this.capacity, 1));
+	}
+	
+	# Member functions
+	# Appends the str to the end of DynamicString
+	def public append(str8 str) {
+		c8* insert_from = this.data + this.size;
+		this.size = this.size + str.size;
+		if (this.size > this.capacity) {
+			this.reserve(this.size);
+		}
+		
+		cstring.strncpy(insert_from, str.data, str.size);
+	}
+	
+	# Appends the str to the end of DynamicString
+	def public append(const DynamicString& str) {
+		c8* insert_from = this.data + this.size;
+		this.size = this.size + str.size;
+		if (this.size > this.capacity) {
+			this.reserve(this.size);
+		}
+		
+		cstring.strncpy(insert_from, str.data, str.size);
+	}
+	
+	# Erases the last character from the string
+	def public pop() {
+		cassert.assert(this.size > 0, "Size was zero");
+		this.size--;
+	}
+	
+	# Erases the last n characters from the string
+	def public pop(u64 n) {
+		cassert.assert(this.size >= n, "Size was zero");
+		this.size -= n;
+	}
+	
+	# Clears the string
+	def public clear() {
+		this.size = 0;
+	}
+	
+	# Returns the first occurence of ch in the DynamicString from position from_pos
+	# If nothing found, returns NOT_FOUND
+	def public find(c8 ch) u64 = this.find(ch, 0);
+	
+	# Returns the first occurence of ch in the DynamicString from position from_pos
+	# If nothing found, returns NOT_FOUND
+	def public find(c8 ch, u64 from_pos) u64 {
+		if from_pos >= this.size
+			return NOT_FOUND;
+	
+		const u8* result = cstring.memchr(u8*(this.data + from_pos), i32(ch), this.size - from_pos);
+		if result != null
+			return u64(result) - u64(this.data);
+		else
+			return NOT_FOUND;
+	}
+	
+	# Returns a substring from -from- character with no more than -count- characters
+	def public substr(u64 from, u64 count) str8 {
+		if from >= this.size
+			return "";
+			
+		u64 result_size = count;
+		if from + count > this.size
+			result_size = this.size - from;
+		
+		str8 substr = str8(this.data + from, result_size);
+		return substr;
+	}
+	
+	# Reverses the DynamicString
+	def public reverse() {
+		u64 i = 0;
+		u64 j = this.size - 1;
+		while i < j {
+			c8 tmp = this.data[i];
+			this.data[i++] = this.data[j];
+			this.data[j--] = tmp;
+		}
+	}
+	
+	# Reallocates the data of the DynamicString so as to have additional free bytes (capacity characters in total)
+	def public reserve(u64 capacity) {
+		if (capacity != this.capacity) {
+			this.data = c8*(cstdlib.realloc(u8*(this.data), capacity));
+			this.capacity = capacity;
+		}
+	}
+	
+	# The last character of the string
+	def public back() c8& {
+		return this.data[this.size - 1];
+	}
+	
+	# Getters of DynamicString's fields
+	def public size() u64 = this.size;
+	def public capacity() u64 = this.capacity;
+	def public data() const c8 const* = this.data;
+	
+	# Operators
+	# Assignment
+	def public +=(str8 str) DynamicString& {
+		this.append(str);
+		return this;
+	}
+	
+	def public +=(const DynamicString& other) DynamicString& {
+		this.append(other);
+		return this;
+	}
+	
+	# Comparison
+	def public ==(const DynamicString& other) bool {
+		if this.size != other.size
+			return false;
+			
+		return cstring.strncmp(this.data, other.data, this.size) == 0;
+	}
+	
+	# Character at
+	def public [](u64 idx) c8& {
+		cassert.assert(idx < this.size, "string index out of range");
+		return this.data[idx];
+	}
+	
+	# To default str type
+	def public *() str8 {
+		return str8(this.data, this.size);
+	}
+	
+	# Creation of a joined DynamicString
+	def public +(const DynamicString& other) DynamicString {
+		DynamicString result = DynamicString();
+		result.append(this);
+		result.append(other);
+		
+		return result;
+	}
+}

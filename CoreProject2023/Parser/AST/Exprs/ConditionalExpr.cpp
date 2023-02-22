@@ -96,11 +96,15 @@ llvm::Value* ConditionalExpr::generate() {
 			m_exprs[i + 1]->isCompileTime()
 		);
 
+		if (isTruePointer(commonType->basicType)) {
+			commonType = std::make_unique<Type>(BasicType::U64);
+		}
+
 		llvm::Value* left = llvm_utils::convertValueTo(commonType, m_exprs[i]->getType(), orig_left);
 		llvm::Value* right = llvm_utils::convertValueTo(commonType, m_exprs[i + 1]->getType(), orig_right);
 
 		if (isInteger(commonType->basicType) 
-			|| isChar(commonType->basicType) 
+			|| isChar(commonType->basicType)
 			|| commonType->basicType == BasicType::BOOL) {
 			bool isUnsigned = ::isUnsigned(commonType->basicType);
 			switch (m_ops[i]) {

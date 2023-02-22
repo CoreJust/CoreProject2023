@@ -212,3 +212,10 @@ Initial development
 	Created module ArrayElementAccessExpr
 
 	Commited as "Array elements access, tuple and str constructors"
+
+22.02.2023
+	Implemented core.crt.cassert, core.dynamic_string, core.crt.cfenv
+	Added syntax highlight for Notepad++ (tools/core_np++_syntax.xml)
+	Several small bugs fixed
+
+	Commited as "core.crt.cassert, core.crt.cfenv, core.dynamic_string, Notepad++ syntax"

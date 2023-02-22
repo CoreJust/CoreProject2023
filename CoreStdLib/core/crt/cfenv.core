@@ -1,0 +1,41 @@
+# cfenv.core - the standard core library module that is an interface with C fenv functions.
+# The file is completely platform-specific
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+
+type fexcept_t = u64;
+struct fenv_t {
+	u64 _Fe_ctl;
+	u64 _Fe_stat;
+}
+
+const u8 FE_INEXACT   = 1;
+const u8 FE_UNDERFLOW = 2;
+const u8 FE_OVERFLOW  = 4;
+const u8 FE_DIVBYZERO = 8;
+const u8 FE_INVALID   = 16;
+
+const u8 FE_ALL_EXCEPT = 31;
+
+const u8 FE_TONEAREST  = 0x0;
+const u8 FE_UPWARD     = 0x200;
+const u8 FE_DOWNWARD   = 0x100;
+const u8 FE_TOWARDZERO = 0x300;
+
+const u8 FE_ROUND_MASK = 0x300;
+
+def native feclearexcept(i32 excepts) i32;
+def native fegetexceptflag(fexcept_t *flagp, i32 excepts) i32;
+def native feraiseexcept(i32 excepts) i32;
+def native fesetexceptflag(const fexcept_t *flagp, i32 excepts) i32;
+def native fetestexcept(i32 excepts) i32;
+
+def native fegetround() i32;
+def native fesetround(i32 round) i32;
+
+def native fegetenv(fenv_t *envp) i32;
+def native feholdexcept(fenv_t *envp) i32;
+def native fesetenv(const fenv_t *envp) i32;
+def native feupdateenv(const fenv_t *envp) i32;

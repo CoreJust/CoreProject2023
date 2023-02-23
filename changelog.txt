@@ -219,3 +219,13 @@ Initial development
 	Several small bugs fixed
 
 	Commited as "core.crt.cassert, core.crt.cfenv, core.dynamic_string, Notepad++ syntax"
+
+23.02.2023
+	Implemented core.crt.clocale, core.crt.csetjmp (partially), core.crt.csignal
+	Fixed bug with ASCII characters with code bigger than 127 in strings
+	Fixed bug in DynamicString in append : the method did not work in some cases
+	
+	Created modules AggregatorIterator, LLVMVariableManager, LLVMFunctionManager
+
+	Commited as "core.crt.clocale, core.crt.csetjmp, core.crt.csignal"
+	

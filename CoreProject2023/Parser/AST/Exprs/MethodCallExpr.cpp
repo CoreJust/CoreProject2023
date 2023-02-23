@@ -21,8 +21,9 @@ void MethodCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node)
 
 llvm::Value* MethodCallExpr::generate() {
 	std::unique_ptr<FunctionType> funcType = m_func->prototype.genType();
+
 	return FunctionCallExpr::makeFunctionCall(
-		m_func->functionValue,
+		m_func->getValue(),
 		funcType.get(),
 		m_argExprs,
 		m_errLine

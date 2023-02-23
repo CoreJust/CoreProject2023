@@ -61,34 +61,9 @@ std::unique_ptr<Declaration> Parser::declaration() {
 }
 
 void Parser::useDeclaration() {
-	std::string moduleName = "";
-	std::string name = consume(TokenType::WORD).data;
-	SymbolType symType = g_module->getSymbolType(name);
-
-	if (symType == SymbolType::MODULE && match(TokenType::DOT)) {
-		moduleName = std::move(name);
-		name = consume(TokenType::WORD).data;
-		symType = g_module->getSymbolType(moduleName, name);
+	while (!match(TokenType::SEMICOLON)) {
+		next();
 	}
-
-	if (symType == SymbolType::NO_SYMBOL) {
-		ErrorManager::parserError(
-			ErrorID::E2003_UNKNOWN_IDENTIFIER,
-			getCurrLine(),
-			"identifier: " + (moduleName.size() ? moduleName + "." + name : name)
-		);
-
-		return;
-	}
-
-	std::string alias = "";
-	if (match(TokenType::AS)) {
-		alias = consume(TokenType::WORD).data;
-	}
-		
-	g_module->addAlias(symType, moduleName, name, alias);
-
-	consume(TokenType::SEMICOLON);
 }
 
 std::unique_ptr<Declaration> Parser::structDeclaration() {
@@ -926,6 +901,7 @@ std::unique_ptr<Expression> Parser::parseMethodCall(
 			? Visibility::PRIVATE : Visibility::PUBLIC;
 
 		Function* func = typeNode->chooseMethod(memberName, argTypes, isCompileTime, visibility, isStatic);
+
 		if (func == nullptr) {
 			functionCallError(typeNode->name, memberName, argTypes, false);
 			return nullptr;

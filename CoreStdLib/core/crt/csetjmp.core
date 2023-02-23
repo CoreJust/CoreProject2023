@@ -1,0 +1,25 @@
+# csetjmp.core - the standard core library module that is an interface with C setjmp functions.
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+# Types here are platform-specific
+
+@private
+struct SETJMP_FLOAT128 {
+	u64[2] _data;
+}
+
+type jmp_buf = SETJMP_FLOAT128[16];
+
+@private
+def native setjmp(jmp_buf* _Buf, u8* frame_address) i32;
+
+@mangle
+def setjmp(jmp_buf* env) i32 {
+	u8* frame; # = ct llvm frame_address - implement
+	return setjmp(env, frame);
+}
+
+@noreturn
+def native longjmp(jmp_buf* env, i32 status);

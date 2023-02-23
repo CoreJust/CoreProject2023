@@ -17,25 +17,17 @@ void ModuleSymbolsUnit::addOperator(FunctionPrototype prototype) {
 	m_operators.push_back(Function{ std::move(prototype), nullptr });
 }
 
-void ModuleSymbolsUnit::addFunction(FunctionPrototype prototype, llvm::Function* value) {
-	m_functions.push_back(Function{ std::move(prototype), value });
-}
-
-void ModuleSymbolsUnit::addConstructor(FunctionPrototype prototype, llvm::Function* value) {
-	m_constructors.push_back(Function{ std::move(prototype), value });
-}
-
-void ModuleSymbolsUnit::addOperator(FunctionPrototype prototype, llvm::Function* value) {
-	m_operators.push_back(Function{ std::move(prototype), value });
+void ModuleSymbolsUnit::addFunction(FunctionPrototype proto, std::shared_ptr<LLVMFunctionManager> manager) {
+	m_functions.push_back(Function{ std::move(proto), std::move(manager) });
 }
 
 void ModuleSymbolsUnit::addVariable(
 	const std::string& name,
 	std::unique_ptr<Type> type,
 	VariableQualities qualities,
-	llvm::Value* value
+	std::shared_ptr<LLVMVariableManager> value
 ) {
-	m_variables.push_back(Variable{ name, std::move(type), qualities, value });
+	m_variables.push_back(Variable{ name, std::move(type), qualities, std::move(value) });
 }
 
 SymbolType ModuleSymbolsUnit::getSymbolType(const std::string& name) const {

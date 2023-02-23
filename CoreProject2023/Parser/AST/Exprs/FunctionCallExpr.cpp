@@ -11,14 +11,14 @@ FunctionCallExpr::FunctionCallExpr(
 	m_funcExpr(std::move(func)), 
 	m_argExprs(std::move(args)) 
 {
-	if (m_funcExpr->getType()->basicType != BasicType::FUNCTION) {
+	if (Type::getTheVeryType(m_funcExpr->getType())->basicType != BasicType::FUNCTION) {
 		ErrorManager::parserError(
 			ErrorID::E2102_CANNOT_BE_CALLED, 
 			m_errLine, 
 			""
 		);
 	} else {
-		m_type = m_funcExpr->getType()->asFunctionType()->returnType->copy();
+		m_type = Type::getTheVeryType(m_funcExpr->getType())->asFunctionType()->returnType->copy();
 	}
 }
 
@@ -27,8 +27,14 @@ void FunctionCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& nod
 }
 
 llvm::Value* FunctionCallExpr::generate() {
-	llvm::Function* funcVal = (llvm::Function*)m_funcExpr->generate();
-	FunctionType* funcType = (FunctionType*)m_funcExpr->getType().get();
+	llvm::Value* value = (llvm::Function*)m_funcExpr->generate();
+	llvm::Function* funcVal = (llvm::Function*)llvm_utils::convertValueTo(
+		Type::getTheVeryType(m_funcExpr->getType()),
+		m_funcExpr->getType(), 
+		value
+	);
+
+	FunctionType* funcType = Type::getTheVeryType(m_funcExpr->getType())->asFunctionType();
 
 	return makeFunctionCall(funcVal, funcType, m_argExprs, m_errLine);
 }

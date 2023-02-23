@@ -1,0 +1,45 @@
+# clocale.core - the standard core library module that is an interface with C locale functions.
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+struct lconv {
+    c8*    decimal_point;
+    c8*    thousands_sep;
+    c8*    grouping;
+    c8*    int_curr_symbol;
+    c8*    currency_symbol;
+    c8*    mon_decimal_point;
+    c8*    mon_thousands_sep;
+    c8*    mon_grouping;
+    c8*    positive_sign;
+    c8*    negative_sign;
+    c8     int_frac_digits;
+    c8     frac_digits;
+    c8     p_cs_precedes;
+    c8     p_sep_by_space;
+    c8     n_cs_precedes;
+    c8     n_sep_by_space;
+    c8     p_sign_posn;
+    c8     n_sign_posn;
+    c16*   _W_decimal_point;
+    c16*   _W_thousands_sep;
+    c16*   _W_int_curr_symbol;
+    c16*   _W_currency_symbol;
+    c16*   _W_mon_decimal_point;
+    c16*   _W_mon_thousands_sep;
+    c16*   _W_positive_sign;
+    c16*   _W_negative_sign;
+}
+
+# Constants are platform-specific
+const u8 LC_ALL      = 0;
+const u8 LC_COLLATE  = 1;
+const u8 LC_CTYPE    = 2;
+const u8 LC_MONETARY = 3;
+const u8 LC_NUMERIC  = 4;
+const u8 LC_TIME     = 5;
+
+
+def native setlocale(i32 category, const c8* locale) c8*;
+def native localeconv() lconv*;

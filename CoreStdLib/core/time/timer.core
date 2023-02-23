@@ -6,20 +6,24 @@ struct Timer {
 	private ctime.clock_t end_time;
 	private bool is_running;
 	
+	# Creates the Timer and starts it
 	def this() {
 		this.restart();
 	}
 
+	# Restarts the Timer
 	def public restart() {
 		this.start_time = ctime.clock();
 		this.is_running = true;
 	}
 	
+	# Stops the timer
 	def public stop() {
 		this.end_time = ctime.clock();
 		this.is_running = false;
 	}
 	
+	# Returns the time from the last (re)start till the last stop/current time
 	def public elapsedTime() ctime.clock_t {
 		ctime.clock_t end_time = this.end_time;
 		if this.is_running {
@@ -29,6 +33,7 @@ struct Timer {
 		return end_time - this.start_time;
 	}
 	
+	# Returns the elapsedTime as floating point in seconds
 	def public elapsedTimeAsSeconds() f64 {
 		return this.elapsedTime() / ctime.CLOCKS_PER_SEC;
 	}

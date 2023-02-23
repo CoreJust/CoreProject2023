@@ -13,7 +13,7 @@ void FunctionExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
 }
 
 llvm::Value* FunctionExpr::generate() {
-    return m_function->functionValue;
+    return m_function->getValue();
 }
 
 bool FunctionExpr::isCompileTime() const {

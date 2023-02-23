@@ -97,7 +97,7 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 			m_type = std::make_unique<Type>(BasicType::BOOL);
 			break;
 		case UnaryExpr::ADRESS:
-			m_type = std::make_unique<PointerType>(BasicType::POINTER, m_expr->getType()->copy());
+			m_type = std::make_unique<PointerType>(BasicType::POINTER, Type::getTheVeryType(m_expr->getType())->copy());
 			break;
 		case UnaryExpr::DEREF:
 			if (auto btype = m_expr->getType()->basicType;
@@ -129,7 +129,7 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 
 			break;
 		case UnaryExpr::MOVE:
-			m_type = std::make_unique<PointerType>(BasicType::RVAL_REFERENCE, m_expr->getType()->copy());
+			m_type = std::make_unique<PointerType>(BasicType::RVAL_REFERENCE, Type::getTheVeryType(m_expr->getType())->copy());
 			break;
 	default:
 		ASSERT(false, "wrong operator");
@@ -146,7 +146,7 @@ llvm::Value* UnaryExpr::generate() {
 		std::vector<std::unique_ptr<Expression>> args;
 		args.push_back(std::move(m_expr));
 		return FunctionCallExpr::makeFunctionCall(
-			m_operatorFunc->functionValue,
+			m_operatorFunc->getValue(),
 			m_operatorFunc->prototype.genType().get(),
 			args,
 			m_errLine

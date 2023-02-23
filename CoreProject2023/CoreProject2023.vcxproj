@@ -355,11 +355,14 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Module\Symbols\Annotations.cpp" />
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Module\Symbols\BasicType.cpp" />
+    <ClCompile Include="Module\Symbols\Function.cpp" />
     <ClCompile Include="Module\Symbols\FunctionArgument.cpp" />
     <ClCompile Include="Module\LLVMGlobals.cpp" />
     <ClCompile Include="Module\LLVMUtils.cpp" />
     <ClCompile Include="Module\Module.cpp" />
     <ClCompile Include="Module\ModuleSymbols.cpp" />
+    <ClCompile Include="Module\Symbols\LLVMFunctionManager.cpp" />
+    <ClCompile Include="Module\Symbols\LLVMVariableManager.cpp" />
     <ClCompile Include="Module\Symbols\Type.cpp" />
     <ClCompile Include="Module\Symbols\TypeNode.cpp" />
     <ClCompile Include="Module\Value.cpp" />
@@ -418,6 +421,8 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Module\LLVMUtils.h" />
     <ClInclude Include="Module\Module.h" />
     <ClInclude Include="Module\ModuleSymbols.h" />
+    <ClInclude Include="Module\Symbols\LLVMFunctionManager.h" />
+    <ClInclude Include="Module\Symbols\LLVMVariableManager.h" />
     <ClInclude Include="Module\Symbols\SymbolRef.h" />
     <ClInclude Include="Module\Symbols\Type.h" />
     <ClInclude Include="Module\Symbols\TypeNode.h" />
@@ -462,6 +467,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="SymbolLoader\BasicSymbolLoader.h" />
     <ClInclude Include="SymbolLoader\SymbolLoader.h" />
     <ClInclude Include="SymbolLoader\SymbolPreloader.h" />
+    <ClInclude Include="Utils\AggregatorIterator.h" />
     <ClInclude Include="Utils\Defs.h" />
     <ClInclude Include="Utils\ErrorManager.h" />
     <ClInclude Include="Utils\File.h" />

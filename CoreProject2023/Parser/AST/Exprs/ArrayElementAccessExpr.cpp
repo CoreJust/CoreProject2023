@@ -69,7 +69,7 @@ llvm::Value* ArrayElementAccessExpr::generate() {
 		args.push_back(std::move(m_arrayExpr));
 		args.push_back(std::move(m_indexExpr));
 		return FunctionCallExpr::makeFunctionCall(
-			m_operatorFunc->functionValue,
+			m_operatorFunc->getValue(),
 			m_operatorFunc->prototype.genType().get(),
 			args,
 			m_errLine

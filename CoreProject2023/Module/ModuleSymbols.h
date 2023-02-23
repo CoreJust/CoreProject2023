@@ -26,15 +26,13 @@ public:
 	void addOperator(FunctionPrototype prototype);
 
 	// Intended for adding function duplicates to modules importing the function
-	void addFunction(FunctionPrototype prototype, llvm::Function* value);
-	void addConstructor(FunctionPrototype prototype, llvm::Function* value);
-	void addOperator(FunctionPrototype prototype, llvm::Function* value);
+	void addFunction(FunctionPrototype proto, std::shared_ptr<LLVMFunctionManager> manager);
 
 	void addVariable(
 		const std::string& name,
 		std::unique_ptr<Type> type,
 		VariableQualities qualities,
-		llvm::Value* value
+		std::shared_ptr<LLVMVariableManager> value
 	);
 
 	SymbolType getSymbolType(const std::string& name) const;

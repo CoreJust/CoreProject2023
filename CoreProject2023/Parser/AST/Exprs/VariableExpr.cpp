@@ -29,8 +29,8 @@ void VariableExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
 
 llvm::Value* VariableExpr::generate() {
 	llvm::Value* varVal = m_isStaticTypeMember ?
-		m_typeNode->getField(m_name, Visibility::PRIVATE, true)->value
-		: g_module->getVariable(m_moduleName, m_name)->value;
+		m_typeNode->getField(m_name, Visibility::PRIVATE, true)->getValue()
+		: g_module->getVariable(m_moduleName, m_name)->getValue();
 
 	return varVal;
 }

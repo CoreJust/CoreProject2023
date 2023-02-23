@@ -71,7 +71,7 @@ llvm::Value* AssignmentExpr::generate() {
 		args.push_back(std::move(m_lval));
 		args.push_back(std::move(m_expr));
 		return FunctionCallExpr::makeFunctionCall(
-			m_operatorFunc->functionValue,
+			m_operatorFunc->getValue(),
 			m_operatorFunc->prototype.genType().get(),
 			args,
 			m_errLine

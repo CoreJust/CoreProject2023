@@ -18,7 +18,7 @@ void FunctionDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>&
 
 void FunctionDeclaration::generate() {
 	if (!m_function->prototype.getQualities().isNative()) {
-		llvm::Function* fun = m_function->functionValue;
+		llvm::Function* fun = m_function->functionManager->getOriginalValue();
 		llvm::BasicBlock* bb = llvm::BasicBlock::Create(g_context, "entry", fun);
 		g_builder->SetInsertPoint(bb);
 
@@ -39,7 +39,7 @@ void FunctionDeclaration::generate() {
 				llvm_utils::genFunctionArgumentValue(
 					m_function,
 					arg,
-					m_function->functionValue->getArg(i)
+					fun->getArg(i)
 				)
 			);
 		}
@@ -66,7 +66,7 @@ void FunctionDeclaration::generate() {
 }
 
 void FunctionDeclaration::generateConstructor() {
-	llvm::Function* fun = m_function->functionValue;
+	llvm::Function* fun = m_function->functionManager->getOriginalValue();
 	llvm::Value* thisVar = llvm_utils::createLocalVariable(fun, m_function->prototype.getReturnType(), "this");
 
 	g_module->addLocalVariable(

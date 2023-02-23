@@ -1,33 +1,30 @@
 import core.io.console;
 import core.dynamic_string;
 import core.time.timer;
-import core.crt.cfenv;
+import core.crt.clocale;
 
 use console;
 use dynamic_string;
 
+DynamicString g_str;
+
 def main() i32 {
-	DynamicString str = "Hello ";
-	str += "world from test";
-	
-	println(str.substr(3, 10));
-	
-	str.reverse();
+	clocale.setlocale(clocale.LC_ALL, "Rus");
+	g_str = "Привет ";
+	g_str += "мир из test";
 	
 	i32 i = 0;
-	while i < str.size() {
-		println(str[i]);
+	while i < g_str.size() {
+		print(g_str[i]);
+		print(" : ");
+		println(u32(g_str[i]));
 		i++;
 	}
-	
-	println(str[str.find('r') + 1]);
-	println(str.find('&'));
-	println(str[i]);
 	
 	timer.Timer timer = timer.Timer();
 	while (true) {
 		if (timer.elapsedTimeAsSeconds() > 2.5) {
-			println(*str);
+			println(*g_str);
 			timer.restart();
 		}
 	}

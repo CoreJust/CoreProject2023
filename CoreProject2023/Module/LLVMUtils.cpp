@@ -78,7 +78,7 @@ llvm::Value* llvm_utils::createGlobalVariable(Variable& var, Expression* initial
 		llvm::appendToGlobalCtors(g_module->getLLVMModule(), initFunc, 1);
 	}
 
-	var.value = varValue;
+	var.valueManager->setInitialValue(varValue);
 	return varValue;
 }
 
@@ -100,7 +100,6 @@ llvm::Value* llvm_utils::addGlobalVariableFromOtherModule(Variable& var, llvm::M
 	);
 
 	varValue->addAttribute("dso_local");
-	var.value = varValue;
 	return varValue;
 }
 
@@ -109,7 +108,7 @@ llvm::Value* llvm_utils::genFunctionArgumentValue(
 	const Argument& arg, 
 	llvm::Argument* llvmArg
 ) {
-	llvm::Value* result = createLocalVariable(func->functionValue, arg.type, arg.name);
+	llvm::Value* result = createLocalVariable(func->functionManager->getOriginalValue(), arg.type, arg.name);
 	g_builder->CreateStore(llvmArg, result);
 	return result;
 }
@@ -447,7 +446,7 @@ llvm::Value* llvm_utils::convertValueTo(
 
 		return g_builder->CreateCall(
 			(llvm::FunctionType*)constructor->prototype.genType()->to_llvmFunctionType(),
-			constructor->functionValue,
+			constructor->getValue(),
 			{ value }
 		);
 	}

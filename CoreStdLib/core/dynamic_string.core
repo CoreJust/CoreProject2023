@@ -37,24 +37,18 @@ struct DynamicString {
 	# Member functions
 	# Appends the str to the end of DynamicString
 	def public append(str8 str) {
-		c8* insert_from = this.data + this.size;
-		this.size = this.size + str.size;
+		this.size += str.size;
 		if (this.size > this.capacity) {
 			this.reserve(this.size);
 		}
 		
-		cstring.strncpy(insert_from, str.data, str.size);
+		c8* insert_from = this.data + this.size - str.size;
+		cstring.memcpy(u8*(insert_from), u8*(str.data), str.size);
 	}
 	
 	# Appends the str to the end of DynamicString
 	def public append(const DynamicString& str) {
-		c8* insert_from = this.data + this.size;
-		this.size = this.size + str.size;
-		if (this.size > this.capacity) {
-			this.reserve(this.size);
-		}
-		
-		cstring.strncpy(insert_from, str.data, str.size);
+		this.append(str8(c8*(str.data)	, str.size));
 	}
 	
 	# Erases the last character from the string
@@ -65,7 +59,7 @@ struct DynamicString {
 	
 	# Erases the last n characters from the string
 	def public pop(u64 n) {
-		cassert.assert(this.size >= n, "Size was zero");
+		cassert.assert(this.size >= n, "Size is less than the number of characters to pop");
 		this.size -= n;
 	}
 	
@@ -120,6 +114,9 @@ struct DynamicString {
 		if (capacity != this.capacity) {
 			this.data = c8*(cstdlib.realloc(u8*(this.data), capacity));
 			this.capacity = capacity;
+			if (this.size > capacity) {
+				this.size = capacity;
+			}
 		}
 	}
 	

@@ -77,7 +77,7 @@ llvm::Value* ConditionalExpr::generate() {
 			argTypes.push_back(m_exprs[i + 1]->getType()->copy());
 			isCompileTime.push_back(m_exprs[i + 1]->isCompileTime());
 			values[i] = FunctionCallExpr::makeFunctionCall(
-				m_operatorFuncs[i]->functionValue,
+				m_operatorFuncs[i]->getValue(),
 				m_operatorFuncs[i]->prototype.genType().get(),
 				args,
 				argTypes,

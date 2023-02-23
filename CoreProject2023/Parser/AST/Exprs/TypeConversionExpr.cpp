@@ -60,7 +60,7 @@ llvm::Value* TypeConversionExpr::generate() {
 		return llvm_utils::getStructValue(values, m_type);
 	} else if (m_isConstructor) {
 		Function* constructor = chooseConstructor();
-		llvm::Function* funcVal = constructor->functionValue;
+		llvm::Function* funcVal = constructor->getValue();
 
 		std::vector<llvm::Value*> argValues;
 		for (size_t i = 0; i < m_args.size(); i++) {

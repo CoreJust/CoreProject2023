@@ -670,7 +670,7 @@ u32 Lexer::getSingleChar() {
 		}
 	}
 
-	return c;
+	return (unsigned char)c;
 }
 
 void Lexer::skipWhitespaces(bool spacesOnly) {

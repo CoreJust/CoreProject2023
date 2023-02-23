@@ -171,7 +171,7 @@ void Compiler::compileLLVM() {
 		std::cout << "\n\n\n\t\t===================================\n\n\n" << module.getName() << ": \n";
 		llvmModule.print(llvm::errs(), nullptr);
 
-		initPasses(targetMachine);
+		initPasses(targetMachine); 
 		g_modulePassManager->run(llvmModule, *g_moduleAnalysisManager);
 
 		std::cout << "\n\n\n\nAfter opt " << module.getName() << ": \n";

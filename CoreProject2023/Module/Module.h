@@ -14,6 +14,8 @@ private:
 	std::map<std::string, std::vector<ModuleSymbolsUnit*>> m_symbols;
 	std::unique_ptr<ModuleSymbols> m_ownSymbols;
 
+	std::map<std::string, std::vector<std::string>> m_moduleAliases;
+
 	// needed to get symbols from imports in imported modules
 	std::set<std::string> m_allTheImportedModules; 
 
@@ -39,7 +41,7 @@ public:
 
 	void addAlias(
 		SymbolType symType,
-		const std::string& moduleName,
+		const std::string& moduleAlias,
 		const std::string& name, 
 		std::string alias
 	);
@@ -54,18 +56,18 @@ public:
 
 	void deleteBlock();
 
-	SymbolType getSymbolType(const std::string& name) const;
-	SymbolType getSymbolType(const std::string& moduleAlias, const std::string& name) const;
+	SymbolType getSymbolType(const std::string& name);
+	SymbolType getSymbolType(const std::string& moduleAlias, const std::string& name);
 
 	Function* getFunction(u64 tokenPos); // as well as constructor, or operator
 
 	// Tries to get a function by name
 	// Returns nullptr if nothing found or more than one function with such name exist
-	Function* getFunction(const std::string& moduleName, const std::string& name);
+	Function* getFunction(const std::string& moduleAlias, const std::string& name);
 
 	// Finds the function with the name and exactly argTypes
 	Function* getFunction(
-		const std::string& moduleName,
+		const std::string& moduleAlias,
 		const std::string& name,
 		const std::vector<std::unique_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime
@@ -73,7 +75,7 @@ public:
 
 	// Chooses the most suitable function with name for argTypes
 	Function* chooseFunction(
-		const std::string& moduleName,
+		const std::string& moduleAlias,
 		const std::string& name,
 		const std::vector<std::unique_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime
@@ -114,7 +116,6 @@ public:
 private:
 	void loadThisModuleUnit(ModuleSymbolsUnit* unit);
 	void addModuleSymbolsUnit(const std::string& alias, ModuleSymbolsUnit* unit);
-	void loadModuleSymbolsAsLLVM(ModuleSymbolsUnit*& unit);
 
 public:
 	static std::string getModuleNameFromPath(const std::string& path);

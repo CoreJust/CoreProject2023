@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Compiler.h"
+#include <setjmp.h>
 
 // TODO: refactor operation expressions, arguments' default values, try replace unique_ptr with shared_ptr for Type
 // Long term TODO: project settings file, implement optionals, add ct preprocesing

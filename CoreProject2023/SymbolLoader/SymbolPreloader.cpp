@@ -73,7 +73,7 @@ void SymbolPreloader::loadClass() {
 			qualities,
 			nullptr,
 			nullptr
-			);
+		);
 
 		m_symbols.addType(qualities.getVisibility(), std::move(result), tokenPos);
 	}

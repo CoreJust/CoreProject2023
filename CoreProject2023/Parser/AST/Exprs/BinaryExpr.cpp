@@ -124,7 +124,7 @@ llvm::Value* BinaryExpr::generate() {
 		args.push_back(std::move(m_left));
 		args.push_back(std::move(m_right));
 		return FunctionCallExpr::makeFunctionCall(
-			m_operatorFunc->functionValue,
+			m_operatorFunc->getValue(),
 			m_operatorFunc->prototype.genType().get(),
 			args,
 			m_errLine

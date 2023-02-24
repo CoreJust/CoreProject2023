@@ -28,5 +28,6 @@ public:
 	virtual void visit(FieldAccessExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(TypeConversionExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(VariableExpr* expr, std::unique_ptr<Expression>& node);
+	virtual void visit(ArrayExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(ValueExpr* expr, std::unique_ptr<Expression>& node);
 };

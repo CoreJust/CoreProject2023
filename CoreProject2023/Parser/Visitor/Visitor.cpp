@@ -115,6 +115,12 @@ void Visitor::visit(VariableExpr* expr, std::unique_ptr<Expression>& node) {
 
 }
 
+void Visitor::visit(ArrayExpr* expr, std::unique_ptr<Expression>& node) {
+	for (auto& e : expr->m_values) {
+		e->accept(this, e);
+	}
+}
+
 void Visitor::visit(ValueExpr* expr, std::unique_ptr<Expression>& node) {
 	
 }

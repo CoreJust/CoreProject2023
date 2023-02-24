@@ -70,6 +70,7 @@ public:
 	bool equals(const std::unique_ptr<Type>& other) const override;
 	i32 equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const override; // < 0 if not equal, < -4096 if not equal at all
 
+	llvm::ArrayType* to_llvmArrayType() const;
 	llvm::Type* to_llvm() const override;
 	std::string toString() const override;
 	std::string toMangleString() const override;

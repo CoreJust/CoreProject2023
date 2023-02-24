@@ -44,6 +44,7 @@ std::string ErrorIDStrings[] = {
 	"E2006: No member of the type with such name exists or the member is inaccessible",
 	"E2007: No access to the member",
 	"E2008: Incorrect array element access expression",
+	"E2009: Too many array elements",
 
 	"E2101: Variable declared via keyword var must be initialized",
 	"E2102: Expression cannot be called; no operator () defined",

@@ -21,4 +21,5 @@
 #include "Exprs/FieldAccessExpr.h"
 #include "Exprs/TypeConversionExpr.h"
 #include "Exprs/VariableExpr.h"
+#include "Exprs/ArrayExpr.h"
 #include "Exprs/ValueExpr.h"

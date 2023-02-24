@@ -170,8 +170,12 @@ i32 ArrayType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) cons
 	return value + (other->isConst ? 1 : 0);
 }
 
-llvm::Type* ArrayType::to_llvm() const {
+llvm::ArrayType* ArrayType::to_llvmArrayType() const {
 	return llvm::ArrayType::get(elementType->to_llvm(), size);
+}
+
+llvm::Type* ArrayType::to_llvm() const {
+	return llvm::PointerType::get(to_llvmArrayType(), 0);
 }
 
 std::string ArrayType::toString() const {
@@ -908,9 +912,9 @@ std::unique_ptr<Type> findCommonType(
 	BasicType bsecond = second->basicType;
 
 	if (isReference(bfirst)) {
-		return findCommonType(first->asPointerType()->elementType, second);
+		return findCommonType(first->asPointerType()->elementType, second, false, isSecondCompileTime);
 	} else if (isReference(bsecond)) {
-		return findCommonType(first, second->asPointerType()->elementType);
+		return findCommonType(first, second->asPointerType()->elementType, isFirstCompileTime, false);
 	}
 
 	if (bfirst == BasicType::TYPE_NODE && first->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {

@@ -6,7 +6,7 @@
 
 /////   COMMENTS   /////
 A comment starts with # and continues till the end of the line
-A multiline comment starts with ### on a line and ends with ### on another. There cannot be anything else on the lines.
+A multiline comment starts with ### on a line and ends with ### on another.
 
 
 

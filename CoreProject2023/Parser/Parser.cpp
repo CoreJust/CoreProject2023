@@ -777,8 +777,11 @@ std::unique_ptr<Expression> Parser::primary() {
 			}
 			return std::make_unique<TypeConversionExpr>(std::move(args), std::move(type));
 		} else if (match(TokenType::LBRACE)) { // array expression (like u8 {...})
-			// TODO: implement
-			consume(TokenType::RBRACE);
+			if (type->basicType == BasicType::ARRAY) {
+				return parseArrayValue(std::move(type->asArrayType()->elementType), type->asArrayType()->size);
+			} else {
+				return parseArrayValue(std::move(type), 0);
+			}
 		} else if (match(TokenType::DOT)) { // static members
 			if (std::unique_ptr<Type>& containingType = Type::getTheVeryType(type);
 				containingType->basicType == BasicType::TYPE_NODE) {
@@ -813,6 +816,11 @@ std::unique_ptr<Expression> Parser::primary() {
 				);
 			}
 		}
+	}
+
+	// Array expression (without type specified)
+	if (match(TokenType::LBRACE)) {
+		return parseArrayValue(nullptr, 0);
 	}
 	
 	// Identifier
@@ -851,6 +859,21 @@ std::unique_ptr<Expression> Parser::primary() {
 	);
 
 	return nullptr;
+}
+
+std::unique_ptr<Expression> Parser::parseArrayValue(std::unique_ptr<Type> type, u64 size) {
+	std::vector<std::unique_ptr<Expression>> values;
+	while (!match(TokenType::RBRACE)) {
+		values.push_back(expression());
+		
+		if (match(TokenType::RBRACE)) {
+			break;
+		} else {
+			consume(TokenType::COMMA);
+		}
+	}
+
+	return std::make_unique<ArrayExpr>(std::move(type), size, std::move(values));
 }
 
 std::unique_ptr<Expression> Parser::parseMethodCall(

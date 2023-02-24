@@ -233,3 +233,7 @@ Initial development
 	Implemented core.crt.cwchar, core.crt.cuchar, core.crt.cctype, core.crt.cwctype
 	
 	Commited as "core.crt.cwchar, core.crt.cuchar, core.crt.cctype, core.crt.cwctype"
+
+	Created module ArrayExpr
+
+	Commited as "Arrays"

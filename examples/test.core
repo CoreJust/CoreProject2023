@@ -1,40 +1,15 @@
 import core.io.console;
-import core.dynamic_string;
-import core.time.timer;
-import core.crt.cwchar;
-import core.crt.cuchar;
-import core.crt.cctype;
-import core.crt.cwctype;
 
 use console;
-use dynamic_string;
 
-DynamicString g_str;
+def arrTest(u8 val) u8[10] {
+	return u8[10] { val, 2*val, 3*val, 4*val };
+}
 
 def main() i32 {
-	println(bool(cctype.isxdigit(i32('A'))));
-	println(c8(cctype.toupper(i32('n'))));
-
-	cwchar.wprintf("Some text: %s\n"str16, "wide string"str16.data);
-
-	g_str = "Hello ";
-	g_str += "world from test";
-	
-	i32 i = 0;
-	while i < g_str.size() {
-		print(g_str[i]);
-		print(" : ");
-		println(u32(g_str[i]));
-		i++;
-	}
-	
-	timer.Timer timer = timer.Timer();
-	while (true) {
-		if (timer.elapsedTimeAsSeconds() > 2.5) {
-			println(*g_str);
-			timer.restart();
-		}
-	}
+	var a = arrTest(15);
+	u64 i = 0;
+	while i < a.size println(a[i++]);
 	
 	console.pause();
 	return 0;

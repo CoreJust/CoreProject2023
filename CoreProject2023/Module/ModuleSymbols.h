@@ -30,7 +30,7 @@ public:
 
 	void addVariable(
 		const std::string& name,
-		std::unique_ptr<Type> type,
+		std::shared_ptr<Type> type,
 		VariableQualities qualities,
 		std::shared_ptr<LLVMVariableManager> value
 	);
@@ -44,21 +44,21 @@ public:
 	// Finds the function with the name and exactly argTypes
 	Function* getFunction(
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime
 	);
 
 	// Chooses the most suitable function with name for argTypes
 	Function* chooseFunction(
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime
 	);
 
 	// Chooses the most suitable constructor of type for argTypes
 	Function* chooseConstructor(
-		const std::unique_ptr<Type>& type,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::shared_ptr<Type>& type,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		bool isImplicit
 	);
@@ -66,7 +66,7 @@ public:
 	// Chooses the most suitable operator with operator-name for argTypes
 	Function* chooseOperator(
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		bool mustReturnReference
 	);

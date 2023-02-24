@@ -49,7 +49,7 @@ public:
 	void addBlock();
 	void addLocalVariable(
 		const std::string& name, 
-		std::unique_ptr<Type> type, 
+		std::shared_ptr<Type> type, 
 		VariableQualities qualities, 
 		llvm::Value* value
 	);
@@ -69,7 +69,7 @@ public:
 	Function* getFunction(
 		const std::string& moduleAlias,
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime
 	);
 
@@ -77,20 +77,20 @@ public:
 	Function* chooseFunction(
 		const std::string& moduleAlias,
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime
 	);
 
 	Function* chooseConstructor(
-		const std::unique_ptr<Type>& type,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::shared_ptr<Type>& type,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		bool isImplicit
 	);
 
 	Function* chooseOperator(
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		bool mustReturnReference = false
 	);

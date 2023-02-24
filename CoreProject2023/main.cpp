@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Compiler.h"
 
-// TODO: refactor operation expressions, arguments' default values, try replace unique_ptr with shared_ptr for Type
+// TODO: refactor operation expressions, arguments' default values, make all the Types in single instance (as basic Type)
 // Long term TODO: project settings file, implement optionals, add ct preprocesing
 // Current tasks: expressions, safe/unsafe code, for, do-while, times, templates, internal types, llvm intrinsics, destructors
 // To test: strings, format strings, str's convertions

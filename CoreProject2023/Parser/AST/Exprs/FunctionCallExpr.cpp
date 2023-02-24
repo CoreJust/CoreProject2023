@@ -11,14 +11,14 @@ FunctionCallExpr::FunctionCallExpr(
 	m_funcExpr(std::move(func)), 
 	m_argExprs(std::move(args)) 
 {
-	if (Type::getTheVeryType(m_funcExpr->getType())->basicType != BasicType::FUNCTION) {
+	if (Type::dereference(m_funcExpr->getType())->basicType != BasicType::FUNCTION) {
 		ErrorManager::parserError(
 			ErrorID::E2102_CANNOT_BE_CALLED, 
 			m_errLine, 
 			""
 		);
 	} else {
-		m_type = Type::getTheVeryType(m_funcExpr->getType())->asFunctionType()->returnType->copy();
+		m_type = Type::dereference(m_funcExpr->getType())->asFunctionType()->returnType;
 	}
 }
 
@@ -29,12 +29,12 @@ void FunctionCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& nod
 llvm::Value* FunctionCallExpr::generate() {
 	llvm::Value* value = (llvm::Function*)m_funcExpr->generate();
 	llvm::Function* funcVal = (llvm::Function*)llvm_utils::convertValueTo(
-		Type::getTheVeryType(m_funcExpr->getType()),
+		Type::dereference(m_funcExpr->getType()),
 		m_funcExpr->getType(), 
 		value
 	);
 
-	FunctionType* funcType = Type::getTheVeryType(m_funcExpr->getType())->asFunctionType();
+	FunctionType* funcType = Type::dereference(m_funcExpr->getType())->asFunctionType();
 
 	return makeFunctionCall(funcVal, funcType, m_argExprs, m_errLine);
 }
@@ -59,7 +59,7 @@ llvm::Value* FunctionCallExpr::makeFunctionCall(
 			);
 		} else {
 			argValues.back() = llvm_utils::convertValueTo(
-				Type::getTheVeryType(args[i]->getType()),
+				Type::dereference(args[i]->getType()),
 				args[i]->getType(),
 				argValues.back()
 			);
@@ -79,7 +79,7 @@ llvm::Value* FunctionCallExpr::makeFunctionCall(
 	llvm::Function* functionValue,
 	FunctionType* functionType,
 	std::vector<llvm::Value*>& args,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime,
 	u64 errLine
 ) {
@@ -94,7 +94,7 @@ llvm::Value* FunctionCallExpr::makeFunctionCall(
 			);
 		} else {
 			args.back() = llvm_utils::convertValueTo(
-				Type::getTheVeryType(argTypes[i]),
+				Type::dereference(argTypes[i]),
 				argTypes[i],
 				args.back()
 			);

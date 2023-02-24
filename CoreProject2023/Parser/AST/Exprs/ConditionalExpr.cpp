@@ -21,18 +21,16 @@ std::string ConditionalExpr::conditionOpToString(ConditionOp op) {
 ConditionalExpr::ConditionalExpr(std::vector<std::unique_ptr<Expression>> exprs, std::vector<ConditionOp> ops)
 	: m_exprs(std::move(exprs)), m_ops(std::move(ops)) {
 	ASSERT(m_exprs.size() == m_ops.size() + 1, "incorrect conditional expr");
-	m_type = std::make_unique<Type>(BasicType::BOOL);
+	m_type = Type::createType(BasicType::BOOL);
 
 	m_operatorFuncs.resize(m_ops.size(), nullptr);
 	for (size_t i = 0; i < m_ops.size(); i++) {
 		std::unique_ptr<Expression>& left = m_exprs[i];
 		std::unique_ptr<Expression>& right = m_exprs[i + 1];
 
-		if (Type::getTheVeryType(left->getType())->basicType >= BasicType::STR8
-			|| Type::getTheVeryType(right->getType())->basicType >= BasicType::STR8) {
-			std::vector<std::unique_ptr<Type>> argTypes;
-			argTypes.push_back(left->getType()->copy());
-			argTypes.push_back(right->getType()->copy());
+		if (Type::dereference(left->getType())->basicType >= BasicType::STR8
+			|| Type::dereference(right->getType())->basicType >= BasicType::STR8) {
+			std::vector<std::shared_ptr<Type>> argTypes = { left->getType(), right->getType() };
 			if (Function* operFunc = g_module->chooseOperator(
 				conditionOpToString(m_ops[i]),
 				argTypes,
@@ -66,15 +64,15 @@ llvm::Value* ConditionalExpr::generate() {
 
 		if (m_operatorFuncs[i] != nullptr) {
 			std::vector<llvm::Value*> args;
-			std::vector<std::unique_ptr<Type>> argTypes;
+			std::vector<std::shared_ptr<Type>> argTypes;
 			std::vector<bool> isCompileTime;
 
 			args.push_back(orig_left);
-			argTypes.push_back(m_exprs[i]->getType()->copy());
+			argTypes.push_back(m_exprs[i]->getType());
 			isCompileTime.push_back(m_exprs[i]->isCompileTime());
 
 			args.push_back(orig_right);
-			argTypes.push_back(m_exprs[i + 1]->getType()->copy());
+			argTypes.push_back(m_exprs[i + 1]->getType());
 			isCompileTime.push_back(m_exprs[i + 1]->isCompileTime());
 			values[i] = FunctionCallExpr::makeFunctionCall(
 				m_operatorFuncs[i]->getValue(),
@@ -89,7 +87,7 @@ llvm::Value* ConditionalExpr::generate() {
 		}
 
 		// Default operators
-		std::unique_ptr<Type> commonType = findCommonType(
+		std::shared_ptr<Type> commonType = findCommonType(
 			m_exprs[i]->getType(),
 			m_exprs[i + 1]->getType(),
 			m_exprs[i]->isCompileTime(),
@@ -97,7 +95,7 @@ llvm::Value* ConditionalExpr::generate() {
 		);
 
 		if (isTruePointer(commonType->basicType)) {
-			commonType = std::make_unique<Type>(BasicType::U64);
+			commonType = Type::createType(BasicType::U64);
 		}
 
 		llvm::Value* left = llvm_utils::convertValueTo(commonType, m_exprs[i]->getType(), orig_left);

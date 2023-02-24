@@ -54,18 +54,16 @@ BinaryExpr::BinaryExpr(
 	auto& rightType = m_right->getType();
 	auto& leftType = m_left->getType();
 	if (isBinaryOpDefinable(m_op)
-		&& (Type::getTheVeryType(rightType)->basicType >= BasicType::STR8
-			|| Type::getTheVeryType(leftType)->basicType >= BasicType::STR8)) {
-		std::vector<std::unique_ptr<Type>> argTypes;
-		argTypes.push_back(leftType->copy());
-		argTypes.push_back(rightType->copy());
+		&& (Type::dereference(rightType)->basicType >= BasicType::STR8
+			|| Type::dereference(leftType)->basicType >= BasicType::STR8)) {
+		std::vector<std::shared_ptr<Type>> argTypes = { leftType, rightType };
 		if (Function* operFunc = g_module->chooseOperator(
 			binaryOpToString(m_op),
 			argTypes,
 			{ m_left->isCompileTime(), m_right->isCompileTime() }
 		)) {
 			m_operatorFunc = operFunc;
-			m_type = m_operatorFunc->prototype.getReturnType()->copy();
+			m_type = m_operatorFunc->prototype.getReturnType();
 
 			return;
 		}
@@ -86,16 +84,16 @@ BinaryExpr::BinaryExpr(
 		case BinaryOp::DIV: {
 			m_type = findCommonType(rightType, leftType, m_right->isCompileTime(), m_left->isCompileTime());
 			if (isInteger(m_type->basicType)) {
-				m_type = std::make_unique<Type>(BasicType::F64);
+				m_type = Type::createType(BasicType::F64);
 			}
 			}; break;
 		case BinaryOp::LSHIFT:
 		case BinaryOp::RSHIFT:
-			m_type = leftType->copy();
+			m_type = leftType;
 			break;
 		case BinaryOp::LOGICAL_AND:
 		case BinaryOp::LOGICAL_OR:
-			m_type = std::make_unique<Type>(BasicType::BOOL);
+			m_type = Type::createType(BasicType::BOOL);
 			break;
 	default:
 		ASSERT(false, "unknown operator");
@@ -109,7 +107,7 @@ BinaryExpr::BinaryExpr(
 			leftType->toString() + " and " + rightType->toString()
 		);
 	} else if (!isLVal() && isReference(m_type->basicType)) {
-		std::unique_ptr<Type> tmp = m_type->asPointerType()->elementType->copy();
+		std::shared_ptr<Type> tmp = m_type->asPointerType()->elementType;
 		m_type = std::move(tmp);
 	}
 }
@@ -137,7 +135,7 @@ llvm::Value* BinaryExpr::generate() {
 llvm::Value* BinaryExpr::generateBinaryOperation(
 	std::unique_ptr<Expression>& left,
 	std::unique_ptr<Expression>& right,
-	std::unique_ptr<Type>& resultingType,
+	std::shared_ptr<Type>& resultingType,
 	BinaryOp op,
 	bool convertToResultingType
 ) {
@@ -167,12 +165,12 @@ llvm::Value* BinaryExpr::generateBinaryOperation(
 				leftVal = llvm_utils::convertValueTo(resultingType, left->getType(), leftVal);
 				rightVal = llvm_utils::convertValueTo(resultingType, right->getType(), rightVal);
 			} else {
-				std::unique_ptr<Type> uint64T = std::make_unique<Type>(BasicType::U64);
+				std::shared_ptr<Type> uint64T = Type::createType(BasicType::U64);
 				leftVal = llvm_utils::convertValueTo(uint64T, left->getType(), leftVal);
 				rightVal = llvm_utils::convertValueTo(uint64T, right->getType(), rightVal);
 			}
 		} else {
-			std::unique_ptr<Type> commonType = findCommonType(
+			std::shared_ptr<Type> commonType = findCommonType(
 				right->getType(),
 				left->getType(),
 				right->isCompileTime(),
@@ -184,7 +182,7 @@ llvm::Value* BinaryExpr::generateBinaryOperation(
 		}
 	} else {
 		if (op < BinaryOp::LOGICAL_AND && resultingType->basicType == BasicType::POINTER) { // must be executed anyway
-			std::unique_ptr<Type> uint64T = std::make_unique<Type>(BasicType::U64);
+			std::shared_ptr<Type> uint64T = Type::createType(BasicType::U64);
 			leftVal = llvm_utils::convertValueTo(uint64T, left->getType(), leftVal);
 			rightVal = llvm_utils::convertValueTo(uint64T, right->getType(), rightVal);
 		} else {
@@ -249,7 +247,7 @@ llvm::Value* BinaryExpr::generateBinaryOperation(
 			break;
 		}
 
-		std::unique_ptr<Type> uint64T = std::make_unique<Type>(BasicType::U64);
+		std::shared_ptr<Type> uint64T = Type::createType(BasicType::U64);
 		return llvm_utils::convertValueTo(resultingType, uint64T, rightVal);
 	}
 

@@ -6,7 +6,7 @@ std::vector<TypeNode> g_basicTypeNodes;
 TypeNode::TypeNode(
     std::string name, 
     TypeQualities qualities, 
-    std::unique_ptr<Type> type, 
+    std::shared_ptr<Type> type, 
     llvm::Type* llvmType,
     std::vector<Variable> fields, 
     std::vector<Function> methods, 
@@ -100,7 +100,7 @@ Function* TypeNode::getMethod(const std::string& name, Visibility visibility, bo
 
 Function* TypeNode::getMethod(
     const std::string& name,
-    const std::vector<std::unique_ptr<Type>>& argTypes,
+    const std::vector<std::shared_ptr<Type>>& argTypes,
     const std::vector<bool>& isCompileTime,
     bool isStatic
 ) {
@@ -119,7 +119,7 @@ Function* TypeNode::getMethod(
 
 Function* TypeNode::chooseMethod(
     const std::string& name,
-    const std::vector<std::unique_ptr<Type>>& argTypes,
+    const std::vector<std::shared_ptr<Type>>& argTypes,
     const std::vector<bool>& isCompileTime,
     Visibility visibility,
     bool isStatic
@@ -171,11 +171,11 @@ std::shared_ptr<TypeNode> TypeNode::getType(const std::string& name, Visibility 
     return nullptr;
 }
 
-std::unique_ptr<Type> TypeNode::genType(std::shared_ptr<TypeNode> typeNode, bool isConst) {
+std::shared_ptr<Type> TypeNode::genType(std::shared_ptr<TypeNode> typeNode, bool isConst) {
     if (typeNode->type && typeNode->type->basicType == BasicType::TYPE_NODE) {
-        return typeNode->type->copy();
+        return typeNode->type;
     } else {
-        return std::make_unique<TypeNodeType>(std::move(typeNode), isConst);
+        return TypeNodeType::createType(std::move(typeNode), isConst);
     }
 }
 

@@ -107,7 +107,7 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 	match(TokenType::NATIVE);
 
 	std::string alias;
-	std::unique_ptr<Type> returnType;
+	std::shared_ptr<Type> returnType;
 	FunctionKind funcKind = FunctionKind::COMMON;
 	if (match(TokenType::TYPE)) {
 		funcKind = FunctionKind::CONSTRUCTOR;
@@ -134,10 +134,10 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 	consume(TokenType::LPAR);
 	size_t i = 0;
 
-	std::vector<std::unique_ptr<Type>> argTypes;
+	std::vector<std::shared_ptr<Type>> argTypes;
 
 	if (!isStatic) {
-		argTypes.push_back(std::make_unique<PointerType>(BasicType::XVAL_REFERENCE, TypeNode::genType(parentType))); // this
+		argTypes.push_back(PointerType::createType(BasicType::XVAL_REFERENCE, TypeNode::genType(parentType))); // this
 	}
 
 	if (!match(TokenType::RPAR)) {
@@ -146,14 +146,14 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 				VariableQualities qualities;
 				qualities.setVisibility(Visibility::LOCAL);
 				
-				std::unique_ptr<Type> argType = TypeParser(m_toks, m_pos).consumeType();
+				std::shared_ptr<Type> argType = TypeParser(m_toks, m_pos).consumeType();
 
 				if (argType->isConst) {
 					qualities.setVariableType(VariableType::CONST);
 				}
 
 				std::string name = consume(TokenType::WORD).data;
-				argTypes.push_back(argType->copy());
+				argTypes.push_back(argType);
 				g_module->addLocalVariable(name, std::move(argType), qualities, nullptr);
 			}
 
@@ -179,9 +179,9 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 	} else {
 		if (!isStatic) {
 			if (function->prototype.getQualities().getFunctionKind() == FunctionKind::CONSTRUCTOR) {
-				g_module->addLocalVariable("this", function->prototype.getReturnType()->copy(), VariableQualities(), nullptr);
+				g_module->addLocalVariable("this", function->prototype.getReturnType(), VariableQualities(), nullptr);
 			} else {
-				g_module->addLocalVariable("this", argTypes[0]->copy(), VariableQualities(), nullptr);
+				g_module->addLocalVariable("this", argTypes[0], VariableQualities(), nullptr);
 			}
 		}
 
@@ -269,7 +269,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 				}
 
 				std::string name = consume(TokenType::WORD).data;
-				g_module->addLocalVariable(argument.name, argument.type->copy(), qualities, nullptr);
+				g_module->addLocalVariable(argument.name, argument.type, qualities, nullptr);
 			}
 
 			i++;
@@ -285,7 +285,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 		return std::make_unique<FunctionDeclaration>(function, nullptr);
 	} else {
 		if (function->prototype.getQualities().getFunctionKind() == FunctionKind::CONSTRUCTOR) {
-			g_module->addLocalVariable("this", function->prototype.getReturnType()->copy(), VariableQualities(), nullptr);
+			g_module->addLocalVariable("this", function->prototype.getReturnType(), VariableQualities(), nullptr);
 		}
 
 		// Short function, like def a() i32 = 10;
@@ -376,11 +376,10 @@ std::unique_ptr<Statement> Parser::statement() {
 }
 
 std::unique_ptr<Statement> Parser::variableDefStatement() {
-	std::unique_ptr<Type> type;
+	std::shared_ptr<Type> type;
 	bool isConst = match(TokenType::CONST);
 	if (!match(TokenType::VAR)) {
-		type = TypeParser(m_toks, m_pos).consumeType();
-		type->isConst = isConst;
+		type = TypeParser(m_toks, m_pos).consumeType()->copy(isConst);
 	}
 
 	std::string alias = consume(TokenType::WORD).data;
@@ -398,13 +397,13 @@ std::unique_ptr<Statement> Parser::variableDefStatement() {
 				"variable: " + alias
 			);
 		} else {
-			type = expr->getType()->copy();
+			type = expr->getType();
 		}
 	}
 
 	VariableQualities qualities;
 	qualities.setVariableType(isConst ? VariableType::CONST : VariableType::COMMON);
-	g_module->addLocalVariable(alias, type->copy(), qualities, nullptr);
+	g_module->addLocalVariable(alias, type, qualities, nullptr);
 	Variable variable(alias, std::move(type), qualities, nullptr);
 
 	consume(TokenType::SEMICOLON);
@@ -678,7 +677,7 @@ std::unique_ptr<Expression> Parser::postfix() {
 		} if (match(TokenType::DOT)) { // member access
 			m_pos++;
 			std::string memberName = peek(-1).data; // it can be WORD or any number
-			const std::unique_ptr<Type>& thisType = Type::getTheVeryType(expr->getType());
+			const std::shared_ptr<Type>& thisType = Type::dereference(expr->getType());
 
 			if (thisType->basicType == BasicType::TYPE_NODE) { // can be method
 				std::shared_ptr<TypeNode> typeNode = ((TypeNodeType*)thisType.get())->node;
@@ -778,12 +777,12 @@ std::unique_ptr<Expression> Parser::primary() {
 			return std::make_unique<TypeConversionExpr>(std::move(args), std::move(type));
 		} else if (match(TokenType::LBRACE)) { // array expression (like u8 {...})
 			if (type->basicType == BasicType::ARRAY) {
-				return parseArrayValue(std::move(type->asArrayType()->elementType), type->asArrayType()->size);
+				return parseArrayValue(type->asArrayType()->elementType, type->asArrayType()->size);
 			} else {
 				return parseArrayValue(std::move(type), 0);
 			}
 		} else if (match(TokenType::DOT)) { // static members
-			if (std::unique_ptr<Type>& containingType = Type::getTheVeryType(type);
+			if (std::shared_ptr<Type>& containingType = Type::dereference(type);
 				containingType->basicType == BasicType::TYPE_NODE) {
 				std::shared_ptr<TypeNode> typeNode = ((TypeNodeType*)containingType.get())->node;
 				Visibility visibility = (g_type && g_type->isEquals(typeNode))
@@ -861,7 +860,7 @@ std::unique_ptr<Expression> Parser::primary() {
 	return nullptr;
 }
 
-std::unique_ptr<Expression> Parser::parseArrayValue(std::unique_ptr<Type> type, u64 size) {
+std::unique_ptr<Expression> Parser::parseArrayValue(std::shared_ptr<Type> type, u64 size) {
 	std::vector<std::unique_ptr<Expression>> values;
 	while (!match(TokenType::RBRACE)) {
 		values.push_back(expression());
@@ -883,8 +882,8 @@ std::unique_ptr<Expression> Parser::parseMethodCall(
 	bool isStatic
 ) {
 	if (match(TokenType::LESS)) { // template
-		std::vector<std::unique_ptr<Type>> argTypes;
-		argTypes.push_back(std::make_unique<TypeNodeType>(typeNode));
+		std::vector<std::shared_ptr<Type>> argTypes;
+		argTypes.push_back(TypeNodeType::createType(typeNode));
 
 		if (!match(TokenType::GREATER)) {
 			do {
@@ -902,18 +901,18 @@ std::unique_ptr<Expression> Parser::parseMethodCall(
 		}
 	} else if (match(TokenType::LPAR)) { // function call
 		std::vector<std::unique_ptr<Expression>> args;
-		std::vector<std::unique_ptr<Type>> argTypes;
+		std::vector<std::shared_ptr<Type>> argTypes;
 		std::vector<bool> isCompileTime;
 
 		if (!isStatic) {
-			argTypes.push_back(std::make_unique<PointerType>(BasicType::XVAL_REFERENCE, std::make_unique<TypeNodeType>(typeNode)));
+			argTypes.push_back(PointerType::createType(BasicType::XVAL_REFERENCE, TypeNodeType::createType(typeNode)));
 			isCompileTime.push_back(expr->isCompileTime());
 			args.push_back(std::move(expr));
 		}
 
 		while (!match(TokenType::RPAR)) {
 			args.push_back(expression());
-			argTypes.push_back(args.back()->getType()->copy());
+			argTypes.push_back(args.back()->getType());
 			isCompileTime.push_back(args.back()->isCompileTime());
 			if (peek().type != TokenType::RPAR) {
 				consume(TokenType::COMMA);
@@ -951,7 +950,7 @@ std::unique_ptr<Expression> Parser::parseMethodCall(
 
 std::unique_ptr<Expression> Parser::parseFunctionValue(std::string moduleName, std::string name) {
 	if (match(TokenType::LESS)) { // template
-		std::vector<std::unique_ptr<Type>> argTypes;
+		std::vector<std::shared_ptr<Type>> argTypes;
 		if (!match(TokenType::GREATER)) {
 			do {
 				argTypes.push_back(TypeParser(m_toks, m_pos).consumeType());
@@ -968,12 +967,12 @@ std::unique_ptr<Expression> Parser::parseFunctionValue(std::string moduleName, s
 		}
 	} else if (match(TokenType::LPAR)) { // function call
 		std::vector<std::unique_ptr<Expression>> args;
-		std::vector<std::unique_ptr<Type>> argTypes;
+		std::vector<std::shared_ptr<Type>> argTypes;
 		std::vector<bool> isCompileTime;
 
 		while (!match(TokenType::RPAR)) {
 			args.push_back(expression());
-			argTypes.push_back(args.back()->getType()->copy());
+			argTypes.push_back(args.back()->getType());
 			isCompileTime.push_back(args.back()->isCompileTime());
 			if (peek().type != TokenType::RPAR) {
 				consume(TokenType::COMMA);
@@ -1002,7 +1001,7 @@ std::unique_ptr<Expression> Parser::parseFunctionValue(std::string moduleName, s
 void Parser::functionCallError(
 	std::string moduleName, 
 	std::string name, 
-	const std::vector<std::unique_ptr<Type>>& argTypes, 
+	const std::vector<std::shared_ptr<Type>>& argTypes, 
 	bool isMultipleFunctionsFound
 ) {
 	std::string error = "function: ";

@@ -6,13 +6,13 @@
 
 struct Variable {
 	std::string name;
-	std::unique_ptr<Type> type;
+	std::shared_ptr<Type> type;
 	VariableQualities qualities;
 	std::shared_ptr<LLVMVariableManager> valueManager = std::make_shared<LLVMVariableManager>();
 
 	Variable(
 		std::string name, 
-		std::unique_ptr<Type> type, 
+		std::shared_ptr<Type> type, 
 		VariableQualities qualities, 
 		std::shared_ptr<LLVMVariableManager> value
 	);

@@ -7,7 +7,7 @@ class ArrayExpr final : public Expression {
 	FRIEND_CLASS_VISITORS
 
 public:
-	ArrayExpr(std::unique_ptr<Type> elemType, u64 size, std::vector<std::unique_ptr<Expression>> values);
+	ArrayExpr(std::shared_ptr<Type> elemType, u64 size, std::vector<std::unique_ptr<Expression>> values);
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;

@@ -74,6 +74,12 @@ int getBasicTypeSize(BasicType type) {
     return TYPE_SIZE[u8(type)];
 }
 
+BasicType getStringCharType(BasicType type) {
+    ASSERT(isString(type), "Must be a string");
+
+    return BasicType(u8(type) - u8(BasicType::STR8) + u8(BasicType::C8));
+}
+
 llvm::Type* basicTypeToLLVM(BasicType type) {
     switch (type) {
         case BasicType::NO_TYPE: return llvm::Type::getVoidTy(g_context);

@@ -137,7 +137,7 @@ void Module::addAlias(
 			alias = name;
 		}
 
-		m_symbols[""].back()->addVariable(alias, var->type->copy(), var->qualities, var->valueManager);
+		m_symbols[""].back()->addVariable(alias, var->type, var->qualities, var->valueManager);
 	} else if (symType == SymbolType::FUNCTION) {
 		Function* func = getFunction(moduleAlias, name);
 		if (alias.size() == 0) {
@@ -156,7 +156,7 @@ void Module::addBlock() {
 
 void Module::addLocalVariable(
 	const std::string& name, 
-	std::unique_ptr<Type> type, 
+	std::shared_ptr<Type> type, 
 	VariableQualities qualities, 
 	llvm::Value* value
 ) {
@@ -246,7 +246,7 @@ Function* Module::getFunction(const std::string& moduleAlias, const std::string&
 Function* Module::getFunction(
 	const std::string& moduleAlias,
 	const std::string& name,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime
 ) {
 	auto&& iter = makeAggregatorIteratorForAlias(m_symbols, m_moduleAliases, moduleAlias);
@@ -262,7 +262,7 @@ Function* Module::getFunction(
 Function* Module::chooseFunction(
 	const std::string& moduleAlias,
 	const std::string& name,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime
 ) {
 	Function* result = nullptr;
@@ -287,8 +287,8 @@ Function* Module::chooseFunction(
 }
 
 Function* Module::chooseConstructor(
-	const std::unique_ptr<Type>& type,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::shared_ptr<Type>& type,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime,
 	bool isImplicit
 ) {
@@ -316,7 +316,7 @@ Function* Module::chooseConstructor(
 
 Function* Module::chooseOperator(
 	const std::string& name,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime,
 	bool mustReturnReference
 ) {

@@ -42,23 +42,21 @@ AssignmentExpr::AssignmentExpr(
 	}
 	
 	// Looking for operator-function if there is such
-	if (Type::getTheVeryType(m_lval->getType())->basicType >= BasicType::STR8) {
-		std::vector<std::unique_ptr<Type>> argTypes;
-		argTypes.push_back(m_lval->getType()->copy());
-		argTypes.push_back(m_expr->getType()->copy());
+	if (Type::dereference(m_lval->getType())->basicType >= BasicType::STR8) {
+		std::vector<std::shared_ptr<Type>> argTypes = { m_lval->getType(), m_expr->getType() };
 		if (Function* operFunc = g_module->chooseOperator(
 			assignmentOpToString(m_op),
 			argTypes,
 			{ m_lval->isCompileTime(), m_expr->isCompileTime() }
 		)) {
 			m_operatorFunc = operFunc;
-			m_type = m_operatorFunc->prototype.getReturnType()->copy();
+			m_type = m_operatorFunc->prototype.getReturnType();
 
 			return;
 		}
 	}
 		
-	m_type = m_lval->getType()->copy();
+	m_type = m_lval->getType();
 }
 
 void AssignmentExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
@@ -81,12 +79,12 @@ llvm::Value* AssignmentExpr::generate() {
 	llvm::Value* lval = m_lval->generate();
 	llvm::Value* value;
 	if (m_op != AssignmentOp::EQUATE) {
-		value = BinaryExpr::generateBinaryOperation(m_lval, m_expr, Type::getTheVeryType(m_type), BinaryExpr::BinaryOp(m_op - 1), true);
+		value = BinaryExpr::generateBinaryOperation(m_lval, m_expr, Type::dereference(m_type), BinaryExpr::BinaryOp(m_op - 1), true);
 	} else {
 		value = m_expr->generate();
 
 		value = llvm_utils::tryImplicitlyConvertTo(
-			Type::getTheVeryType(m_lval->getType()),
+			Type::dereference(m_lval->getType()),
 			m_expr->getType(),
 			value,
 			m_errLine,

@@ -3,28 +3,41 @@
 #include <Module/Module.h>
 #include <Module/LLVMGlobals.h>
 
+std::vector<std::vector<std::shared_ptr<Type>>> typeInstancesInit() {
+	std::vector<std::vector<std::shared_ptr<Type>>> result;
+	for (u8 i = 0; i < u8(BasicType::UNKNOWN); i++) {
+		result.push_back({ });
+	}
+
+	return result;
+}
+
+std::vector<std::vector<std::shared_ptr<Type>>> Type::s_typeInstances[2] = {
+	typeInstancesInit(), typeInstancesInit()
+};
+
 Type::Type()
-	: basicType(BasicType::NO_TYPE), isConst(false) {
+	: Type(BasicType::NO_TYPE, false) {
 
 }
 
 Type::Type(BasicType basic, bool isConst)
-	: basicType(basic), isConst(isConst) {
+	: basicType(basic), isConst(isConst), m_hash(s_typeInstances[isConst][u8(basic)].size()) {
 
 }
 
-std::unique_ptr<Type> Type::copy() const {
-	return std::make_unique<Type>(basicType, isConst);
+std::shared_ptr<Type> Type::copy(i32 makeConst) const {
+	return createType(basicType, makeConst == -1 ? isConst : makeConst);
 }
 
-bool Type::equals(const std::unique_ptr<Type>& other) const {
+bool Type::equals(const std::shared_ptr<Type>& other) const {
 	if (basicType != other->basicType || isConst != other->isConst)
 		return false;
 
-	return true;
+	return m_hash == other->m_hash;
 }
 
-i32 Type::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+i32 Type::equalsOrLessConstantThan(const std::shared_ptr<Type>& other) const {
 	if (basicType != other->basicType) {
 		return -4097;
 	}
@@ -113,42 +126,45 @@ u64 Type::getAlignment() const {
 	return (this->getBitSize() + 7) / 8;
 }
 
-std::unique_ptr<Type>& Type::getTheVeryType(std::unique_ptr<Type>& type) {
+u64 Type::getHash() const {
+	return m_hash;
+}
+
+std::shared_ptr<Type>& Type::dereference(std::shared_ptr<Type>& type) {
 	if (isReference(type->basicType)) {
-		return getTheVeryType(type->asPointerType()->elementType);
+		return dereference(type->asPointerType()->elementType);
 	}
 
 	return type;
 }
 
-const std::unique_ptr<Type>& Type::getTheVeryType(const std::unique_ptr<Type>& type) {
+const std::shared_ptr<Type>& Type::dereference(const std::shared_ptr<Type>& type) {
 	if (isReference(type->basicType)) {
-		return getTheVeryType(type->asPointerType()->elementType);
+		return dereference(type->asPointerType()->elementType);
 	}
 
 	return type;
 }
 
-ArrayType::ArrayType(std::unique_ptr<Type> elementType, u64 size, bool isConst)
+std::shared_ptr<Type> Type::createType(BasicType type, bool isConst) {
+	auto& vec = s_typeInstances[isConst][u8(type)];
+	if (vec.size() == 0) {
+		vec.push_back(std::make_shared<Type>(type, isConst));
+	}
+
+	return vec[0];
+}
+
+ArrayType::ArrayType(std::shared_ptr<Type> elementType, u64 size, bool isConst)
 	: elementType(std::move(elementType)), size(size), Type(BasicType::ARRAY, isConst) {
 
 }
 
-std::unique_ptr<Type> ArrayType::copy() const {
-	return std::make_unique<ArrayType>(elementType->copy(), size, isConst);
+std::shared_ptr<Type> ArrayType::copy(i32 makeConst) const {
+	return ArrayType::createType(elementType->copy(), size, makeConst == -1 ? isConst : makeConst);
 }
 
-bool ArrayType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) return false;
-
-	const ArrayType* arrType = other->asArrayType();
-	if (!elementType->equals(arrType->elementType))
-		return false;
-
-	return size == arrType->size;
-}
-
-i32 ArrayType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+i32 ArrayType::equalsOrLessConstantThan(const std::shared_ptr<Type>& other) const {
 	if (other->basicType != BasicType::ARRAY) {
 		return -4097;
 	}
@@ -190,36 +206,38 @@ u64 ArrayType::getBitSize() const {
 	return 64;
 }
 
-PointerType::PointerType(BasicType basicType, std::unique_ptr<Type> elementType, bool isConst)
+std::shared_ptr<ArrayType> ArrayType::createType(std::shared_ptr<Type> elementType, u64 size, bool isConst) {
+	auto& vec = s_typeInstances[isConst][u8(BasicType::ARRAY)];
+	for (auto& type : vec) {
+		if (type->isConst == isConst 
+			&& type->asArrayType()->size == size 
+			&& type->asArrayType()->elementType->equals(elementType)) {
+			return std::static_pointer_cast<ArrayType, Type>(type);
+		}
+	}
+
+	vec.push_back(std::make_shared<ArrayType>(std::move(elementType), size, isConst));
+	return std::static_pointer_cast<ArrayType, Type>(vec.back());
+}
+
+PointerType::PointerType(BasicType basicType, std::shared_ptr<Type> elementType, bool isConst)
 	: elementType(std::move(elementType)), Type(basicType, isConst) {
 	ASSERT(basicType >= BasicType::DYN_ARRAY && basicType <= BasicType::OPTIONAL, "wrong basic type");
 	
 	if (isReference(this->basicType) && this->elementType->isConst) {
-		this->isConst = true;
+		*(bool*)&this->isConst = true;
 	}
 
 	if (this->basicType == BasicType::LVAL_REFERENCE && this->isConst) {
-		this->basicType = BasicType::XVAL_REFERENCE;
+		*(BasicType*)&this->basicType = BasicType::XVAL_REFERENCE;
 	}
 }
 
-std::unique_ptr<Type> PointerType::copy() const {
-	return std::make_unique<PointerType>(basicType, elementType->copy(), isConst);
+std::shared_ptr<Type> PointerType::copy(i32 makeConst) const {
+	return PointerType::createType(basicType, elementType->copy(), makeConst == -1 ? isConst : makeConst);
 }
 
-bool PointerType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) {
-		return false;
-	}
-
-	const PointerType* ptrType = other->asPointerType();
-	if (!elementType->equals(ptrType->elementType))
-		return false;
-
-	return true;
-}
-
-i32 PointerType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+i32 PointerType::equalsOrLessConstantThan(const std::shared_ptr<Type>& other) const {
 	if (basicType != other->basicType) {
 		return -4097;
 	}
@@ -287,41 +305,35 @@ u64 PointerType::getBitSize() const {
 	return Type::getBitSize();
 }
 
-TupleType::TupleType(std::vector<std::unique_ptr<Type>> subTypes, bool isConst)
+std::shared_ptr<PointerType> PointerType::createType(BasicType basicType, std::shared_ptr<Type> elementType, bool isConst) {
+	auto& vec = s_typeInstances[isConst][u8(basicType)];
+	for (auto& type : vec) {
+		if (type->isConst == isConst
+			&& type->asPointerType()->elementType->equals(elementType)) {
+			return std::static_pointer_cast<PointerType, Type>(type);
+		}
+	}
+
+	vec.push_back(std::make_shared<PointerType>(basicType, std::move(elementType), isConst));
+	return std::static_pointer_cast<PointerType, Type>(vec.back());
+}
+
+TupleType::TupleType(std::vector<std::shared_ptr<Type>> subTypes, bool isConst)
 	: subTypes(std::move(subTypes)), Type(BasicType::TUPLE, isConst) {
 	ASSERT(this->subTypes.size(), "tuple cannot be empty");
 }
 
-std::unique_ptr<Type> TupleType::copy() const {
-	std::vector<std::unique_ptr<Type>> subTypesCopy;
+std::shared_ptr<Type> TupleType::copy(i32 makeConst) const {
+	std::vector<std::shared_ptr<Type>> subTypesCopy;
 	subTypesCopy.reserve(subTypes.size());
 	for (auto& subType : subTypes) {
 		subTypesCopy.push_back(subType->copy());
 	}
 
-	return std::make_unique<TupleType>(std::move(subTypesCopy), isConst);
+	return TupleType::createType(std::move(subTypesCopy), makeConst == -1 ? isConst : makeConst);
 }
 
-bool TupleType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) {
-		return false;
-	}
-
-	const TupleType* tupType = other->asTupleType();
-	if (subTypes.size() != tupType->subTypes.size()) {
-		return false;
-	}
-
-	for (size_t i = 0; i < subTypes.size(); i++) {
-		if (!subTypes[i]->equals(tupType->subTypes[i])) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-i32 TupleType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+i32 TupleType::equalsOrLessConstantThan(const std::shared_ptr<Type>& other) const {
 	if (basicType != other->basicType) {
 		return -4097;
 	}
@@ -347,7 +359,7 @@ i32 TupleType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) cons
 	return value + (other->isConst ? 1 : 0);
 }
 
-bool TupleType::isEquivalentTo(std::vector<std::unique_ptr<Type>>& types) {
+bool TupleType::isEquivalentTo(std::vector<std::shared_ptr<Type>>& types) {
 	if (subTypes.size() != types.size()) {
 		return false;
 	}
@@ -400,9 +412,29 @@ u64 TupleType::getBitSize() const {
 	return result;
 }
 
+std::shared_ptr<TupleType> TupleType::createType(std::vector<std::shared_ptr<Type>> subTypes, bool isConst) {
+	auto& vec = s_typeInstances[isConst][u8(BasicType::TUPLE)];
+	for (auto& type : vec) {
+		if (type->isConst == isConst
+			&& type->asTupleType()->subTypes.size() == subTypes.size()) {
+			for (size_t i = 0; i < subTypes.size(); i++) {
+				if (!subTypes[i]->equals(type->asTupleType()->subTypes[i])) {
+					goto cycle_continue;
+				}
+			}
+
+			return std::static_pointer_cast<TupleType, Type>(type);
+		cycle_continue: (void)0;
+		}
+	}
+
+	vec.push_back(std::make_shared<TupleType>(std::move(subTypes), isConst));
+	return std::static_pointer_cast<TupleType, Type>(vec.back());
+}
+
 FunctionType::FunctionType(
-	std::unique_ptr<Type> returnType, 
-	std::vector<std::unique_ptr<Type>> argTypes, 
+	std::shared_ptr<Type> returnType, 
+	std::vector<std::shared_ptr<Type>> argTypes, 
 	bool isVaArgs, 
 	bool isConst
 ) : 
@@ -413,42 +445,22 @@ FunctionType::FunctionType(
 	
 }
 
-std::unique_ptr<Type> FunctionType::copy() const {
-	std::vector<std::unique_ptr<Type>> argTypesCopy;
+std::shared_ptr<Type> FunctionType::copy(i32 makeConst) const {
+	std::vector<std::shared_ptr<Type>> argTypesCopy;
 	argTypesCopy.reserve(argTypes.size());
 	for (auto& argType : argTypes) {
-		argTypesCopy.push_back(std::unique_ptr<Type>(argType->copy()));
+		argTypesCopy.push_back(std::shared_ptr<Type>(argType->copy()));
 	}
 
-	return std::make_unique<FunctionType>(returnType->copy(), std::move(argTypesCopy), isVaArgs, isConst);
+	return FunctionType::createType(
+		returnType->copy(),
+		std::move(argTypesCopy),
+		isVaArgs,
+		makeConst == -1 ? isConst : makeConst
+	);
 }
 
-bool FunctionType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) return false;
-
-	const FunctionType* funcType = other->asFunctionType();
-	if (isVaArgs != funcType->isVaArgs) {
-		return false;
-	}
-
-	if (argTypes.size() != funcType->argTypes.size()) {
-		return false;
-	}
-
-	if (!returnType->equals(funcType->returnType)) {
-		return false;
-	}
-
-	for (size_t i = 0; i < argTypes.size(); i++) {
-		if (!argTypes[i]->equals(funcType->argTypes[i])) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-i32 FunctionType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+i32 FunctionType::equalsOrLessConstantThan(const std::shared_ptr<Type>& other) const {
 	if (basicType != other->basicType) {
 		return -4097;
 	}
@@ -530,30 +542,44 @@ u64 FunctionType::getBitSize() const {
 	return 64; // pointer
 }
 
+std::shared_ptr<FunctionType> FunctionType::createType(
+	std::shared_ptr<Type> returnType, 
+	std::vector<std::shared_ptr<Type>> argTypes,
+	bool isVaArgs, 
+	bool isConst
+) {
+	auto& vec = s_typeInstances[isConst][u8(BasicType::FUNCTION)];
+	for (auto& type : vec) {
+		if (type->isConst == isConst
+			&& type->asFunctionType()->isVaArgs == isVaArgs
+			&& type->asFunctionType()->argTypes.size() == argTypes.size()
+			&& type->asFunctionType()->returnType->equals(returnType)) {
+			for (size_t i = 0; i < argTypes.size(); i++) {
+				if (!argTypes[i]->equals(type->asFunctionType()->argTypes[i])) {
+					goto cycle_continue;
+				}
+			}
+
+			return std::static_pointer_cast<FunctionType, Type>(type);
+		cycle_continue: (void)0;
+		}
+	}
+
+	vec.push_back(std::make_shared<FunctionType>(std::move(returnType), std::move(argTypes), isVaArgs, isConst));
+	return std::static_pointer_cast<FunctionType, Type>(vec.back());
+}
+
 
 TypeNodeType::TypeNodeType(std::shared_ptr<TypeNode> node, bool isConst)
 	: node(std::move(node)), Type(BasicType::TYPE_NODE, isConst) {
 
 }
 
-std::unique_ptr<Type> TypeNodeType::copy() const {
-	return std::make_unique<TypeNodeType>(node, isConst);
+std::shared_ptr<Type> TypeNodeType::copy(i32 makeConst) const {
+	return TypeNodeType::createType(node, makeConst == -1 ? isConst : makeConst);
 }
 
-bool TypeNodeType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) {
-		return false;
-	}
-
-	TypeNodeType* typeNT = other->asTypeNodeType();
-	if (!node->isEquals(typeNT->node)) {
-		return false;
-	}
-
-	return node->type->equals(typeNT->node->type);
-}
-
-i32 TypeNodeType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+i32 TypeNodeType::equalsOrLessConstantThan(const std::shared_ptr<Type>& other) const {
 	if (basicType != other->basicType) {
 		return -4097;
 	}
@@ -587,42 +613,36 @@ u64 TypeNodeType::getBitSize() const {
 	return node->type->getBitSize();
 }
 
+std::shared_ptr<TypeNodeType> TypeNodeType::createType(std::shared_ptr<TypeNode> node, bool isConst) {
+	auto& vec = s_typeInstances[isConst][u8(BasicType::TYPE_NODE)];
+	for (auto& type : vec) {
+		if (type->isConst == isConst
+			&& type->asTypeNodeType()->node == node) {
+			return std::static_pointer_cast<TypeNodeType, Type>(type);
+		}
+	}
 
-StructType::StructType(std::vector<std::unique_ptr<Type>> fieldTypes, bool isConst)
+	vec.push_back(std::make_shared<TypeNodeType>(std::move(node), isConst));
+	return std::static_pointer_cast<TypeNodeType, Type>(vec.back());
+}
+
+
+StructType::StructType(std::vector<std::shared_ptr<Type>> fieldTypes, bool isConst)
 	: fieldTypes(std::move(fieldTypes)), Type(BasicType::STRUCT, isConst) {
 
 }
 
-std::unique_ptr<Type> StructType::copy() const {
-	std::vector<std::unique_ptr<Type>> fieldTypesCopy;
+std::shared_ptr<Type> StructType::copy(i32 makeConst) const {
+	std::vector<std::shared_ptr<Type>> fieldTypesCopy;
 	fieldTypesCopy.reserve(fieldTypes.size());
 	for (auto& subType : fieldTypes) {
 		fieldTypesCopy.push_back(subType->copy());
 	}
 
-	return std::make_unique<StructType>(std::move(fieldTypesCopy), isConst);
+	return StructType::createType(std::move(fieldTypesCopy), makeConst == -1 ? isConst : makeConst);
 }
 
-bool StructType::equals(const std::unique_ptr<Type>& other) const {
-	if (!Type::equals(other)) {
-		return false;
-	}
-
-	const StructType* structType = other->asStructType();
-	if (fieldTypes.size() != structType->fieldTypes.size()) {
-		return false;
-	}
-
-	for (size_t i = 0; i < fieldTypes.size(); i++) {
-		if (!fieldTypes[i]->equals(structType->fieldTypes[i])) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-i32 StructType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) const {
+i32 StructType::equalsOrLessConstantThan(const std::shared_ptr<Type>& other) const {
 	if (basicType != other->basicType) {
 		return -4097;
 	}
@@ -648,7 +668,7 @@ i32 StructType::equalsOrLessConstantThan(const std::unique_ptr<Type>& other) con
 	return value + (other->isConst ? 1 : 0);
 }
 
-bool StructType::isEquivalentTo(std::vector<std::unique_ptr<Type>>& types) {
+bool StructType::isEquivalentTo(std::vector<std::shared_ptr<Type>>& types) {
 	if (fieldTypes.size() != types.size()) {
 		return false;
 	}
@@ -700,11 +720,31 @@ u64 StructType::getBitSize() const {
 	return result;
 }
 
+std::shared_ptr<StructType> StructType::createType(std::vector<std::shared_ptr<Type>> fieldTypes, bool isConst) {
+	auto& vec = s_typeInstances[isConst][u8(BasicType::STRUCT)];
+	for (auto& type : vec) {
+		if (type->isConst == isConst
+			&& type->asStructType()->fieldTypes.size() == fieldTypes.size()) {
+			for (size_t i = 0; i < fieldTypes.size(); i++) {
+				if (!fieldTypes[i]->equals(type->asStructType()->fieldTypes[i])) {
+					goto cycle_continue;
+				}
+			}
+
+			return std::static_pointer_cast<StructType, Type>(type);
+		cycle_continue: (void)0;
+		}
+	}
+
+	vec.push_back(std::make_shared<StructType>(std::move(fieldTypes), isConst));
+	return std::static_pointer_cast<StructType, Type>(vec.back());
+}
+
 
 
 bool isImplicitlyConverible(
-	const std::unique_ptr<Type>& from, 
-	const std::unique_ptr<Type>& to, 
+	const std::shared_ptr<Type>& from, 
+	const std::shared_ptr<Type>& to, 
 	bool isFromCompileTime
 ) {
 	if (from->equalsOrLessConstantThan(to) >= 0) {
@@ -718,12 +758,13 @@ bool isImplicitlyConverible(
 		return true;
 	}
 
+	// Extracting references
 	if (isTrueReference(bfrom) && isTrueReference(bto) && isReference(from->asPointerType()->elementType->basicType)) {
 		return isImplicitlyConverible(from->asPointerType()->elementType, to);
 	}
 
 	if (bto == BasicType::XVAL_REFERENCE) {
-		const std::unique_ptr<Type>& nextFrom = isReference(bfrom) ?
+		const std::shared_ptr<Type>& nextFrom = isReference(bfrom) ?
 			from->asPointerType()->elementType
 			: from;
 		return isImplicitlyConverible(nextFrom, to->asPointerType()->elementType);
@@ -742,15 +783,21 @@ bool isImplicitlyConverible(
 		return isImplicitlyConverible(from->asPointerType()->elementType, to);
 	}
 
+	// Aliased types
 	if (bfrom == BasicType::TYPE_NODE && from->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
 		return isImplicitlyConverible(from->asTypeNodeType()->node->type, to, isFromCompileTime);
 	} else if (bto == BasicType::TYPE_NODE && to->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
 		return isImplicitlyConverible(from, to->asTypeNodeType()->node->type, isFromCompileTime);
 	}
 
+	// Basic types
 	if (bfrom == BasicType::POINTER && isFromCompileTime
 		&& (bto == BasicType::POINTER || bto == BasicType::FUNCTION || bto == BasicType::OPTIONAL)) {
 		return true;
+	}
+
+	if (bfrom == BasicType::ARRAY && bto == BasicType::DYN_ARRAY) {
+		return from->asArrayType()->elementType->equalsOrLessConstantThan(to->asPointerType()->elementType) >= 0;
 	}
 
 	if (bfrom == bto && bfrom <= BasicType::STR32) {
@@ -759,7 +806,7 @@ bool isImplicitlyConverible(
 
 	if (isString(bfrom) && bto == BasicType::POINTER && isFromCompileTime) {
 		if (BasicType charType = to->asPointerType()->elementType->basicType; isChar(charType)) {
-			return u8(bfrom) - u8(charType) == u8(BasicType::STR8) - u8(BasicType::C8);
+			return getStringCharType(bfrom) == charType;
 		}
 	}
 
@@ -787,16 +834,15 @@ bool isImplicitlyConverible(
 		return isInteger(bto);
 	}
 
-	std::vector<std::unique_ptr<Type>> types;
-	types.push_back(from->copy());
-	if (g_module->chooseConstructor(to, types, { isFromCompileTime }, true)) {
+	// Constructors marked as @implicit
+	if (g_module->chooseConstructor(to, { from }, { isFromCompileTime }, true)) {
 		return true;
 	}
 
 	return false;
 }
 
-bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique_ptr<Type>& to) {
+bool isExplicitlyConverible(const std::shared_ptr<Type>& from, const std::shared_ptr<Type>& to) {
 	if (isImplicitlyConverible(from, to, true)) { // true because anything convertible in ct is convertible explicitly
 		return true;
 	}
@@ -851,8 +897,8 @@ bool isExplicitlyConverible(const std::unique_ptr<Type>& from, const std::unique
 }
 
 i32 evaluateConvertibility(
-	const std::unique_ptr<Type>& from,
-	const std::unique_ptr<Type>& to,
+	const std::shared_ptr<Type>& from,
+	const std::shared_ptr<Type>& to,
 	bool isFromCompileTime
 ) {
 	BasicType bfrom = from->basicType;
@@ -902,9 +948,9 @@ i32 evaluateConvertibility(
 	return -1;
 }
 
-std::unique_ptr<Type> findCommonType(
-	const std::unique_ptr<Type>& first, 
-	const std::unique_ptr<Type>& second,
+std::shared_ptr<Type> findCommonType(
+	const std::shared_ptr<Type>& first, 
+	const std::shared_ptr<Type>& second,
 	bool isFirstCompileTime, 
 	bool isSecondCompileTime
 ) {
@@ -926,22 +972,22 @@ std::unique_ptr<Type> findCommonType(
 	if ((isInteger(bfirst) && isInteger(bsecond))
 			|| (isFloat(bfirst) && isFloat(bsecond))) {
 		if (isFirstCompileTime) {
-			return second->copy();
+			return second;
 		} else if (isSecondCompileTime) {
-			return first->copy();
+			return first;
 		}
 	}
 
 	if (bfirst == BasicType::POINTER && isInteger(bsecond)) {
-		return first->copy();
+		return first;
 	} if (bsecond == BasicType::POINTER && isInteger(bfirst)) {
-		return second->copy();
+		return second;
 	}
 
 	if (isImplicitlyConverible(second, first, isSecondCompileTime)) {
-		return first->copy();
+		return first;
 	} else if (isImplicitlyConverible(first, second, isFirstCompileTime)) {
-		return second->copy();
+		return second;
 	}
 
 	return nullptr;

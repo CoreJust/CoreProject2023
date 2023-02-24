@@ -27,7 +27,7 @@ namespace llvm_utils {
 	// Creates a local variable in the beginning of the function
 	llvm::Value* createLocalVariable(
 		llvm::Function* func, 
-		const std::unique_ptr<Type>& type, 
+		const std::shared_ptr<Type>& type, 
 		const std::string& name
 	);
 
@@ -40,12 +40,12 @@ namespace llvm_utils {
 
 	// Returns the default value of the type
 	llvm::Constant* getDefaultValueOf(
-		const std::unique_ptr<Type>& type
+		const std::shared_ptr<Type>& type
 	);
 
 	// Returns the value of the type with all bits in zero
 	llvm::Constant* getZeroedValueOf(
-		const std::unique_ptr<Type>& type
+		const std::shared_ptr<Type>& type
 	);
 
 	// Returns the value of integer type
@@ -70,15 +70,15 @@ namespace llvm_utils {
 	// Returns the value of a struct filled with values
 	llvm::Value* getStructValue(
 		const std::vector<llvm::Value*> values,
-		const std::unique_ptr<Type>& type
+		const std::shared_ptr<Type>& type
 	);
 
 
 	// Converts the value to type -to- from type -from- if it is possible implicitly and returns the converted value
 	// If conversion is not possible, return nullptr
 	llvm::Value* tryImplicitlyConvertTo(
-		const std::unique_ptr<Type>& to, 
-		const std::unique_ptr<Type>& from, 
+		const std::shared_ptr<Type>& to, 
+		const std::shared_ptr<Type>& from, 
 		llvm::Value* value, 
 		u64 errLine, 
 		bool isFromCompileTime = false // is the value available in compile time
@@ -86,21 +86,21 @@ namespace llvm_utils {
 
 	// Converts the value to type -to- from type -from-. Returns nullptr if the conversion is not possible
 	llvm::Value* convertValueTo(
-		const std::unique_ptr<Type>& to, 
-		const std::unique_ptr<Type>& from, 
+		const std::shared_ptr<Type>& to, 
+		const std::shared_ptr<Type>& from, 
 		llvm::Value* value
 	);
 
 	// Converts the value from the type -from- to some of the three string values (stringType)
 	llvm::Value* convertToString(
-		const std::unique_ptr<Type>& from, 
+		const std::shared_ptr<Type>& from, 
 		llvm::Value* value, 
 		BasicType stringType
 	);
 
 	// Converts the value from the type -from- to bool
 	llvm::Value* convertToBool(
-		const std::unique_ptr<Type>& from, 
+		const std::shared_ptr<Type>& from, 
 		llvm::Value* value
 	);
 }

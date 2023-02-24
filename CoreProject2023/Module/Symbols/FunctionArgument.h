@@ -4,9 +4,8 @@
 
 struct Argument {
 	std::string name;
-	std::unique_ptr<Type> type;
+	std::shared_ptr<Type> type;
 
-	Argument(std::string name, std::unique_ptr<Type> type);
-	Argument(Argument&&) = default;
-	Argument(Argument& other);
+	Argument(std::string name, std::shared_ptr<Type> type);
+	Argument(const Argument& other);
 };

@@ -9,41 +9,37 @@ FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string m
 	: m_expr(std::move(expr)), m_memberName(std::move(memberName)) {
 
 	// Getting the resulting type
-	const std::unique_ptr<Type>& type = Type::getTheVeryType(m_expr->getType());
+	const std::shared_ptr<Type>& type = Type::dereference(m_expr->getType());
 	if (isString(type->basicType)) {
 		if (m_memberName == "data") {
 			BasicType basicType = BasicType((u8)type->basicType - (u8)BasicType::STR8 + (u8)BasicType::C8);
-			m_type = std::make_unique<PointerType>(BasicType::POINTER, std::make_unique<Type>(basicType), true);
+			m_type = PointerType::createType(BasicType::POINTER, Type::createType(basicType), true);
 		} else if (m_memberName == "size") {
-			m_type = std::make_unique<Type>(BasicType::U64, true);
+			m_type = Type::createType(BasicType::U64, true);
 		}
 	} else if (type->basicType == BasicType::ARRAY) {
 		if (m_memberName == "size") { // compile time
-			m_type = std::make_unique<Type>(BasicType::U64, true);
+			m_type = Type::createType(BasicType::U64, true);
 			return;
 		}
 	} else if (type->basicType == BasicType::DYN_ARRAY) {
 		if (m_memberName == "data") {
-			m_type = type->copy();
-			m_type->basicType = BasicType::POINTER;
-			m_type->isConst = true;
+			m_type = PointerType::createType(BasicType::POINTER, type->asPointerType()->elementType, true);
 		} else if (m_memberName == "size") {
-			m_type = std::make_unique<Type>(BasicType::U64, true);
+			m_type = Type::createType(BasicType::U64, true);
 		}
 	} else if (type->basicType == BasicType::TUPLE) {
 		if (std::all_of(m_memberName.begin(), m_memberName.end(), isdigit)) {
-			TupleType* tupType = (TupleType*)type.get();
+			TupleType* tupType = type->asTupleType();
 			if (size_t i = std::stoull(m_memberName); i < tupType->subTypes.size()) {
-				m_type = tupType->subTypes[i]->copy();
-				m_type->isConst = type->isConst;
+				m_type = tupType->subTypes[i]->copy(type->isConst);
 			}
 		}
 	} else if (type->basicType == BasicType::TYPE_NODE) {
 		TypeNode* typeNode = ((TypeNodeType*)type.get())->node.get();
 		for (auto& var : typeNode->fields) {
 			if (var.name == m_memberName) {
-				m_type = var.type->copy();
-				m_type->isConst = type->isConst;
+				m_type = var.type->copy(type->isConst);
 			}
 		}
 	}
@@ -51,7 +47,7 @@ FieldAccessExpr::FieldAccessExpr(std::unique_ptr<Expression> expr, std::string m
 	if (m_type) {
 		if (m_expr->isLVal()) {
 			bool isConst = m_expr->getType()->isConst;
-			m_type = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, std::move(m_type));
+			m_type = PointerType::createType(BasicType::LVAL_REFERENCE, std::move(m_type));
 		}
 
 		return;
@@ -69,7 +65,7 @@ void FieldAccessExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node
 }
 
 llvm::Value* FieldAccessExpr::generate() {
-	const std::unique_ptr<Type>& type = Type::getTheVeryType(m_expr->getType());
+	const std::shared_ptr<Type>& type = Type::dereference(m_expr->getType());
 	if (type->basicType == BasicType::ARRAY) {
 		if (m_memberName == "size") { // compile time
 			return llvm_utils::getConstantInt(((ArrayType*)type.get())->size, 64);

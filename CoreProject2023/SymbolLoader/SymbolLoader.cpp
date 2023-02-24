@@ -70,7 +70,7 @@ void SymbolLoader::loadClass() {
 
 	if (match(TokenType::STRUCT)) {
 		std::string name = consume(TokenType::WORD).data;
-		std::vector<std::unique_ptr<Type>> fieldTypes;
+		std::vector<std::shared_ptr<Type>> fieldTypes;
 		consume(TokenType::LBRACE);
 
 		std::vector<Variable> fields;
@@ -85,14 +85,14 @@ void SymbolLoader::loadClass() {
 			} else {
 				Variable field = loadField(typeNode->qualities, typeNode);
 				if (field.qualities.getVariableType() == VariableType::FIELD) {
-					fieldTypes.push_back(field.type->copy());
+					fieldTypes.push_back(field.type);
 				}
 
 				fields.push_back(std::move(field));
 			}
 		}
 
-		std::unique_ptr<StructType> type = std::make_unique<StructType>(std::move(fieldTypes));
+		std::shared_ptr<StructType> type = StructType::createType(std::move(fieldTypes));
 		typeNode->llvmType = type->to_llvm();
 		typeNode->type = std::move(type);
 		typeNode->fields = std::move(fields);
@@ -106,7 +106,7 @@ void SymbolLoader::loadFunction() {
 	// read function declaration
 	match(TokenType::NATIVE);
 
-	std::unique_ptr<Type> returnType;
+	std::shared_ptr<Type> returnType;
 	if (match(TokenType::TYPE)) { // constructor
 		returnType = TypeParser(m_toks, m_pos).consumeType();
 	} else if (!match(TokenType::WORD)) {
@@ -134,7 +134,7 @@ void SymbolLoader::loadFunction() {
 					);
 				}
 			} else {
-				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+				std::shared_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
 				consume(TokenType::WORD);
 				args.push_back(Argument{ m_toks[m_pos - 1].data, std::move(type) });
 			}
@@ -171,7 +171,7 @@ void SymbolLoader::loadVariable() {
 
 	var->type = TypeParser(m_toks, m_pos).consumeType();
 	if (var->qualities.getVariableType() == VariableType::CONST) {
-		var->type->isConst = true;
+		var->type = var->type->copy(1);
 	}
 
 	consume(TokenType::WORD);
@@ -248,7 +248,7 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 	qualities.setNative(match(TokenType::NATIVE));
 
 	std::string alias;
-	std::unique_ptr<Type> returnType;
+	std::shared_ptr<Type> returnType;
 	TokenType opType = TokenType::NO_TOKEN; // for operators
 	if (match(TokenType::TYPE)) {
 		returnType = TypeParser(m_toks, m_pos).consumeType();
@@ -291,7 +291,7 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 	std::vector<Argument> args;
 
 	if (qualities.getMethodType() != MethodType::STATIC && qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR) {
-		args.push_back(Argument("this", std::make_unique<PointerType>(BasicType::XVAL_REFERENCE, TypeNode::genType(parentType))));
+		args.push_back(Argument("this", PointerType::createType(BasicType::XVAL_REFERENCE, TypeNode::genType(parentType))));
 	}
 
 	consume(TokenType::LPAR);
@@ -308,7 +308,7 @@ std::optional<FunctionPrototype> SymbolLoader::loadMethod(TypeQualities parentQu
 
 				isVaArgs = true;
 			} else {
-				std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+				std::shared_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
 				consume(TokenType::WORD);
 				args.push_back(Argument{ m_toks[m_pos - 1].data, std::move(type) });
 			}
@@ -371,7 +371,7 @@ Variable SymbolLoader::loadField(TypeQualities parentQualities, std::shared_ptr<
 	}
 
 	bool isStatic = match(TokenType::STATIC);
-	std::unique_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
+	std::shared_ptr<Type> type = TypeParser(m_toks, m_pos).consumeType();
 	std::string fieldName = consume(TokenType::WORD).data;
 
 	if (match(TokenType::EQ)) {

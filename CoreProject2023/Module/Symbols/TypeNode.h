@@ -9,7 +9,7 @@
 struct TypeNode {
 	std::string name;
 	TypeQualities qualities;
-	std::unique_ptr<Type> type; // in case of an alias
+	std::shared_ptr<Type> type; // in case of an alias
 	llvm::Type* llvmType;
 
 	std::vector<Variable> fields;
@@ -19,7 +19,7 @@ struct TypeNode {
 	TypeNode(
 		std::string name, 
 		TypeQualities qualities, 
-		std::unique_ptr<Type> type, 
+		std::shared_ptr<Type> type, 
 		llvm::Type* llvmType,
 		std::vector<Variable> fields = { },
 		std::vector<Function> methods = { },
@@ -42,7 +42,7 @@ struct TypeNode {
 	// Finds the function with the name and exactly argTypes
 	Function* getMethod(
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		bool isStatic
 	);
@@ -50,7 +50,7 @@ struct TypeNode {
 	// Chooses the most suitable function with name for argTypes
 	Function* chooseMethod(
 		const std::string& name,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		Visibility visibility,
 		bool isStatic
@@ -59,7 +59,7 @@ struct TypeNode {
 	Variable* getField(const std::string& name, Visibility visibility, bool isStatic);
 	std::shared_ptr<TypeNode> getType(const std::string& name, Visibility visibility);
 
-	static std::unique_ptr<Type> genType(std::shared_ptr<TypeNode> typeNode, bool isConst = false);
+	static std::shared_ptr<Type> genType(std::shared_ptr<TypeNode> typeNode, bool isConst = false);
 };
 
 void initBasicTypeNodes();

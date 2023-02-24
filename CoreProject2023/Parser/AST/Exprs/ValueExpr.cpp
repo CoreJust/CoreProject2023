@@ -7,9 +7,9 @@
 ValueExpr::ValueExpr(Value val)
 	: m_val(std::move(val)) {
 	if (m_val.type == BasicType::POINTER) {
-		m_type = std::make_unique<PointerType>(BasicType::POINTER, std::make_unique<Type>(BasicType::U8), true);
+		m_type = PointerType::createType(BasicType::POINTER, Type::createType(BasicType::U8), true);
 	} else {
-		m_type = std::make_unique<Type>(m_val.type, true);
+		m_type = Type::createType(m_val.type, true);
 	}
 }
 

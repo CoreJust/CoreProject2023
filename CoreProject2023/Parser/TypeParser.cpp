@@ -136,7 +136,7 @@ bool TypeParser::skipType() {
 	return true;
 }
 
-std::unique_ptr<Type> TypeParser::consumeType() {
+std::shared_ptr<Type> TypeParser::consumeType() {
 	if (auto type = parseType()) {
 		return std::move(type);
 	}
@@ -150,17 +150,17 @@ std::unique_ptr<Type> TypeParser::consumeType() {
 	return nullptr;
 }
 
-std::unique_ptr<Type> TypeParser::parseTypeOrGetNoType() {
+std::shared_ptr<Type> TypeParser::parseTypeOrGetNoType() {
 	savePos();
 	if (auto type = parseType()) {
 		return std::move(type);
 	}
 
 	loadPos();
-	return std::make_unique<Type>();
+	return Type::createType(BasicType::NO_TYPE);
 }
 
-std::unique_ptr<Type> TypeParser::tryParseType() {
+std::shared_ptr<Type> TypeParser::tryParseType() {
 	savePos();
 	if (auto type = parseType()) {
 		return std::move(type);
@@ -170,35 +170,35 @@ std::unique_ptr<Type> TypeParser::tryParseType() {
 	return nullptr;
 }
 
-std::unique_ptr<Type> TypeParser::parseType() {
-	std::unique_ptr<Type> result;
+std::shared_ptr<Type> TypeParser::parseType() {
+	std::shared_ptr<Type> result;
 
 	// First part: type itself
 	bool isConst = match(TokenType::CONST);
 
 	m_pos++;
 	switch (peek(-1).type) {
-		case TokenType::BOOL: result = std::make_unique<Type>(BasicType::BOOL, isConst); break;
-		case TokenType::C8: result = std::make_unique<Type>(BasicType::C8, isConst); break;
-		case TokenType::C16: result = std::make_unique<Type>(BasicType::C16, isConst); break;
-		case TokenType::C32: result = std::make_unique<Type>(BasicType::C32, isConst); break;
-		case TokenType::STR8: result = std::make_unique<Type>(BasicType::STR8, isConst); break;
-		case TokenType::STR16: result = std::make_unique<Type>(BasicType::STR16, isConst); break;
-		case TokenType::STR32: result = std::make_unique<Type>(BasicType::STR32, isConst); break;
-		case TokenType::I8: result = std::make_unique<Type>(BasicType::I8, isConst); break;
-		case TokenType::I16: result = std::make_unique<Type>(BasicType::I16, isConst); break;
-		case TokenType::I32: result = std::make_unique<Type>(BasicType::I32, isConst); break;
-		case TokenType::I64: result = std::make_unique<Type>(BasicType::I64, isConst); break;
-		case TokenType::U8: result = std::make_unique<Type>(BasicType::U8, isConst); break;
-		case TokenType::U16: result = std::make_unique<Type>(BasicType::U16, isConst); break;
-		case TokenType::U32: result = std::make_unique<Type>(BasicType::U32, isConst); break;
-		case TokenType::U64: result = std::make_unique<Type>(BasicType::U64, isConst); break;
-		case TokenType::F32: result = std::make_unique<Type>(BasicType::F32, isConst); break;
-		case TokenType::F64: result = std::make_unique<Type>(BasicType::F64, isConst); break;
+		case TokenType::BOOL: result = Type::createType(BasicType::BOOL, isConst); break;
+		case TokenType::C8: result = Type::createType(BasicType::C8, isConst); break;
+		case TokenType::C16: result = Type::createType(BasicType::C16, isConst); break;
+		case TokenType::C32: result = Type::createType(BasicType::C32, isConst); break;
+		case TokenType::STR8: result = Type::createType(BasicType::STR8, isConst); break;
+		case TokenType::STR16: result = Type::createType(BasicType::STR16, isConst); break;
+		case TokenType::STR32: result = Type::createType(BasicType::STR32, isConst); break;
+		case TokenType::I8: result = Type::createType(BasicType::I8, isConst); break;
+		case TokenType::I16: result = Type::createType(BasicType::I16, isConst); break;
+		case TokenType::I32: result = Type::createType(BasicType::I32, isConst); break;
+		case TokenType::I64: result = Type::createType(BasicType::I64, isConst); break;
+		case TokenType::U8: result = Type::createType(BasicType::U8, isConst); break;
+		case TokenType::U16: result = Type::createType(BasicType::U16, isConst); break;
+		case TokenType::U32: result = Type::createType(BasicType::U32, isConst); break;
+		case TokenType::U64: result = Type::createType(BasicType::U64, isConst); break;
+		case TokenType::F32: result = Type::createType(BasicType::F32, isConst); break;
+		case TokenType::F64: result = Type::createType(BasicType::F64, isConst); break;
 
 		case TokenType::FUNC: {
-			std::unique_ptr<Type> returnType = parseTypeOrGetNoType();
-			std::vector<std::unique_ptr<Type>> argTypes;
+			std::shared_ptr<Type> returnType = parseTypeOrGetNoType();
+			std::vector<std::shared_ptr<Type>> argTypes;
 			bool isVaArgs = false;
 
 			consume(TokenType::LPAR);
@@ -221,10 +221,10 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				consume(TokenType::RPAR);
 			}
 
-			result = std::make_unique<FunctionType>(std::move(returnType), std::move(argTypes), isVaArgs, isConst);
+			result = FunctionType::createType(std::move(returnType), std::move(argTypes), isVaArgs, isConst);
 		}; break;
 		case TokenType::TUPLE: {
-			std::vector<std::unique_ptr<Type>> subTypes;
+			std::vector<std::shared_ptr<Type>> subTypes;
 			consume(TokenType::LESS);
 			if (!match(TokenType::GREATER)) {
 				do {
@@ -233,17 +233,17 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				consume(TokenType::GREATER);
 			}
 
-			result = std::make_unique<TupleType>(std::move(subTypes), isConst);
+			result = TupleType::createType(std::move(subTypes), isConst);
 		}; break;
 		case TokenType::STRUCT: {
-			std::vector<std::unique_ptr<Type>> fieldTypes;
+			std::vector<std::shared_ptr<Type>> fieldTypes;
 			consume(TokenType::LBRACE);
 			while (!match(TokenType::RBRACE)) {
 				fieldTypes.push_back(consumeType());
 				consume(TokenType::SEMICOLON);
 			}
 
-			result = std::make_unique<StructType>(std::move(fieldTypes), isConst);
+			result = StructType::createType(std::move(fieldTypes), isConst);
 		}; break;
 
 		case TokenType::WORD: {
@@ -281,7 +281,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 			}
 
 			if (symType == SymbolType::VARIABLE) {
-				result = std::unique_ptr<Type>(g_module->getVariable(moduleName, name)->type->copy());
+				result = std::shared_ptr<Type>(g_module->getVariable(moduleName, name)->type);
 			} else if (symType == SymbolType::FUNCTION) {
 				result = g_module->getFunction(moduleName, name)->prototype.genType();
 			}
@@ -298,7 +298,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 		bool isConst = match(TokenType::CONST);
 		if (match(TokenType::LBRACKET)) {
 			if (match(TokenType::RBRACKET)) { // dynamic array
-				result = std::make_unique<PointerType>(BasicType::DYN_ARRAY, std::move(result), isConst);
+				result = PointerType::createType(BasicType::DYN_ARRAY, std::move(result), isConst);
 				continue;
 			} else { // static array
 				if (!matchRange(TokenType::NUMBERI8, TokenType::NUMBERU64)) {
@@ -316,12 +316,12 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				} else {
 					u64 size = std::stoull(peek(-1).data);
 					consume(TokenType::RBRACKET);
-					result = std::make_unique<ArrayType>(std::move(result), size, true);
+					result = ArrayType::createType(std::move(result), size, true);
 					continue;
 				}
 			}
 		} else if (match(TokenType::QUESTION)) { // optional
-			result = std::make_unique<PointerType>(BasicType::OPTIONAL, std::move(result), isConst);
+			result = PointerType::createType(BasicType::OPTIONAL, std::move(result), isConst);
 			continue;
 		} else if (match(TokenType::ANDAND)) { // rvalue reference
 			if (isReference(result->basicType)) {
@@ -334,7 +334,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				break;
 			}
 
-			result = std::make_unique<PointerType>(BasicType::RVAL_REFERENCE, std::move(result), false);
+			result = PointerType::createType(BasicType::RVAL_REFERENCE, std::move(result), false);
 			continue;
 		}
 
@@ -349,7 +349,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				break;
 			}
 
-			result = std::make_unique<PointerType>(BasicType::POINTER, std::move(result), isConst);
+			result = PointerType::createType(BasicType::POINTER, std::move(result), isConst);
 			continue;
 		} else if (match(TokenType::POWER)) { // pointer to pointer
 			if (isReference(result->basicType)) {
@@ -362,8 +362,8 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				break;
 			}
 
-			result = std::make_unique<PointerType>(BasicType::POINTER, std::move(result), isConst);
-			result = std::make_unique<PointerType>(BasicType::POINTER, std::move(result), false);
+			result = PointerType::createType(BasicType::POINTER, std::move(result), isConst);
+			result = PointerType::createType(BasicType::POINTER, std::move(result), false);
 			continue;
 		} else if (match(TokenType::AND)) { // reference
 			if (isReference(result->basicType)) {
@@ -376,7 +376,7 @@ std::unique_ptr<Type> TypeParser::parseType() {
 				break;
 			}
 
-			result = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, std::move(result), isConst);
+			result = PointerType::createType(BasicType::LVAL_REFERENCE, std::move(result), isConst);
 			continue;
 		}
 

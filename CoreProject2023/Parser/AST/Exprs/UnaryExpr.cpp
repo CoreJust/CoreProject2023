@@ -42,9 +42,9 @@ bool UnaryExpr::isUnaryOpDefinable(UnaryOp op) {
 
 UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 	: m_expr(std::move(expr)), m_op(op) {
-	if (isUnaryOpDefinable(m_op) && Type::getTheVeryType(m_expr->getType())->basicType >= BasicType::STR8) {
-		std::vector<std::unique_ptr<Type>> argTypes;
-		argTypes.push_back(m_expr->getType()->copy());
+	if (isUnaryOpDefinable(m_op) && Type::dereference(m_expr->getType())->basicType >= BasicType::STR8) {
+		std::vector<std::shared_ptr<Type>> argTypes;
+		argTypes.push_back(m_expr->getType());
 		if (Function* operFunc = g_module->chooseOperator(
 			unaryOpToString(m_op),
 			argTypes,
@@ -52,7 +52,7 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 			m_op == UnaryOp::PRE_INC || m_op == UnaryOp::PRE_DEC // whether the function must return a reference type
 		)) {
 			m_operatorFunc = operFunc;
-			m_type = m_operatorFunc->prototype.getReturnType()->copy();
+			m_type = m_operatorFunc->prototype.getReturnType();
 
 			return;
 		}
@@ -61,10 +61,10 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 	switch (m_op) {
 		case UnaryExpr::PLUS:
 		case UnaryExpr::NOT:
-			m_type = m_expr->getType()->copy();
+			m_type = m_expr->getType();
 			break;
 		case UnaryExpr::MINUS:
-			m_type = m_expr->getType()->copy();
+			m_type = m_expr->getType();
 			if (isUnsigned(m_type->basicType)) {
 				ErrorManager::typeError(
 					ErrorID::E3054_CANNOT_NEGATE_UNSIGNED_INT,
@@ -87,20 +87,20 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 			}
 
 			if (m_op == UnaryOp::PRE_DEC || m_op == UnaryOp::PRE_INC) {
-				m_type = m_expr->getType()->copy();
+				m_type = m_expr->getType();
 			} else {
-				m_type = m_expr->getType()->asPointerType()->elementType->copy();
+				m_type = m_expr->getType()->asPointerType()->elementType;
 			}
 
 			break;
 		case UnaryExpr::LOGICAL_NOT:
-			m_type = std::make_unique<Type>(BasicType::BOOL);
+			m_type = Type::createType(BasicType::BOOL);
 			break;
 		case UnaryExpr::ADRESS:
-			m_type = std::make_unique<PointerType>(BasicType::POINTER, Type::getTheVeryType(m_expr->getType())->copy());
+			m_type = PointerType::createType(BasicType::POINTER, Type::dereference(m_expr->getType()));
 			break;
 		case UnaryExpr::DEREF:
-			if (auto btype = Type::getTheVeryType(m_expr->getType())->basicType;
+			if (auto btype = Type::dereference(m_expr->getType())->basicType;
 				btype != BasicType::POINTER
 				&& btype != BasicType::OPTIONAL
 				&& btype != BasicType::ARRAY
@@ -112,24 +112,24 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 					"tried to derefence" + m_expr->getType()->toString()
 				);
 			} else {
-				if (Type::getTheVeryType(m_expr->getType())->basicType == BasicType::ARRAY) {
-					m_type = std::make_unique<PointerType>(
+				if (Type::dereference(m_expr->getType())->basicType == BasicType::ARRAY) {
+					m_type = PointerType::createType(
 						BasicType::LVAL_REFERENCE,
-						Type::getTheVeryType(m_expr->getType())->asArrayType()->elementType->copy(),
-						Type::getTheVeryType(m_expr->getType())->isConst
+						Type::dereference(m_expr->getType())->asArrayType()->elementType,
+						Type::dereference(m_expr->getType())->isConst
 					);
 				} else {
-					m_type = std::make_unique<PointerType>(
+					m_type = PointerType::createType(
 						BasicType::LVAL_REFERENCE,
-						Type::getTheVeryType(m_expr->getType())->asPointerType()->elementType->copy(),
-						Type::getTheVeryType(m_expr->getType())->isConst
+						Type::dereference(m_expr->getType())->asPointerType()->elementType,
+						Type::dereference(m_expr->getType())->isConst
 					);
 				}
 			}
 
 			break;
 		case UnaryExpr::MOVE:
-			m_type = std::make_unique<PointerType>(BasicType::RVAL_REFERENCE, Type::getTheVeryType(m_expr->getType())->copy());
+			m_type = PointerType::createType(BasicType::RVAL_REFERENCE, Type::dereference(m_expr->getType()));
 			break;
 	default:
 		ASSERT(false, "wrong operator");
@@ -164,7 +164,7 @@ llvm::Value* UnaryExpr::generate() {
 		return m_expr->generate();
 	} else if (m_op == UnaryOp::MOVE) {
 		llvm::Value* value = m_expr->generate();
-		const std::unique_ptr<Type>& type = isPointer(m_expr->getType()->basicType) ?
+		const std::shared_ptr<Type>& type = isPointer(m_expr->getType()->basicType) ?
 			((PointerType*)m_expr->getType().get())->elementType
 			: m_expr->getType();
 
@@ -177,7 +177,7 @@ llvm::Value* UnaryExpr::generate() {
 		return g_builder->CreateNot(value);
 	}
 	
-	BasicType btype = Type::getTheVeryType(m_type)->basicType;
+	BasicType btype = Type::dereference(m_type)->basicType;
 	if (isInteger(btype) || btype == BasicType::BOOL) {
 		switch (m_op) {
 			case UnaryExpr::PLUS: return m_expr->generate();
@@ -217,7 +217,7 @@ llvm::Value* UnaryExpr::createIncOrDecrement(
 	bool isPostfix,
 	bool isRVal
 ) {
-	const std::unique_ptr<Type>& type = isPostfix ? m_type : m_type->asPointerType()->elementType;
+	const std::shared_ptr<Type>& type = isPostfix ? m_type : m_type->asPointerType()->elementType;
 
 	llvm::Value* ptr_value = m_expr->generate();
 	llvm::Value* value = g_builder->CreateLoad(type->to_llvm(), ptr_value);

@@ -1,6 +1,6 @@
 #include "Expression.h"
 
-const std::unique_ptr<Type>& Expression::getType() const {
+const std::shared_ptr<Type>& Expression::getType() const {
     return m_type;
 }
 

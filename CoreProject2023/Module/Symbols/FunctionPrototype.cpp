@@ -3,17 +3,17 @@
 #include <Module/Module.h>
 #include <Module/LLVMGlobals.h>
 
-FunctionPrototype::FunctionPrototype(const std::string& name, std::unique_ptr<Type> returnType, std::vector<Argument> args,
+FunctionPrototype::FunctionPrototype(const std::string& name, std::shared_ptr<Type> returnType, std::vector<Argument> args,
 	FunctionQualities qualities, bool isVaArgs)
 	: m_name(name), m_returnType(std::move(returnType)), m_args(std::move(args)), m_qualities(qualities), m_isVaArgs(isVaArgs) {
 
 }
 
 FunctionPrototype::FunctionPrototype(FunctionPrototype& other)
-	: m_name(other.m_name), m_returnType(other.m_returnType->copy()), m_qualities(other.m_qualities), m_isVaArgs(other.m_isVaArgs) {
+	: m_name(other.m_name), m_returnType(other.m_returnType), m_qualities(other.m_qualities), m_isVaArgs(other.m_isVaArgs) {
 	m_args.reserve(other.m_args.size());
 	for (auto& arg : other.m_args) {
-		m_args.push_back(Argument{ arg.name, arg.type->copy() });
+		m_args.push_back(arg);
 	}
 }
 
@@ -80,7 +80,7 @@ llvm::Function* FunctionPrototype::generateImportedFromOtherModule(llvm::Module&
 }
 
 i32 FunctionPrototype::getSuitableness(
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime
 ) const {
 	auto isCT = [&](size_t i) -> bool {
@@ -151,18 +151,18 @@ const FunctionQualities& FunctionPrototype::getQualities() const {
 	return m_qualities;
 }
 
-std::unique_ptr<Type>& FunctionPrototype::getReturnType() {
+std::shared_ptr<Type>& FunctionPrototype::getReturnType() {
 	return m_returnType;
 }
 
-std::unique_ptr<FunctionType> FunctionPrototype::genType() const {
-	return std::make_unique<FunctionType>(std::unique_ptr<Type>(m_returnType->copy()), genArgumentTypes(), m_isVaArgs, false);
+std::shared_ptr<FunctionType> FunctionPrototype::genType() const {
+	return FunctionType::createType(m_returnType, genArgumentTypes(), m_isVaArgs, false);
 }
 
-std::vector<std::unique_ptr<Type>> FunctionPrototype::genArgumentTypes() const {
-	std::vector<std::unique_ptr<Type>> argTypes;
+std::vector<std::shared_ptr<Type>> FunctionPrototype::genArgumentTypes() const {
+	std::vector<std::shared_ptr<Type>> argTypes;
 	for (auto& arg : m_args) {
-		argTypes.push_back(std::unique_ptr<Type>(arg.type->copy()));
+		argTypes.push_back(arg.type);
 	}
 
 	return argTypes;
@@ -172,7 +172,7 @@ std::vector<Argument>& FunctionPrototype::args() {
 	return m_args;
 }
 
-const std::unique_ptr<Type>& FunctionPrototype::getReturnType() const {
+const std::shared_ptr<Type>& FunctionPrototype::getReturnType() const {
 	return m_returnType;
 }
 

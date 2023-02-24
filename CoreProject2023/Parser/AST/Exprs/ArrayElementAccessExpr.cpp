@@ -8,23 +8,20 @@
 
 ArrayElementAccessExpr::ArrayElementAccessExpr(std::unique_ptr<Expression> arrayExpr, std::unique_ptr<Expression> indexExpr)
 	: m_arrayExpr(std::move(arrayExpr)), m_indexExpr(std::move(indexExpr)) {
-	if (isUserDefined(Type::getTheVeryType(m_arrayExpr->getType())->basicType)) {
-		std::vector<std::unique_ptr<Type>> argTypes;
-		argTypes.push_back(m_arrayExpr->getType()->copy());
-		argTypes.push_back(m_indexExpr->getType()->copy());
+	if (isUserDefined(Type::dereference(m_arrayExpr->getType())->basicType)) {
 		if (Function* operFunc = g_module->chooseOperator(
 			"[",
-			argTypes,
+			{ m_arrayExpr->getType(), m_indexExpr->getType() },
 			{ m_arrayExpr->isCompileTime(), m_arrayExpr->isCompileTime() }
 		)) {
 			m_operatorFunc = operFunc;
-			m_type = m_operatorFunc->prototype.getReturnType()->copy();
+			m_type = m_operatorFunc->prototype.getReturnType();
 
 			return;
 		}
 	}
 
-	const std::unique_ptr<Type>& arrayType = Type::getTheVeryType(m_arrayExpr->getType());
+	const std::shared_ptr<Type>& arrayType = Type::dereference(m_arrayExpr->getType());
 	if (!isString(arrayType->basicType) && arrayType->basicType != BasicType::ARRAY
 		&& arrayType->basicType != BasicType::DYN_ARRAY && arrayType->basicType != BasicType::POINTER) {
 		ErrorManager::parserError(
@@ -36,7 +33,7 @@ ArrayElementAccessExpr::ArrayElementAccessExpr(std::unique_ptr<Expression> array
 		return;
 	}
 
-	if (!isImplicitlyConverible(m_indexExpr->getType(), std::make_unique<Type>(BasicType::U64)), m_indexExpr->isCompileTime()) {
+	if (!isImplicitlyConverible(m_indexExpr->getType(), Type::createType(BasicType::U64), m_indexExpr->isCompileTime())) {
 		ErrorManager::parserError(
 			ErrorID::E2008_INCORRECT_ARRAY_ELEMENT_ACCESS,
 			m_errLine,
@@ -47,15 +44,15 @@ ArrayElementAccessExpr::ArrayElementAccessExpr(std::unique_ptr<Expression> array
 	}
 
 	if (arrayType->basicType == BasicType::ARRAY) {
-		m_type = arrayType->asArrayType()->elementType->copy();
+		m_type = arrayType->asArrayType()->elementType;
 	} else if (isString(arrayType->basicType)) {
-		m_type = std::make_unique<Type>(BasicType((u8)arrayType->basicType - (u8)BasicType::STR8 + (u8)BasicType::C8));
+		m_type = Type::createType(getStringCharType(arrayType->basicType));
 	} else { // pointer or dynamic array
-		m_type = arrayType->asPointerType()->elementType->copy();
+		m_type = arrayType->asPointerType()->elementType;
 	}
 
 	if (m_arrayExpr->isLVal()) {
-		m_type = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, std::move(m_type), m_arrayExpr->getType()->isConst);
+		m_type = PointerType::createType(BasicType::LVAL_REFERENCE, std::move(m_type), m_arrayExpr->getType()->isConst);
 	}
 }
 
@@ -77,22 +74,21 @@ llvm::Value* ArrayElementAccessExpr::generate() {
 	}
 
 	llvm::Value* arrayVal = m_arrayExpr->generate();
-	const std::unique_ptr<Type>& arrayType = Type::getTheVeryType(m_arrayExpr->getType());
+	const std::shared_ptr<Type>& arrayType = Type::dereference(m_arrayExpr->getType());
 	arrayVal = llvm_utils::convertValueTo(arrayType, m_arrayExpr->getType(), arrayVal);
 
 	if (isString(arrayType->basicType) || arrayType->basicType == BasicType::DYN_ARRAY) {
-		arrayVal = g_builder->CreateGEP(
-			Type::getTheVeryType(m_type)->to_llvm(),
+		arrayVal = g_builder->CreateExtractValue(
 			arrayVal,
-			{ llvm_utils::getConstantInt(0, 32) }
+			{ 0 }
 		);
 	}
 
 	llvm::Value* indexVal = m_indexExpr->generate();
-	indexVal = llvm_utils::convertValueTo(std::make_unique<Type>(BasicType::U64), m_indexExpr->getType(), indexVal);
+	indexVal = llvm_utils::convertValueTo(Type::createType(BasicType::U64), m_indexExpr->getType(), indexVal);
 
 	llvm::Value* elementVal = g_builder->CreateGEP(
-		Type::getTheVeryType(m_type)->to_llvm(),
+		Type::dereference(m_type)->to_llvm(),
 		arrayVal,
 		{ indexVal }
 	);
@@ -100,6 +96,6 @@ llvm::Value* ArrayElementAccessExpr::generate() {
 	if (isReference(m_type->basicType)) {
 		return elementVal;
 	} else {
-		return g_builder->CreateLoad(Type::getTheVeryType(m_type)->to_llvm(), elementVal);
+		return g_builder->CreateLoad(Type::dereference(m_type)->to_llvm(), elementVal);
 	}
 }

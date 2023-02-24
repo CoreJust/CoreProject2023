@@ -35,7 +35,7 @@ void VariableDefStatement::generate() {
 	g_builder->CreateStore(val, alloc);
 	g_module->addLocalVariable(
 		m_variable.name,
-		m_variable.type->copy(),
+		m_variable.type,
 		m_variable.qualities,
 		alloc
 	);

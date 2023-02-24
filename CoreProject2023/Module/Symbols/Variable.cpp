@@ -2,7 +2,7 @@
 
 Variable::Variable(
 	std::string name, 
-	std::unique_ptr<Type> type, 
+	std::shared_ptr<Type> type, 
 	VariableQualities qualities, 
 	std::shared_ptr<LLVMVariableManager> value
 ) : 
@@ -16,7 +16,7 @@ Variable::Variable(
 }
 
 Variable::Variable(Variable& other)
-	: Variable(other.name, other.type->copy(), other.qualities, other.valueManager) {
+	: Variable(other.name, other.type, other.qualities, other.valueManager) {
 
 }
 

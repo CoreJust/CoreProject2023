@@ -115,7 +115,7 @@ llvm::Value* llvm_utils::genFunctionArgumentValue(
 
 llvm::Value* llvm_utils::createLocalVariable(
 	llvm::Function* func, 
-	const std::unique_ptr<Type>& type, 
+	const std::shared_ptr<Type>& type, 
 	const std::string& name
 ) {
 	llvm::IRBuilder<> tmpBuilder(&func->getEntryBlock(), func->getEntryBlock().begin());
@@ -139,7 +139,7 @@ llvm::Constant* llvm_utils::createGlobalValue(llvm::Type* type, llvm::Constant* 
 	return globalValue;
 }
 
-llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type) {
+llvm::Constant* llvm_utils::getDefaultValueOf(const std::shared_ptr<Type>& type) {
 	llvm::Type* llvmType = type->to_llvm();
 	switch (type->basicType) {
 		case BasicType::NO_TYPE: return nullptr;
@@ -220,7 +220,7 @@ llvm::Constant* llvm_utils::getDefaultValueOf(const std::unique_ptr<Type>& type)
 	return nullptr;
 }
 
-llvm::Constant* llvm_utils::getZeroedValueOf(const std::unique_ptr<Type>& type) {
+llvm::Constant* llvm_utils::getZeroedValueOf(const std::shared_ptr<Type>& type) {
 	llvm::Type* llvmType = type->to_llvm();
 	llvm::Constant* value = getConstantInt(
 		0, 
@@ -306,8 +306,9 @@ llvm::Constant* llvm_utils::getConstantString(
 	}
 }
 
-llvm::Value* llvm_utils::getStructValue(const std::vector<llvm::Value*> values, const std::unique_ptr<Type>& type) {
-	ASSERT(type->basicType == BasicType::STRUCT || isString(type->basicType) || type->basicType == BasicType::TUPLE, "");
+llvm::Value* llvm_utils::getStructValue(const std::vector<llvm::Value*> values, const std::shared_ptr<Type>& type) {
+	ASSERT(type->basicType == BasicType::STRUCT || type->basicType == BasicType::DYN_ARRAY
+		|| isString(type->basicType) || type->basicType == BasicType::TUPLE, "");
 
 	llvm::Value* alloc = createLocalVariable(g_builder->GetInsertBlock()->getParent(), type, "value");
 	llvm::Type* llvmType = type->to_llvm();
@@ -322,8 +323,8 @@ llvm::Value* llvm_utils::getStructValue(const std::vector<llvm::Value*> values, 
 }
 
 llvm::Value* llvm_utils::tryImplicitlyConvertTo(
-	const std::unique_ptr<Type>& to, 
-	const std::unique_ptr<Type>& from,
+	const std::shared_ptr<Type>& to, 
+	const std::shared_ptr<Type>& from,
 	llvm::Value* value, 
 	u64 errLine, 
 	bool isFromCompileTime
@@ -338,8 +339,8 @@ llvm::Value* llvm_utils::tryImplicitlyConvertTo(
 }
 
 llvm::Value* llvm_utils::convertValueTo(
-	const std::unique_ptr<Type>& to, 
-	const std::unique_ptr<Type>& from, 
+	const std::shared_ptr<Type>& to, 
+	const std::shared_ptr<Type>& from, 
 	llvm::Value* value
 ) {
 	if (to->equalsOrLessConstantThan(from) >= -4096) { // equals not considering constantness
@@ -376,12 +377,14 @@ llvm::Value* llvm_utils::convertValueTo(
 		}
 	}
 
+	// Aliased types
 	if (bfrom == BasicType::TYPE_NODE && from->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
 		return convertValueTo(to, from->asTypeNodeType()->node->type, value);
 	} else if (bto == BasicType::TYPE_NODE && to->asTypeNodeType()->node->type->basicType < BasicType::CLASS) {
 		return convertValueTo(to->asTypeNodeType()->node->type, from, value);
 	}
 
+	// Primitive types
 	if (bto == BasicType::BOOL) {
 		return convertToBool(from, value);
 	}
@@ -422,6 +425,9 @@ llvm::Value* llvm_utils::convertValueTo(
 		} else if (isInteger(bto) || isChar(bto)) {
 			value = g_builder->CreatePtrToInt(value, llvm::Type::getInt64Ty(g_context));
 			return g_builder->CreateIntCast(value, to->to_llvm(), isSigned(bto) || isChar(bto));
+		} else if (bfrom == BasicType::ARRAY && bto == BasicType::DYN_ARRAY) {
+			value = g_builder->CreateBitCast(value, llvm::PointerType::get(from->asArrayType()->elementType->to_llvm(), 0));
+			return getStructValue({ value, getConstantInt(from->asArrayType()->size, 64) }, to);
 		}
 	} else if (isString(bfrom)) {
 		if (bto == BasicType::POINTER) {
@@ -438,10 +444,8 @@ llvm::Value* llvm_utils::convertValueTo(
 			return value;
 		}
 	}
-
-	std::vector<std::unique_ptr<Type>> types;
-	types.push_back(from->copy());
-	if (Function* constructor = g_module->chooseConstructor(to, types, { true }, true)) {
+	
+	if (Function* constructor = g_module->chooseConstructor(to, { from }, { true }, true)) {
 		value = convertValueTo(constructor->prototype.args()[0].type, from, value);
 
 		return g_builder->CreateCall(
@@ -454,14 +458,14 @@ llvm::Value* llvm_utils::convertValueTo(
 	return nullptr;
 }
 
-llvm::Value* llvm_utils::convertToString(const std::unique_ptr<Type>& from, llvm::Value* value, BasicType stringType) {
+llvm::Value* llvm_utils::convertToString(const std::shared_ptr<Type>& from, llvm::Value* value, BasicType stringType) {
 	TypeNode& stringNode = getBasicTypeNode(stringType);
 	// TODO: implement
 
 	return nullptr;
 }
 
-llvm::Value* llvm_utils::convertToBool(const std::unique_ptr<Type>& from, llvm::Value* value) {
+llvm::Value* llvm_utils::convertToBool(const std::shared_ptr<Type>& from, llvm::Value* value) {
 	if (from->basicType == BasicType::BOOL) {
 		return value;
 	}

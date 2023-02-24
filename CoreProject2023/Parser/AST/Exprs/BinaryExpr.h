@@ -45,7 +45,7 @@ public:
 	static llvm::Value* generateBinaryOperation(
 		std::unique_ptr<Expression>& left,
 		std::unique_ptr<Expression>& right,
-		std::unique_ptr<Type>& resultingType,
+		std::shared_ptr<Type>& resultingType,
 		BinaryOp op,
 		bool convertToResultingType
 	);

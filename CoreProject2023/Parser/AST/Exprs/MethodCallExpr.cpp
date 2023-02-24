@@ -12,7 +12,7 @@ MethodCallExpr::MethodCallExpr(
 	ASSERT(m_func, "function cannot be no-null");
 	ASSERT(m_argExprs.size(), "this expression cannot be no-null");
 
-	m_type = m_func->prototype.getReturnType()->copy();
+	m_type = m_func->prototype.getReturnType();
 }
 
 void MethodCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
@@ -20,7 +20,7 @@ void MethodCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node)
 }
 
 llvm::Value* MethodCallExpr::generate() {
-	std::unique_ptr<FunctionType> funcType = m_func->prototype.genType();
+	std::shared_ptr<FunctionType> funcType = m_func->prototype.genType();
 
 	return FunctionCallExpr::makeFunctionCall(
 		m_func->getValue(),

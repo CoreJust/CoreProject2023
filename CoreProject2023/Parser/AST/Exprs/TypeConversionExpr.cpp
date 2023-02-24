@@ -5,7 +5,7 @@
 #include <Module/LLVMUtils.h>
 #include <Module/LLVMGlobals.h>
 
-TypeConversionExpr::TypeConversionExpr(std::vector<std::unique_ptr<Expression>> args, std::unique_ptr<Type> type)
+TypeConversionExpr::TypeConversionExpr(std::vector<std::unique_ptr<Expression>> args, std::shared_ptr<Type> type)
 	: m_args(std::move(args)) {
 	m_type = std::move(type);
 	if (m_args.size() == 1 && isExplicitlyConverible(m_args[0]->getType(), m_type)) {
@@ -27,8 +27,8 @@ llvm::Value* TypeConversionExpr::generate() {
 	if (m_args.size() == 0 && !isUserDefined(m_type->basicType)) { // e.g. i32()
 		return llvm_utils::getDefaultValueOf(m_type);
 	} else if (isString(m_type->basicType) && m_args.size() == 2) { // strx(data, size)
-		const std::unique_ptr<Type>& dataType = Type::getTheVeryType(m_args[0]->getType());
-		const std::unique_ptr<Type>& sizeType = Type::getTheVeryType(m_args[1]->getType());
+		const std::shared_ptr<Type>& dataType = Type::dereference(m_args[0]->getType());
+		const std::shared_ptr<Type>& sizeType = Type::dereference(m_args[1]->getType());
 
 		llvm::Value* dataVal = m_args[0]->generate();
 		llvm::Value* sizeVal = m_args[1]->generate();
@@ -37,8 +37,8 @@ llvm::Value* TypeConversionExpr::generate() {
 		sizeVal = llvm_utils::convertValueTo(sizeType, m_args[1]->getType(), sizeVal); // removing references
 
 		BasicType charType = BasicType((u8)m_type->basicType - (u8)BasicType::STR8 + (u8)BasicType::C8);
-		std::unique_ptr<Type> charPtrType = std::make_unique<PointerType>(BasicType::POINTER, std::make_unique<Type>(charType));
-		std::unique_ptr<Type> u64Type = std::make_unique<Type>(BasicType::U64);
+		std::shared_ptr<Type> charPtrType = PointerType::createType(BasicType::POINTER, Type::createType(charType));
+		std::shared_ptr<Type> u64Type = Type::createType(BasicType::U64);
 
 		dataVal = llvm_utils::tryImplicitlyConvertTo(charPtrType, dataType, dataVal, m_errLine, m_args[0]->isCompileTime());
 		sizeVal = llvm_utils::tryImplicitlyConvertTo(u64Type, sizeType, sizeVal, m_errLine, m_args[1]->isCompileTime());
@@ -93,11 +93,11 @@ llvm::Value* TypeConversionExpr::generate() {
 }
 
 Function* TypeConversionExpr::chooseConstructor() {
-	std::vector<std::unique_ptr<Type>> argTypes;
+	std::vector<std::shared_ptr<Type>> argTypes;
 	std::vector<bool> isCompileTime;
 
 	for (auto& arg : m_args) {
-		argTypes.push_back(arg->getType()->copy());
+		argTypes.push_back(arg->getType());
 		isCompileTime.push_back(arg->isCompileTime());
 	}
 

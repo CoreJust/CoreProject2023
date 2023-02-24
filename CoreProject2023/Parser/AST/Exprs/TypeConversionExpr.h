@@ -7,7 +7,7 @@ class TypeConversionExpr final : public Expression {
 	FRIEND_CLASS_VISITORS
 
 public:
-	TypeConversionExpr(std::vector<std::unique_ptr<Expression>> args, std::unique_ptr<Type> type);
+	TypeConversionExpr(std::vector<std::unique_ptr<Expression>> args, std::shared_ptr<Type> type);
 
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;

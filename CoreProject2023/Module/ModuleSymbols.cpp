@@ -23,7 +23,7 @@ void ModuleSymbolsUnit::addFunction(FunctionPrototype proto, std::shared_ptr<LLV
 
 void ModuleSymbolsUnit::addVariable(
 	const std::string& name,
-	std::unique_ptr<Type> type,
+	std::shared_ptr<Type> type,
 	VariableQualities qualities,
 	std::shared_ptr<LLVMVariableManager> value
 ) {
@@ -90,7 +90,7 @@ Function* ModuleSymbolsUnit::getFunction(const std::string& name) {
 
 Function* ModuleSymbolsUnit::getFunction(
 	const std::string& name,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime
 ) {
 	for (auto& fun : m_functions) {
@@ -107,7 +107,7 @@ Function* ModuleSymbolsUnit::getFunction(
 
 Function* ModuleSymbolsUnit::chooseFunction(
 	const std::string& name,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime
 ) {
 	Function* result = nullptr;
@@ -134,8 +134,8 @@ Function* ModuleSymbolsUnit::chooseFunction(
 }
 
 Function* ModuleSymbolsUnit::chooseConstructor(
-	const std::unique_ptr<Type>& type,
-	const std::vector<std::unique_ptr<Type>>& argTypes,
+	const std::shared_ptr<Type>& type,
+	const std::vector<std::shared_ptr<Type>>& argTypes,
 	const std::vector<bool>& isCompileTime,
 	bool isImlicit
 ) {
@@ -165,7 +165,7 @@ Function* ModuleSymbolsUnit::chooseConstructor(
 
 Function* ModuleSymbolsUnit::chooseOperator(
 	const std::string& name, 
-	const std::vector<std::unique_ptr<Type>>& argTypes, 
+	const std::vector<std::shared_ptr<Type>>& argTypes, 
 	const std::vector<bool>& isCompileTime,
 	bool mustReturnReference
 ) {

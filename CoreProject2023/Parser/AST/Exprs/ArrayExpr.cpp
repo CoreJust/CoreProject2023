@@ -5,14 +5,14 @@
 #include <Module/LLVMUtils.h>
 #include <Module/LLVMGlobals.h>
 
-ArrayExpr::ArrayExpr(std::unique_ptr<Type> elemType, u64 size, std::vector<std::unique_ptr<Expression>> values)
+ArrayExpr::ArrayExpr(std::shared_ptr<Type> elemType, u64 size, std::vector<std::unique_ptr<Expression>> values)
 	: m_values(std::move(values)) {
 	if (elemType) {
 		if (size == 0) {
 			size = m_values.size();
 		}
 
-		m_type = std::make_unique<ArrayType>(std::move(elemType), size, true);
+		m_type = ArrayType::createType(std::move(elemType), size, true);
 
 		if (m_values.size() > size) {
 			ErrorManager::parserError(
@@ -23,7 +23,7 @@ ArrayExpr::ArrayExpr(std::unique_ptr<Type> elemType, u64 size, std::vector<std::
 		}
 	} else {
 		size = m_values.size();
-		m_type = std::make_unique<ArrayType>(m_values[0]->getType()->copy(), size, true);
+		m_type = ArrayType::createType(m_values[0]->getType(), size, true);
 	}
 }
 
@@ -32,7 +32,7 @@ void ArrayExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
 }
 
 llvm::Value* ArrayExpr::generate() {
-	const std::unique_ptr<Type>& elemType = m_type->asArrayType()->elementType;
+	const std::shared_ptr<Type>& elemType = m_type->asArrayType()->elementType;
 	std::vector<llvm::Constant*> initialValues;
 
 	for (auto& val : m_values) {

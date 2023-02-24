@@ -5,17 +5,17 @@
 
 VariableExpr::VariableExpr(std::string moduleName, Variable* variable)
 	: m_isStaticTypeMember(false), m_moduleName(std::move(moduleName)), m_name(variable->name) {
-	m_type = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, variable->type->copy());
+	m_type = PointerType::createType(BasicType::LVAL_REFERENCE, variable->type);
 }
 
 VariableExpr::VariableExpr(std::shared_ptr<TypeNode> typeNode, Variable* variable)
 	: m_isStaticTypeMember(true), m_typeNode(std::move(typeNode)), m_name(variable->name) {
-	m_type = std::make_unique<PointerType>(BasicType::LVAL_REFERENCE, variable->type->copy());
+	m_type = PointerType::createType(BasicType::LVAL_REFERENCE, variable->type);
 }
 
 VariableExpr::~VariableExpr() {
 	m_name.~basic_string();
-	m_type.~unique_ptr();
+	m_type.~shared_ptr();
 	if (m_isStaticTypeMember) {
 		m_typeNode.~shared_ptr();
 	} else {

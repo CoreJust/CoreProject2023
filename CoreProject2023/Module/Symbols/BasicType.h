@@ -66,6 +66,9 @@ bool isTruePointer(BasicType type); // is actually a pointer: static array, poin
 // Size of a basic type in bits. If it is varies (e.g. tuple), returns -1
 int getBasicTypeSize(BasicType type);
 
+// Returns the character type of the string type
+BasicType getStringCharType(BasicType type);
+
 namespace llvm {
 	class Type;
 };

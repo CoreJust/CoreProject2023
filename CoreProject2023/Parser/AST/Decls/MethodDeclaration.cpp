@@ -36,7 +36,7 @@ void MethodDeclaration::generate() {
 
 			g_module->addLocalVariable(
 				arg.name,
-				arg.type->copy(),
+				arg.type,
 				qualities,
 				llvm_utils::genFunctionArgumentValue(
 					m_method,
@@ -70,7 +70,7 @@ void MethodDeclaration::generateConstructor() {
 
 	g_module->addLocalVariable(
 		"this",
-		m_method->prototype.getReturnType()->copy(),
+		m_method->prototype.getReturnType(),
 		VariableQualities(),
 		thisVar
 	);

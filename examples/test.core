@@ -7,7 +7,10 @@ def arrTest(u8 val) u8[10] {
 }
 
 def main() i32 {
-	var a = arrTest(15);
+	str8 s = "sss";
+	println(s[2]);
+
+	u8[] a = arrTest(15);
 	u64 i = 0;
 	while i < a.size println(a[i++]);
 	

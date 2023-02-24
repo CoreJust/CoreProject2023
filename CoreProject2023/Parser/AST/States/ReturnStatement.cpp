@@ -15,11 +15,11 @@ void ReturnStatement::accept(Visitor* visitor, std::unique_ptr<Statement>& node)
 }
 
 void ReturnStatement::generate() {
-	std::unique_ptr<Type> returnType;
+	std::shared_ptr<Type> returnType;
 	if (g_function->prototype.getQualities().getFunctionKind() == FunctionKind::CONSTRUCTOR) {
-		returnType = std::make_unique<Type>(BasicType::NO_TYPE);
+		returnType = Type::createType(BasicType::NO_TYPE);
 	} else {
-		returnType = g_function->prototype.getReturnType()->copy();
+		returnType = g_function->prototype.getReturnType();
 	}
 
 	if (m_expr) {

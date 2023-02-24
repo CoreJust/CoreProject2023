@@ -26,7 +26,7 @@ public:
 		llvm::Function* functionValue,
 		FunctionType* functionType,
 		std::vector<llvm::Value*>& args,
-		const std::vector<std::unique_ptr<Type>>& argTypes,
+		const std::vector<std::shared_ptr<Type>>& argTypes,
 		const std::vector<bool>& isCompileTime,
 		u64 errLine
 	);

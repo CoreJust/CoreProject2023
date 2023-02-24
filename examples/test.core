@@ -1,7 +1,10 @@
 import core.io.console;
 import core.dynamic_string;
 import core.time.timer;
-import core.crt.clocale;
+import core.crt.cwchar;
+import core.crt.cuchar;
+import core.crt.cctype;
+import core.crt.cwctype;
 
 use console;
 use dynamic_string;
@@ -9,9 +12,13 @@ use dynamic_string;
 DynamicString g_str;
 
 def main() i32 {
-	clocale.setlocale(clocale.LC_ALL, "Rus");
-	g_str = "Привет ";
-	g_str += "мир из test";
+	println(bool(cctype.isxdigit(i32('A'))));
+	println(c8(cctype.toupper(i32('n'))));
+
+	cwchar.wprintf("Some text: %s\n"str16, "wide string"str16.data);
+
+	g_str = "Hello ";
+	g_str += "world from test";
 	
 	i32 i = 0;
 	while i < g_str.size() {

@@ -1,0 +1,18 @@
+# cuchar.core - the standard core library module that is an interface with C(11+) uchar functions.
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+struct mbstate_t {
+	u64 wchar;
+	u16 byte;
+	u16 state;
+}
+
+def native mbrtoc8(c8* pc8, const u8* s, u64 n, mbstate_t* ps) u64;
+def native c8rtomb(u8* s, c8 char8, mbstate_t* ps) u64;
+def native mbrtoc16(c16* pc16, const u8* s, u64 n, mbstate_t* ps) u64;
+
+def native c16rtomb(u8* s, c16 char16, mbstate_t* ps) u64;
+def native mbrtoc32(c32* pc32, const u8* s, u64 n, mbstate_t* ps) u64;
+def native c32rtomb(u8* s, c32 char32, mbstate_t* ps) u64;

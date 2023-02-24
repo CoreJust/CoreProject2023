@@ -100,7 +100,7 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 			m_type = std::make_unique<PointerType>(BasicType::POINTER, Type::getTheVeryType(m_expr->getType())->copy());
 			break;
 		case UnaryExpr::DEREF:
-			if (auto btype = m_expr->getType()->basicType;
+			if (auto btype = Type::getTheVeryType(m_expr->getType())->basicType;
 				btype != BasicType::POINTER
 				&& btype != BasicType::OPTIONAL
 				&& btype != BasicType::ARRAY
@@ -112,17 +112,17 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 					"tried to derefence" + m_expr->getType()->toString()
 				);
 			} else {
-				if (m_expr->getType()->basicType == BasicType::ARRAY) {
+				if (Type::getTheVeryType(m_expr->getType())->basicType == BasicType::ARRAY) {
 					m_type = std::make_unique<PointerType>(
 						BasicType::LVAL_REFERENCE,
-						m_expr->getType()->asArrayType()->elementType->copy(),
-						m_expr->getType()->isConst
+						Type::getTheVeryType(m_expr->getType())->asArrayType()->elementType->copy(),
+						Type::getTheVeryType(m_expr->getType())->isConst
 					);
 				} else {
 					m_type = std::make_unique<PointerType>(
 						BasicType::LVAL_REFERENCE,
-						m_expr->getType()->asPointerType()->elementType->copy(),
-						m_expr->getType()->isConst
+						Type::getTheVeryType(m_expr->getType())->asPointerType()->elementType->copy(),
+						Type::getTheVeryType(m_expr->getType())->isConst
 					);
 				}
 			}

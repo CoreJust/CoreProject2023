@@ -1,0 +1,102 @@
+# cwchar.core - the standard core library module that is an interface with C wchar functions.
+@set visibility direct_import
+@set safety unsafe
+@set mangling nomangle
+
+import core.crt.cstdarg; # for va_list
+import core.crt.ctime; # for tm
+
+type CFILE = u8*;
+
+# platform-specific
+const c16 WEOF = c16(0xffff);
+
+# Wide C-string I/o
+def native fwprintf(CFILE stream, const c16* format, ...) i32;
+def native fwscanf(CFILE stream, const c16* format, ...) i32;
+def native swprintf(c16* s, u64 n, const c16* format, ...) i32;
+def native swscanf(const c16* s, const c16* format, ...) i32;
+def native vfwprintf(CFILE stream, const c16* format, cstdarg.va_list arg) i32;
+def native vfwscanf(CFILE stream, const c16* format, cstdarg.va_list arg) i32;
+def native vswprintf(c16* s, u64 n, const c16* format, cstdarg.va_list arg) i32;
+def native vswscanf(const c16* s, const c16* format, cstdarg.va_list arg) i32;
+def native vwprintf(const c16* format, cstdarg.va_list arg) i32;
+def native vwscanf(const c16* format, cstdarg.va_list arg) i32;
+def native wprintf(const c16* format, ...) i32;
+def native wscanf(const c16* format, ...) i32;
+def native fgetwc(CFILE stream) i16;
+def native fgetws(c16* s, i32 n, CFILE stream) c16*;
+def native fputwc(c16 c, CFILE stream) i16;
+def native fputws(const c16* s, CFILE stream) i32;
+def native fwide(CFILE stream, i32 mode) i32;
+def native getwc(CFILE stream) i16;
+def native getwchar() i16;
+def native putwc(c16 c, CFILE stream) i16;
+def native putwchar(c16 c) i16;
+def native ungetwc(i16 c, CFILE stream) i16;
+
+# Wide C-string conversions
+def native wcstod(const c16* nptr, c16** endptr) f64;
+def native wcstof(const c16* nptr, c16** endptr) f32;
+def native wcstold(const c16* nptr, c16** endptr) f64;
+def native wcstol(const c16* nptr, c16** endptr, i32 base) i64;
+def native wcstoll(const c16* nptr, c16** endptr, i32 base) i64;
+def native wcstoul(const c16* nptr, c16** endptr, i32 base) u64;
+def native wcstoull(const c16* nptr, c16** endptr, i32 base) u64;
+def native wcsftime(c16* s, u64 maxsize, const c16* format, const ctime.tm* timeptr) u64;
+def native btowc(i32 c) i16;
+def native wctob(i16 c) i32;
+
+# Wide C-string manipulation and examination
+def native wcscpy(c16* s1, const c16* s2) c16*;
+def native wcsncpy(c16* s1, const c16* s2, u64 n) c16*;
+def native wmemcpy(c16* s1, const c16* s2, u64 n) c16*;
+def native wmemmove(c16* s1, const c16* s2, u64 n) c16*;
+def native wcscat(c16* s1, const c16* s2) c16*;
+def native wcsncat(c16* s1, const c16* s2, u64 n) c16*;
+def native wcscmp(const c16* s1, const c16* s2) i32;
+def native wcscoll(const c16* s1, const c16* s2) i32;
+def native wcsncmp(const c16* s1, const c16* s2, u64 n) i32;
+def native wcsxfrm(c16* s1, const c16* s2, u64 n) u64;
+def native wmemcmp(const c16* s1, const c16* s2, u64 n) i32;
+def native wcslen(const c16* s) u64;
+def native wmemset(c16* s, c16 c, u64 n) c16*;
+def native wcscspn(const c16* s1, const c16* s2) u64;
+def native wcsspn(const c16* s1, const c16* s2) u64;
+def native wcstok(c16* s1, const c16* s2, c16** ptr) c16*;
+
+def native wcschr(const c16* s, c16 c) const c16*;
+
+@mangle
+def wcschr(c16* s, c16 c) c16* = c16*(wcschr(const c16*(s), c));
+
+def native wcspbrk(const c16* s1, const c16* s2) const c16*;
+
+@mangle
+def wcspbrk(c16* s1, const c16* s2) c16* = c16*(wcspbrk(const c16*(s1), s2));
+
+def native wcsrchr(const c16* s, c16 c) const c16*;
+
+@mangle
+def wcsrchr(c16* s, c16 c) c16* = c16*(wcsrchr(const c16*(s), c));
+
+def native wcsstr(const c16* s1, const c16* s2) const c16*;
+
+@mangle
+def wcsstr(c16* s1, const c16* s2) c16* = c16*(wcsstr(const c16*(s1), s2));
+
+@mangle
+def wmemchr(const c16* s, c16 c, u64 n) const c16* {
+	while (n > 0) {
+        if (*s == c)
+            return s;
+			
+		++s;
+		--n;
+	}
+
+    return null;
+}
+
+@mangle
+def wmemchr(c16* s, c16 c, u64 n) c16* = c16*(wmemchr(const c16*(s), c, n));

@@ -1,3 +1,6 @@
+#include <wchar.h>
+
+#if 0
 extern "C"
 int puts(const char* str);
 
@@ -59,3 +62,4 @@ int main(int argc, const char * argv[])
 
     return 0;
 }
+#endif

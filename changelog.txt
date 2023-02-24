@@ -229,3 +229,7 @@ Initial development
 
 	Commited as "core.crt.clocale, core.crt.csetjmp, core.crt.csignal"
 	
+24.02.2023
+	Implemented core.crt.cwchar, core.crt.cuchar, core.crt.cctype, core.crt.cwctype
+	
+	Commited as "core.crt.cwchar, core.crt.cuchar, core.crt.cctype, core.crt.cwctype"

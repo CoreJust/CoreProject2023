@@ -52,8 +52,7 @@ void MethodDeclaration::generate() {
 				if (m_method->prototype.getReturnType()->basicType == BasicType::NO_TYPE) {
 					g_builder->CreateRetVoid();
 				}
-			}
-			catch (TerminatorAdded*) {}
+			} catch (TerminatorAdded*) {}
 		} else {
 			generateConstructor();
 		}
@@ -81,4 +80,86 @@ void MethodDeclaration::generateConstructor() {
 
 	thisVar = g_builder->CreateLoad(m_method->prototype.getReturnType()->to_llvm(), thisVar);
 	g_builder->CreateRet(thisVar);
+}
+
+std::string MethodDeclaration::toString() const {
+	static std::string VISIBILITY_STR[4] = { "local ", "private ", "protected ", "public " };
+	static std::string METHOD_TYPE_STR[4] = { "", "static ", "virtual ", "abstract " };
+
+	static std::string MANGLE_STR[2] = { "@mangle\n", "@nomangle\n" };
+	static std::string IMPLICIT_STR[2] = { "@implicit\n", "@explicit\n" };
+	static std::string SAFETY_STR[3] = { "@unsafe\n", "@safe_only\n", "@safe\n" };
+	static std::string CONVENTION_STR[7] = {
+		"@ccall\n", "@stdcall\n", "@fastcall\n", "@thiscall\n", "@vectorcall\n", "@coldcall\n", "@tailcall\n"
+	};
+
+	std::string result = "";
+	FunctionQualities qualities = m_method->prototype.getQualities();
+	if (qualities.isNoExcept()) {
+		result += "@noexcept\n";
+	} if (qualities.isNoReturn()) {
+		result += "@noreturn\n";
+	} if (qualities.isOverride()) {
+		result += "@override\n";
+	} if (qualities.getFunctionKind() == FunctionKind::CONSTRUCTOR) {
+		result += IMPLICIT_STR[(u8)qualities.isImplicit()];
+	}
+
+	result += MANGLE_STR[(u8)qualities.isManglingOn()];
+	result += SAFETY_STR[(u8)qualities.getSafety()];
+	result += CONVENTION_STR[(u8)qualities.getCallingConvention()];
+
+	result += "def ";
+
+	result += VISIBILITY_STR[(u8)qualities.getVisibility()];
+	result += METHOD_TYPE_STR[(u8)qualities.getMethodType()];
+	if (qualities.isNative()) {
+		result += "native ";
+	}
+
+	result += m_method->prototype.getName();
+
+	if (qualities.getFunctionKind() == FunctionKind::OPERATOR) {
+		if (m_method->prototype.getName() == "(") {
+			result += ')';
+		} else if (m_method->prototype.getName() == "[") {
+			result += ']';
+		}
+	}
+
+	result += '(';
+
+	for (auto& arg : m_method->prototype.args()) {
+		if (arg.name == "this") {
+			continue;
+		}
+
+		result += arg.type->toString();
+		result += ' ';
+		result += arg.name;
+		result += ", ";
+	}
+
+	if (m_method->prototype.isVaArgs()) {
+		result += "...";
+	} else {
+		result.pop_back();
+		result.pop_back();
+	}
+
+	result += ") ";
+
+	if (qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR && qualities.getFunctionKind() != FunctionKind::DESTRUCTOR) {
+		result += m_method->prototype.getReturnType()->toString();
+	}
+
+	if (!qualities.isNative()) {
+		result += m_body->toString();
+	} else {
+		result += ';';
+	}
+
+	result += "\n\n";
+
+	return result;
 }

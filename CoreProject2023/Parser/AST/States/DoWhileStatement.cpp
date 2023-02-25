@@ -44,3 +44,21 @@ void DoWhileStatement::generate() {
 	g_cycles.deleteCycle();
 	g_module->deleteBlock();
 }
+
+std::string DoWhileStatement::toString() const {
+	std::string result = "do ";
+	result += m_body->toString();
+	while (result.back() == '\n') {
+		result.pop_back();
+	}
+
+	if (result.back() != '}') {
+		result += '\n';
+	}
+
+	result += "while ";
+	result += m_condition->toString();
+	result += ";\n";
+
+	return result;
+}

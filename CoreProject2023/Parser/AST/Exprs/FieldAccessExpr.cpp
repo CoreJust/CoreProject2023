@@ -141,6 +141,10 @@ llvm::Value* FieldAccessExpr::generate() {
 	return nullptr;
 }
 
+std::string FieldAccessExpr::toString() const {
+	return m_expr->toString() + "." + m_memberName;
+}
+
 bool FieldAccessExpr::isCompileTime() const {
 	return m_expr->getType()->basicType == BasicType::ARRAY;
 }

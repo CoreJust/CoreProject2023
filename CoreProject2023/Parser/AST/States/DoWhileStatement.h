@@ -11,6 +11,8 @@ public:
 	void accept(Visitor* visitor, std::unique_ptr<Statement>& node) override;
 	void generate() override;
 
+	std::string toString() const override;
+
 private:
 	std::unique_ptr<Expression> m_condition;
 	std::unique_ptr<Statement> m_body;

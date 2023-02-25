@@ -1,0 +1,18 @@
+{
+	"name": "test",
+	"modules": [ "test.core" ],
+	"configuration": "debug",
+	"opt-level": 3,
+	"compilation-mode": "program",
+	"import-paths": [ "../CoreStdLib" ],
+	"additional-linked-files": [ "../CoreStdLib/built/crt.o" ],
+	"output": {
+		"tokens": [ "no-output" ],
+		"ast": [ "console" ],
+		"optimized-ast": [ "no-output" ],
+		"llvm-ir": [ "console" ],
+		"optimized-llvm-ir": [ "console" ],
+		"object-data": [ "file", "../CoreProject2023/build/prog.o" ],
+		"executable-data": [ "file", "../CoreProject2023/build/prog.exe" ]
+	}
+}

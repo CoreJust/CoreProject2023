@@ -211,6 +211,25 @@ llvm::Value* UnaryExpr::generate() {
 	return nullptr;
 }
 
+std::string UnaryExpr::toString() const {
+	std::string result = "";
+	if (m_op != UnaryOp::POST_DEC && m_op != UnaryOp::POST_INC) {
+		result += unaryOpToString(m_op);
+	}
+
+	if (m_op == UnaryOp::MOVE) {
+		result += ' ';
+	}
+
+	result += m_expr->toString();
+
+	if (m_op == UnaryOp::POST_DEC || m_op == UnaryOp::POST_INC) {
+		result += unaryOpToString(m_op);
+	}
+
+	return result;
+}
+
 llvm::Value* UnaryExpr::createIncOrDecrement(
 	BasicType btype, 
 	bool isIncrement,

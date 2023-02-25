@@ -16,6 +16,10 @@ llvm::Value* FunctionExpr::generate() {
     return m_function->getValue();
 }
 
+std::string FunctionExpr::toString() const {
+    return m_function->prototype.toString();
+}
+
 bool FunctionExpr::isCompileTime() const {
     return true;
 }

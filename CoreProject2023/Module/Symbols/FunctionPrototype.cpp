@@ -1,5 +1,6 @@
 #include "FunctionPrototype.h"
 #include <Utils/Defs.h>
+#include <Project/Project.h>
 #include <Module/Module.h>
 #include <Module/LLVMGlobals.h>
 
@@ -30,9 +31,13 @@ llvm::Function* FunctionPrototype::generate() const {
 	}
 
 	llvm::FunctionType* ft = llvm::FunctionType::get(m_returnType->to_llvm(), types, m_isVaArgs);
+	llvm::Function::LinkageTypes linkage =
+		g_settings->compilationMode == CompilationMode::Library || m_qualities.isNative() || m_name == "main"
+		? llvm::Function::ExternalLinkage : llvm::Function::InternalLinkage;
 
-	llvm::Function* fun = llvm::Function::Create(ft,
-		llvm::Function::ExternalLinkage,
+	llvm::Function* fun = llvm::Function::Create(
+		ft,
+		linkage,
 		getLLVMName(),
 		g_module->getLLVMModule()
 	);

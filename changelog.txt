@@ -249,4 +249,9 @@ Initial development
 
 	Commited as "for, do-while, empty statement"
 
-	TODO: project file => commit, safe/unsafe => commit, expressions => commit, templates => commit
+	Created module ProjectSettings, ProjectFileParser
+	Project settings are explained in docs/Project settings file.txt
+
+	Commited as "Added core project file usage"
+
+	TODO: safe/unsafe => commit, expressions => commit, templates => commit

@@ -13,3 +13,7 @@ void ExpressionStatement::accept(Visitor* visitor, std::unique_ptr<Statement>& n
 void ExpressionStatement::generate() {
 	m_expression->generate();
 }
+
+std::string ExpressionStatement::toString() const {
+	return m_expression->toString() + ";\n";
+}

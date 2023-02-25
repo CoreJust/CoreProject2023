@@ -14,6 +14,8 @@ public:
 	void accept(Visitor* visitor, std::unique_ptr<Expression>& node) override;
 	llvm::Value* generate() override;
 
+	std::string toString() const override;
+
 public:
 	static llvm::Value* makeFunctionCall(
 		llvm::Function* functionValue,

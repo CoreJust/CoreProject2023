@@ -12,3 +12,7 @@ void NopeStatement::accept(Visitor* visitor, std::unique_ptr<Statement>& node) {
 void NopeStatement::generate() {
 
 }
+
+std::string NopeStatement::toString() const {
+	return ";\n";
+}

@@ -87,6 +87,20 @@ llvm::Value* ArrayExpr::generate() {
 	return alloc;
 }
 
+std::string ArrayExpr::toString() const {
+	std::string result = m_type->toString() + "{ ";
+	for (auto& val : m_values) {
+		result += val->toString();
+		result += ", ";
+	}
+
+	result.pop_back();
+	result.pop_back();
+
+	result += " }";
+	return result;
+}
+
 bool ArrayExpr::isCompileTime() const {
 	for (auto& val : m_values) {
 		if (!val->isCompileTime()) {

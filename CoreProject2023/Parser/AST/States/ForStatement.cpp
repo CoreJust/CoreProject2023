@@ -66,3 +66,33 @@ void ForStatement::generate() {
 	g_cycles.deleteCycle();
 	g_module->deleteBlock();
 }
+
+std::string ForStatement::toString() const {
+	std::string result = "for (";
+	for (auto& var : m_varDefs) {
+		result += var->toString();
+		result.pop_back();
+		result.pop_back();
+		result += ", ";
+	}
+
+	result.pop_back();
+	result.pop_back();
+	result += "; ";
+
+	result += m_condition->toString();
+	result += "; ";
+
+	for (auto& inc : m_increments) {
+		result += inc->toString();
+		result += ", ";
+	}
+
+	result.pop_back();
+	result.pop_back();
+	result += ") ";
+	
+	result += m_body->toString();
+
+	return result;
+}

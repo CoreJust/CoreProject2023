@@ -29,3 +29,23 @@ llvm::Value* MethodCallExpr::generate() {
 		m_errLine
 	);
 }
+
+std::string MethodCallExpr::toString() const {
+	std::string result =
+		m_argExprs[0]->toString()
+		+ "."
+		+ m_func->prototype.toString()
+		+ "(";
+
+	for (size_t i = 1; i < m_argExprs.size(); i++) {
+		result += m_argExprs[i]->toString();
+		result += ", ";
+	}
+	
+	result.pop_back();
+	result.pop_back();
+
+	result += ')';
+
+	return result;
+}

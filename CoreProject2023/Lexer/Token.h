@@ -189,6 +189,6 @@ struct Token {
 	Token(TokenType type, int errLine);
 	Token(TokenType type, const std::string& data, int errLine);
 
-	std::string toString();
+	std::string toString() const;
 	static std::string toString(TokenType t);
 };

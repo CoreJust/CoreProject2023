@@ -2,6 +2,7 @@
 #include <ranges>
 #include <Utils/ErrorManager.h>
 #include <Utils/AggregatorIterator.h>
+#include <Project/Project.h>
 #include <Parser/AST/INode.h>
 #include "LLVMUtils.h"
 #include "LLVMGlobals.h"
@@ -27,9 +28,23 @@ auto makeAggregatorIteratorForAlias(
 		}
 	}
 
-	return std::move(result);
+	return result;
 }
 
+
+std::shared_ptr<llvm::Module> LLVMModuleManager::getLLVMModule(const std::string& name) {
+	static std::shared_ptr<llvm::Module> s_llvmModule;
+	if (g_settings->compilationMode != CompilationMode::Program) {
+		return std::make_shared<llvm::Module>(name, g_context);
+	}
+
+	if (!s_llvmModule) {
+		std::string compiledModuleName = Module::getModuleNameFromPath(g_settings->compiledCoreModules[0]);
+		s_llvmModule = std::make_shared<llvm::Module>(compiledModuleName, g_context);
+	}
+
+	return s_llvmModule;
+}
 
 Module::Module(
 	const std::string& name, 
@@ -41,7 +56,7 @@ Module::Module(
 	m_path(path), 
 	m_qualities(qualities), 
 	m_importedModules(std::move(imports)),
-	m_llvmModule(std::make_unique<llvm::Module>(name, g_context)),
+	m_llvmModule(LLVMModuleManager::getLLVMModule(name)),
 	m_ownSymbols(std::make_unique<ModuleSymbols>())
 {
 	m_symbols[""] = {

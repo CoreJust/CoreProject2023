@@ -33,6 +33,43 @@ llvm::Value* ValueExpr::generate() {
 	return nullptr;
 }
 
+std::string ValueExpr::toString() const {
+	BasicType type = m_type->basicType;
+	switch (type) {
+	case BasicType::I8:
+	case BasicType::I16:
+	case BasicType::I32:
+	case BasicType::I64:
+		return std::to_string(m_val.value.intVal);
+	case BasicType::U8:
+	case BasicType::U16:
+	case BasicType::U32:
+	case BasicType::U64:
+		return std::to_string(m_val.value.uintVal);
+	case BasicType::F32:
+	case BasicType::F64:
+		return std::to_string(m_val.value.floatVal);
+	case BasicType::BOOL:
+		return m_val.value.uintVal ? "true" : "false";
+	case BasicType::C8:
+		return std::string({ char(m_val.value.uintVal) });
+	case BasicType::C16:
+		return std::string({ char(m_val.value.uintVal >> 8), char(m_val.value.uintVal) });
+	case BasicType::C32:
+		return std::string({
+			char(m_val.value.uintVal >> 24),
+			char(m_val.value.uintVal >> 16),
+			char(m_val.value.uintVal >> 8),
+			char(m_val.value.uintVal)
+		});
+	case BasicType::STR8:
+	case BasicType::STR16:
+	case BasicType::STR32:
+		return m_val.value.strVal;
+	default: return "";
+	}
+}
+
 bool ValueExpr::isCompileTime() const {
 	return true;
 }

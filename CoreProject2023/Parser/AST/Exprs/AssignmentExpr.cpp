@@ -95,3 +95,7 @@ llvm::Value* AssignmentExpr::generate() {
 	g_builder->CreateStore(value, lval);
 	return lval;
 }
+
+std::string AssignmentExpr::toString() const {
+	return m_lval->toString() + " = " + m_expr->toString();
+}

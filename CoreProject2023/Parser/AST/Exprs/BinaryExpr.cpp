@@ -132,6 +132,10 @@ llvm::Value* BinaryExpr::generate() {
 	return generateBinaryOperation(m_left, m_right, m_type, m_op, false);
 }
 
+std::string BinaryExpr::toString() const {
+	return "(" + m_left->toString() + " " + binaryOpToString(m_op) + " " + m_right->toString() + ")";
+}
+
 llvm::Value* BinaryExpr::generateBinaryOperation(
 	std::unique_ptr<Expression>& left,
 	std::unique_ptr<Expression>& right,

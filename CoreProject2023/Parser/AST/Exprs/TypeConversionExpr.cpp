@@ -92,6 +92,23 @@ llvm::Value* TypeConversionExpr::generate() {
 	}
 }
 
+std::string TypeConversionExpr::toString() const {
+	std::string result = m_type->toString();
+	result += '(';
+
+	for (auto& arg : m_args) {
+		result += arg->toString();
+		result += ", ";
+	}
+
+	result.pop_back();
+	result.pop_back();
+
+	result += ')';
+
+	return result;
+}
+
 Function* TypeConversionExpr::chooseConstructor() {
 	std::vector<std::shared_ptr<Type>> argTypes;
 	std::vector<bool> isCompileTime;

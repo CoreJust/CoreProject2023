@@ -2,12 +2,16 @@
 #include <llvm/IR/Module.h>
 #include "ModuleSymbols.h"
 
+namespace LLVMModuleManager {
+	std::shared_ptr<llvm::Module> getLLVMModule(const std::string& name);
+};
+
 class Module final {
 private:
 	std::string m_name;
 	std::string m_path;
 	ModuleQualities m_qualities;
-	std::unique_ptr<llvm::Module> m_llvmModule;
+	std::shared_ptr<llvm::Module> m_llvmModule;
 	std::vector<std::string> m_importedModules;
 
 	// key "" means accessible without stating any module/namespace

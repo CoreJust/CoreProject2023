@@ -60,7 +60,7 @@
     <ClCompile Include="Parser\AST\States\ExpressionStatement.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Compiler.cpp">
+    <ClCompile Include="Project\Compiler.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="Module\ModuleSymbols.cpp">
@@ -72,7 +72,7 @@
     <ClCompile Include="SymbolLoader\SymbolLoader.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Project.cpp">
+    <ClCompile Include="Project\Project.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="Parser\AST\States\ReturnStatement.cpp">
@@ -204,6 +204,12 @@
     <ClCompile Include="Parser\AST\States\NopeStatement.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Project\ProjectSettings.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Project\ProjectFileParser.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h">
@@ -269,7 +275,7 @@
     <ClInclude Include="Module\ModuleSymbols.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Compiler.h">
+    <ClInclude Include="Project\Compiler.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Module\Symbols\Variable.h">
@@ -287,7 +293,7 @@
     <ClInclude Include="SymbolLoader\SymbolLoader.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Project.h">
+    <ClInclude Include="Project\Project.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Parser\AST\States\ReturnStatement.h">
@@ -408,6 +414,12 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Parser\AST\States\NopeStatement.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Project\ProjectSettings.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Project\ProjectFileParser.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

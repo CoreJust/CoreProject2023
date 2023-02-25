@@ -12,6 +12,8 @@ public:
 	void accept(Visitor* visitor, std::unique_ptr<Declaration>& node) override;
 	void generate() override;
 
+	std::string toString() const override;
+
 private:
 	void generateConstructor();
 

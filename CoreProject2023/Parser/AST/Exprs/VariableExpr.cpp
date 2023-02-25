@@ -34,3 +34,7 @@ llvm::Value* VariableExpr::generate() {
 
 	return varVal;
 }
+
+std::string VariableExpr::toString() const {
+	return m_name;
+}

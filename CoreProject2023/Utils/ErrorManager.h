@@ -86,6 +86,14 @@ enum ErrorID : u32 {
 	E4051_LOADING_MODULE_SYMBOLS_TWICE, // The module symbols were added to symbol table twice
 	E4052_NO_MODULE_FOUND_BY_ALIAS, // Tried to get symbol of module with a wrong alias
 	E4053_CANNOT_SET_NO_MODULE_AS_CURRENT, // Tried to set g_module to nullptr (since no module was found)
+
+
+	// Project settings errors
+	E5001_UNKNOWN_SETTING, // An unknown setting was met
+	E5002_WRONG_SETTING_TYPE, // A setting had an improper value type (e.g. "name": 1)
+	E5003_WRONG_SETTING_VALUE, // A setting's value had correct type, but the value itself was impossible for the setting
+	E5004_FAILED_TO_LOAD_SETTINGS, // Wrong JSON file or file not found
+	E5005_NECESSARY_SETTING_NOT_FOUND, // One of the necessary settings (e.g. project name) is missing
 };
 
 std::string errorIDToString(ErrorID id);
@@ -110,6 +118,7 @@ namespace ErrorManager {
 	void parserError(ErrorID id, int line, const std::string& data);
 	void typeError(ErrorID id, int line, const std::string& data);
 	void internalError(ErrorID id, int line, const std::string& data);
+	void projectSettingsError(ErrorID id, int line, const std::string& data);
 
 	void warning(ErrorID id, const std::string& data);
 

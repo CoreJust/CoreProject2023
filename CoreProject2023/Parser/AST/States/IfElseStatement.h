@@ -14,6 +14,8 @@ public:
 	void accept(Visitor* visitor, std::unique_ptr<Statement>& node) override;
 	void generate() override;
 
+	std::string toString() const override;
+
 private:
 	// Must contain at least one; if there is one extra body - it is the else statement
 	std::vector<std::unique_ptr<Expression>> m_conditions;

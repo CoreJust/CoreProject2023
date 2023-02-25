@@ -40,3 +40,17 @@ void VariableDefStatement::generate() {
 		alloc
 	);
 }
+
+std::string VariableDefStatement::toString() const {
+	std::string result = m_variable.type->toString();
+	result += ' ';
+	result += m_variable.name;
+
+	if (m_expr) {
+		result += " = ";
+		result += m_expr->toString();
+	}
+
+	result += ";\n";
+	return result;
+}

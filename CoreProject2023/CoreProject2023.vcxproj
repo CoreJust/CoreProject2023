@@ -309,7 +309,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <PreprocessorDefinitions>_SILENCE_CXX20_CISO646_REMOVED_WARNING;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include;C:\nlohmann</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <EnableModules>true</EnableModules>
@@ -331,7 +331,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <PreprocessorDefinitions>_SILENCE_CXX20_CISO646_REMOVED_WARNING;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\egor2\source\repos\CoreProject2023\CoreProject2023;C:\llvm\llvm-project\llvm\include;C:\llvm\llvm-project\build\include;C:\nlohmann</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -353,7 +353,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Lexer\Token.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Module\Symbols\Annotations.cpp" />
-    <ClCompile Include="Compiler.cpp" />
+    <ClCompile Include="Project\Compiler.cpp" />
     <ClCompile Include="Module\Symbols\BasicType.cpp" />
     <ClCompile Include="Module\Symbols\Function.cpp" />
     <ClCompile Include="Module\Symbols\FunctionArgument.cpp" />
@@ -402,7 +402,9 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Parser\Parser.cpp" />
     <ClCompile Include="Parser\TypeParser.cpp" />
     <ClCompile Include="Parser\Visitor\Visitor.cpp" />
-    <ClCompile Include="Project.cpp" />
+    <ClCompile Include="Project\Project.cpp" />
+    <ClCompile Include="Project\ProjectFileParser.cpp" />
+    <ClCompile Include="Project\ProjectSettings.cpp" />
     <ClCompile Include="SymbolLoader\BasicSymbolLoader.cpp" />
     <ClCompile Include="SymbolLoader\SymbolLoader.cpp" />
     <ClCompile Include="SymbolLoader\SymbolPreloader.cpp" />
@@ -417,7 +419,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Lexer\ModulePeeker.h" />
     <ClInclude Include="Lexer\Token.h" />
     <ClInclude Include="Module\Symbols\Annotations.h" />
-    <ClInclude Include="Compiler.h" />
+    <ClInclude Include="Project\Compiler.h" />
     <ClInclude Include="Module\Symbols\BasicType.h" />
     <ClInclude Include="Module\Symbols\Function.h" />
     <ClInclude Include="Module\Symbols\FunctionArgument.h" />
@@ -470,7 +472,9 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Parser\Parser.h" />
     <ClInclude Include="Parser\TypeParser.h" />
     <ClInclude Include="Parser\Visitor\Visitor.h" />
-    <ClInclude Include="Project.h" />
+    <ClInclude Include="Project\Project.h" />
+    <ClInclude Include="Project\ProjectFileParser.h" />
+    <ClInclude Include="Project\ProjectSettings.h" />
     <ClInclude Include="SymboleLoader\SymboleLoader.h" />
     <ClInclude Include="SymbolLoader\BasicSymbolLoader.h" />
     <ClInclude Include="SymbolLoader\SymbolLoader.h" />

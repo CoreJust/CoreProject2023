@@ -78,7 +78,14 @@ std::string ErrorIDStrings[] = {
 	"E4001: String conversion error; cannot convert string from utf32 when its size is not multiple of 4",
 	"E4051: Loading module symbols twice; symbols of the module with such name were already loaded",
 	"E4052: No module found with such alias; trying to get a symbol of module with a wrong alias",
-	"E4053: No module found with such path; trying to set nullptr as the current module"
+	"E4053: No module found with such path; trying to set nullptr as the current module",
+
+
+	"E5001: Unknown project setting",
+	"E5002: Project setting has wrong type",
+	"E5003: Project setting has impossible value",
+	"E5004: Project setting: failed to load",
+	"E5005: A necessary setting is missed",
 };
 
 std::string errorIDToString(ErrorID id) {
@@ -131,10 +138,18 @@ void ErrorManager::typeError(ErrorID id, int line, const std::string& data) {
 }
 
 void ErrorManager::internalError(ErrorID id, int line, const std::string& data) {
-	ASSERT(id >= ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE,
+	ASSERT(id >= ErrorID::E4001_WRONGLY_READ_STRING_BAD_SIZE
+		&& id < ErrorID::E5001_UNKNOWN_SETTING,
 		"Not an internal error");
 
 	printError("Internal error " + errorIDToString(id), line, data);
+}
+
+void ErrorManager::projectSettingsError(ErrorID id, int line, const std::string& data) {
+	ASSERT(id >= ErrorID::E5001_UNKNOWN_SETTING,
+		"Not a project settings error");
+
+	printError("Project settings error " + errorIDToString(id), line, data);
 }
 
 void ErrorManager::warning(ErrorID id, const std::string& data) {

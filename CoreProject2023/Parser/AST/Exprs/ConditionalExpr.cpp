@@ -157,3 +157,20 @@ llvm::Value* ConditionalExpr::generate() {
 
 	return result;
 }
+
+std::string ConditionalExpr::toString() const {
+	std::string result = "(";
+	size_t i = 0;
+	for (auto& cond : m_exprs) {
+		result += cond->toString();
+		if (i < m_ops.size()) {
+			result += " ";
+			result += conditionOpToString(m_ops[i++]);
+			result += " ";
+		}
+	}
+
+	result += ")";
+
+	return result;
+}

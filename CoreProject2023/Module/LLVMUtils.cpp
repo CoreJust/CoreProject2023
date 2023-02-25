@@ -2,6 +2,7 @@
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/Transforms/Utils/ModuleUtils.h>
 #include <Parser/AST/INode.h>
+#include <Project/Project.h>
 #include "Module.h"
 #include "LLVMGlobals.h"
 #include <Utils/ErrorManager.h>
@@ -36,11 +37,15 @@ llvm::Value* llvm_utils::createGlobalVariable(Variable& var, Expression* initial
 		llvm::GlobalValue::GeneralDynamicTLSModel :
 		llvm::GlobalValue::NotThreadLocal;
 
+	llvm::GlobalValue::LinkageTypes linkage =
+		g_settings->compilationMode == CompilationMode::Library || isExternal
+		? llvm::Function::ExternalLinkage : llvm::Function::InternalLinkage;
+
 	llvm::GlobalVariable* varValue = new llvm::GlobalVariable(
 		g_module->getLLVMModule(), // current llvm::Module
 		var.type->to_llvm(), // variable type
 		!isConstructorNeeded && isConst, // is constant
-		llvm::GlobalValue::LinkageTypes::ExternalLinkage, // linkage
+		linkage, // linkage
 		defaultVal, // default value
 		var.name, // variable name
 		nullptr, // insert before

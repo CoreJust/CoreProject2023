@@ -53,3 +53,11 @@ void ReturnStatement::generate() {
 
 	throw new TerminatorAdded;
 }
+
+std::string ReturnStatement::toString() const {
+	if (m_expr->getType()->basicType == BasicType::NO_TYPE) {
+		return "return;\n";
+	}
+
+	return "return " + m_expr->toString() + ";\n";
+}

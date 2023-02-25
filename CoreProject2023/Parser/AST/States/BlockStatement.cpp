@@ -19,3 +19,19 @@ void BlockStatement::generate() {
 
 	g_module->deleteBlock();
 }
+
+std::string BlockStatement::toString() const {
+	static std::string s_tabs = "";
+
+	s_tabs += '\t';
+	std::string result = "{\n";
+	for (auto& state : m_states) {
+		result += s_tabs;
+		result += state->toString();
+	}
+
+	result += "}\n\n";
+	s_tabs.pop_back();
+
+	return result;
+}

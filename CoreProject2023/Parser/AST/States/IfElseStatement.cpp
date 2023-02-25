@@ -80,3 +80,28 @@ void IfElseStatement::generate() {
 		}
 	}
 }
+
+std::string IfElseStatement::toString() const {
+	std::string result = "";
+	size_t i = 0;
+	for (; i < m_conditions.size(); i++) {
+		result += "if ";
+		result += m_conditions[i]->toString();
+		result += " ";
+		result += m_bodies[i]->toString();
+
+		if (result.back() == '}') {
+			result += " else ";
+		} else {
+			result += "\nelse ";
+		}
+	}
+
+	if (m_bodies.size() > i) {
+		result += m_bodies[i]->toString();
+	} else {
+		result.erase(result.size() - 6);
+	}
+
+	return result;
+}

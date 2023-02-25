@@ -15,3 +15,28 @@ void VariableDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>&
 void VariableDeclaration::generate() {
 	llvm_utils::createGlobalVariable(*m_variable, m_value.get());
 }
+
+std::string VariableDeclaration::toString() const {
+	static std::string VISIBILITY_STR[4] = { "@local\n", "@private\n", "@direct_import\n", "@public\n" };
+	static std::string SAFETY_STR[3] = { "@unsafe\n", "@safe_only\n", "@safe\n" };
+
+	std::string result = "";
+	if (m_variable->qualities.isThreadLocal()) {
+		result += "@thread_local\n";
+	}
+
+	result += SAFETY_STR[(u8)m_variable->qualities.getSafety()];
+	result += VISIBILITY_STR[(u8)m_variable->qualities.getVisibility()];
+
+	result += m_variable->type->toString();
+	result += ' ';
+	result += m_variable->name;
+
+	if (m_value) {
+		result += " = ";
+		result += m_value->toString();
+	}
+
+	result += ";\n";
+	return result;
+}

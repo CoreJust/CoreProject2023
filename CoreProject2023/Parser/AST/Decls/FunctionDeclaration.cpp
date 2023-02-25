@@ -83,3 +83,76 @@ void FunctionDeclaration::generateConstructor() {
 	thisVar = g_builder->CreateLoad(m_function->prototype.getReturnType()->to_llvm(), thisVar);
 	g_builder->CreateRet(thisVar);
 }
+
+std::string FunctionDeclaration::toString() const {
+	static std::string VISIBILITY_STR[4] = { "@local\n", "@private\n", "@direct_import\n", "@public\n" };
+	static std::string MANGLE_STR[2] = { "@mangle\n", "@nomangle\n" };
+	static std::string IMPLICIT_STR[2] = { "@implicit\n", "@explicit\n" };
+	static std::string SAFETY_STR[3] = { "@unsafe\n", "@safe_only\n", "@safe\n" };
+	static std::string CONVENTION_STR[7] = {
+		"@ccall\n", "@stdcall\n", "@fastcall\n", "@thiscall\n", "@vectorcall\n", "@coldcall\n", "@tailcall\n"
+	};
+
+	std::string result = "";
+	FunctionQualities qualities = m_function->prototype.getQualities();
+	if (qualities.isNoExcept()) {
+		result += "@noexcept\n";
+	} if (qualities.isNoReturn()) {
+		result += "@noreturn\n";
+	} if (qualities.getFunctionKind() == FunctionKind::CONSTRUCTOR) {
+		result += IMPLICIT_STR[(u8)qualities.isImplicit()];
+	}
+
+	result += MANGLE_STR[(u8)qualities.isManglingOn()];
+	result += SAFETY_STR[(u8)qualities.getSafety()];
+	result += CONVENTION_STR[(u8)qualities.getCallingConvention()];
+	result += VISIBILITY_STR[(u8)qualities.getVisibility()];
+
+	result += "def ";
+
+	if (qualities.isNative()) {
+		result += "native ";
+	}
+
+	result += m_function->prototype.getName();
+
+	if (qualities.getFunctionKind() == FunctionKind::OPERATOR) {
+		if (m_function->prototype.getName() == "(") {
+			result += ')';
+		} else if (m_function->prototype.getName() == "[") {
+			result += ']';
+		}
+	}
+
+	result += '(';
+
+	for (auto& arg : m_function->prototype.args()) {
+		result += arg.type->toString();
+		result += ' ';
+		result += arg.name;
+		result += ", ";
+	}
+
+	if (m_function->prototype.isVaArgs()) {
+		result += "...";
+	} else {
+		result.pop_back();
+		result.pop_back();
+	}
+
+	result += ") ";
+
+	if (qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR && qualities.getFunctionKind() != FunctionKind::DESTRUCTOR) {
+		result += m_function->prototype.getReturnType()->toString();
+	}
+
+	if (!qualities.isNative()) {
+		result += m_body->toString();
+	} else {
+		result += ';';
+	}
+
+	result += "\n\n";
+
+	return result;
+}

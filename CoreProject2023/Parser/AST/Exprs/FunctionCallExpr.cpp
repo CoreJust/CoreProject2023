@@ -39,6 +39,21 @@ llvm::Value* FunctionCallExpr::generate() {
 	return makeFunctionCall(funcVal, funcType, m_argExprs, m_errLine);
 }
 
+std::string FunctionCallExpr::toString() const {
+	std::string result = m_funcExpr->toString() + "(";
+	for (auto& arg : m_argExprs) {
+		result += arg->toString();
+		result += ", ";
+	}
+
+	result.pop_back();
+	result.pop_back();
+
+	result += ')';
+
+	return result;
+}
+
 llvm::Value* FunctionCallExpr::makeFunctionCall(
 	llvm::Function* functionValue,
 	FunctionType* functionType,

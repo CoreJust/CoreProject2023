@@ -99,3 +99,7 @@ llvm::Value* ArrayElementAccessExpr::generate() {
 		return g_builder->CreateLoad(Type::dereference(m_type)->to_llvm(), elementVal);
 	}
 }
+
+std::string ArrayElementAccessExpr::toString() const {
+	return m_arrayExpr->toString() + "[" + m_indexExpr->toString() + "]";
+}

@@ -86,7 +86,7 @@ Token::Token(TokenType type, const std::string& data, int errLine)
 
 }
 
-std::string Token::toString() {
+std::string Token::toString() const {
 	return TOKEN_NAMES[+type] + " \"" + data + "\" line " + std::to_string(errLine + 1);
 }
 

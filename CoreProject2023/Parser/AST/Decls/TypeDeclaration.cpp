@@ -33,3 +33,24 @@ void TypeDeclaration::generate() {
 
 	g_type = previousType;
 }
+
+std::string TypeDeclaration::toString() const {
+	std::string result = m_typeNode->type->basicType == BasicType::STRUCT
+		? "struct "
+		: "class ";
+
+	result += m_typeNode->name;
+	result += " {\n";
+	for (auto& field : m_fields) {
+		result += field->toString();
+	}
+
+	result += "\n\n";
+
+	for (auto& method : m_methods) {
+		result += method->toString();
+	}
+
+	result += "\n}\n\n";
+	return result;
+}

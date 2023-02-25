@@ -44,3 +44,12 @@ void WhileStatement::generate() {
 	g_cycles.deleteCycle();
 	g_module->deleteBlock();
 }
+
+std::string WhileStatement::toString() const {
+	std::string result = "while ";
+	result += m_condition->toString();
+	result += " ";
+	result += m_body->toString();
+
+	return result;
+}

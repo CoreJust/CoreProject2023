@@ -22,7 +22,7 @@ private:
 	std::unique_ptr<Declaration> functionDeclaration();
 	std::unique_ptr<Declaration> variableDeclaration();
 
-	std::unique_ptr<Statement> stateOrBlock();
+	std::unique_ptr<Statement> stateOrBlock(bool isSafe = false);
 	std::unique_ptr<Statement> statement();
 	std::unique_ptr<Statement> variableDefStatement(bool toConsumeSemicolon = true);
 	std::unique_ptr<Statement> forStatement();

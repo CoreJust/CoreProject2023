@@ -27,6 +27,7 @@ protected:
 public:
 	const BasicType basicType;
 	const bool isConst;
+	Safety safety = Safety::SAFE;
 
 public:
 	Type();

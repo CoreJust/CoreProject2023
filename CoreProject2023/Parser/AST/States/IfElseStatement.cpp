@@ -90,17 +90,14 @@ std::string IfElseStatement::toString() const {
 		result += " ";
 		result += m_bodies[i]->toString();
 
-		if (result.back() == '}') {
-			result += " else ";
-		} else {
-			result += "\nelse ";
-		}
+		result += s_tabs;
+		result += "else ";
 	}
 
 	if (m_bodies.size() > i) {
 		result += m_bodies[i]->toString();
 	} else {
-		result.erase(result.size() - 6);
+		result.erase(result.find_last_of('\n') + 1);
 	}
 
 	return result;

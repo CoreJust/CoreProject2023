@@ -52,20 +52,22 @@ std::string ValueExpr::toString() const {
 	case BasicType::BOOL:
 		return m_val.value.uintVal ? "true" : "false";
 	case BasicType::C8:
-		return std::string({ char(m_val.value.uintVal) });
+		return std::string({ '\'', char(m_val.value.uintVal), '\'' });
 	case BasicType::C16:
-		return std::string({ char(m_val.value.uintVal >> 8), char(m_val.value.uintVal) });
+		return std::string({ '\'', char(m_val.value.uintVal >> 8), char(m_val.value.uintVal), '\'' });
 	case BasicType::C32:
 		return std::string({
+			 '\'',
 			char(m_val.value.uintVal >> 24),
 			char(m_val.value.uintVal >> 16),
 			char(m_val.value.uintVal >> 8),
-			char(m_val.value.uintVal)
+			char(m_val.value.uintVal),
+			'\''
 		});
 	case BasicType::STR8:
 	case BasicType::STR16:
 	case BasicType::STR32:
-		return m_val.value.strVal;
+		return "\"" + m_val.value.strVal + "\"";
 	default: return "";
 	}
 }

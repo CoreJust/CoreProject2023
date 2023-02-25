@@ -64,6 +64,8 @@ BinaryExpr::BinaryExpr(
 		)) {
 			m_operatorFunc = operFunc;
 			m_type = m_operatorFunc->prototype.getReturnType();
+			m_safety = operFunc->prototype.getQualities().getSafety();
+			g_safety.tryUse(m_safety, m_errLine);
 
 			return;
 		}

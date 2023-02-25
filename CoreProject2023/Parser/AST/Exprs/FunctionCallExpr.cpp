@@ -20,6 +20,9 @@ FunctionCallExpr::FunctionCallExpr(
 	} else {
 		m_type = Type::dereference(m_funcExpr->getType())->asFunctionType()->returnType;
 	}
+
+	m_safety = m_funcExpr->getSafety();
+	g_safety.tryUse(m_safety, m_errLine);
 }
 
 void FunctionCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {

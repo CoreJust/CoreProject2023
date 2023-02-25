@@ -44,6 +44,11 @@ ConditionalExpr::ConditionalExpr(std::vector<std::unique_ptr<Expression>> exprs,
 						"operator: " + operFunc->prototype.toString()
 					);
 				}
+
+				if (m_safety != Safety::UNSAFE && operFunc->prototype.getQualities().getSafety() == Safety::UNSAFE) {
+					m_safety = Safety::UNSAFE;
+					g_safety.tryUse(m_safety, m_errLine);
+				}
 			}
 		}
 	}

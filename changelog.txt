@@ -254,4 +254,10 @@ Initial development
 
 	Commited as "Added core project file usage"
 
-	TODO: safe/unsafe => commit, expressions => commit, templates => commit
+26.02.2023
+	Created module SafetyManager
+
+	Commited as "Safe/unsafe code"
+
+	TODO: fix AST str values output
+	TODO: expressions => commit, templates => commit

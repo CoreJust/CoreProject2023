@@ -17,6 +17,15 @@ TypeConversionExpr::TypeConversionExpr(std::vector<std::unique_ptr<Expression>> 
 	} else {
 		m_isConstructor = true;
 	}
+
+	m_safety = m_type->safety;
+	for (auto& arg : m_args) {
+		if (arg->getSafety() == Safety::UNSAFE) {
+			m_safety = Safety::UNSAFE;
+		}
+	}
+
+	g_safety.tryUse(m_safety, m_errLine);
 }
 
 void TypeConversionExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {
@@ -61,6 +70,9 @@ llvm::Value* TypeConversionExpr::generate() {
 	} else if (m_isConstructor) {
 		Function* constructor = chooseConstructor();
 		llvm::Function* funcVal = constructor->getValue();
+
+		m_safety = constructor->prototype.getQualities().getSafety();
+		g_safety.tryUse(m_safety, m_errLine);
 
 		std::vector<llvm::Value*> argValues;
 		for (size_t i = 0; i < m_args.size(); i++) {

@@ -226,6 +226,18 @@ In case of an overloaded function's (same name, different argument types) call:
     
     
     
+/////   SAFETY   /////
+Code is considered safe-only if not specified otherwise. Such code may only contain safe-only and safe code, otherwise it would cause compilation error.
+Code specified as safe or unsafe may contain any code, but the former can be used in the safe-only code.
+The safety can be specified in the module annotations (@set safety -safety-), before a symbol (@-safety-) or in code block (safe { ... }).
+The items marked as unsafe by default (unavaliable in safe-only code):
+	1) Pointers dereference
+	2) Non-constant references usage
+	3) Varying function arguments (in both function declaration and call)
+	4) Operator as
+	
+	
+	
 /////   STATEMENTS   /////
 Block statement:
     { -statement-; [-statement-; ...] }

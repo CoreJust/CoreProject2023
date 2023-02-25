@@ -23,7 +23,9 @@ Type::Type()
 
 Type::Type(BasicType basic, bool isConst)
 	: basicType(basic), isConst(isConst), m_hash(s_typeInstances[isConst][u8(basic)].size()) {
-
+	if (isUnsafe(basic, isConst)) {
+		safety = Safety::UNSAFE;
+	}
 }
 
 std::shared_ptr<Type> Type::copy(i32 makeConst) const {
@@ -157,7 +159,7 @@ std::shared_ptr<Type> Type::createType(BasicType type, bool isConst) {
 
 ArrayType::ArrayType(std::shared_ptr<Type> elementType, u64 size, bool isConst)
 	: elementType(std::move(elementType)), size(size), Type(BasicType::ARRAY, isConst) {
-
+	safety = this->elementType->safety;
 }
 
 std::shared_ptr<Type> ArrayType::copy(i32 makeConst) const {
@@ -226,10 +228,15 @@ PointerType::PointerType(BasicType basicType, std::shared_ptr<Type> elementType,
 	
 	if (isReference(this->basicType) && this->elementType->isConst) {
 		*(bool*)&this->isConst = true;
+		this->elementType = this->elementType->copy(0);
 	}
 
 	if (this->basicType == BasicType::LVAL_REFERENCE && this->isConst) {
 		*(BasicType*)&this->basicType = BasicType::XVAL_REFERENCE;
+	}
+
+	if (this->elementType->safety == Safety::UNSAFE) {
+		safety = Safety::UNSAFE;
 	}
 }
 
@@ -442,7 +449,15 @@ FunctionType::FunctionType(
 	argTypes(std::move(argTypes)), 
 	isVaArgs(isVaArgs), 
 	Type(BasicType::FUNCTION, isConst) {
-	
+	if (this->returnType->safety == Safety::UNSAFE || isVaArgs) {
+		safety = Safety::UNSAFE;
+	} else {
+		for (auto& argType : this->argTypes) {
+			if (argType->safety == Safety::UNSAFE) {
+				safety = Safety::UNSAFE;
+			}
+		}
+	}
 }
 
 std::shared_ptr<Type> FunctionType::copy(i32 makeConst) const {
@@ -572,7 +587,7 @@ std::shared_ptr<FunctionType> FunctionType::createType(
 
 TypeNodeType::TypeNodeType(std::shared_ptr<TypeNode> node, bool isConst)
 	: node(std::move(node)), Type(BasicType::TYPE_NODE, isConst) {
-
+	safety = this->node->qualities.getSafety();
 }
 
 std::shared_ptr<Type> TypeNodeType::copy(i32 makeConst) const {
@@ -629,7 +644,11 @@ std::shared_ptr<TypeNodeType> TypeNodeType::createType(std::shared_ptr<TypeNode>
 
 StructType::StructType(std::vector<std::shared_ptr<Type>> fieldTypes, bool isConst)
 	: fieldTypes(std::move(fieldTypes)), Type(BasicType::STRUCT, isConst) {
-
+	for (auto& fieldType : this->fieldTypes) {
+		if (fieldType->safety == Safety::UNSAFE) {
+			safety = Safety::UNSAFE;
+		}
+	}
 }
 
 std::shared_ptr<Type> StructType::copy(i32 makeConst) const {

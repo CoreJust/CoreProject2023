@@ -5,7 +5,10 @@
 
 VariableDeclaration::VariableDeclaration(Variable* var, std::unique_ptr<Expression> value) 
 	: m_variable(var), m_value(std::move(value)) {
-
+	m_safety = m_variable->qualities.getSafety();
+	if (m_variable->type->safety == Safety::UNSAFE) {
+		g_safety.tryUse(m_safety, Safety::UNSAFE, m_errLine);
+	}
 }
 
 void VariableDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>& node) {
@@ -13,7 +16,9 @@ void VariableDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>&
 }
 
 void VariableDeclaration::generate() {
+	g_safety.push(m_safety);
 	llvm_utils::createGlobalVariable(*m_variable, m_value.get());
+	g_safety.pop();
 }
 
 std::string VariableDeclaration::toString() const {

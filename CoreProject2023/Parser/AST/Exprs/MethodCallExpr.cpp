@@ -13,6 +13,8 @@ MethodCallExpr::MethodCallExpr(
 	ASSERT(m_argExprs.size(), "this expression cannot be no-null");
 
 	m_type = m_func->prototype.getReturnType();
+	m_safety = m_func->prototype.getQualities().getSafety();
+	g_safety.tryUse(m_safety, m_errLine);
 }
 
 void MethodCallExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {

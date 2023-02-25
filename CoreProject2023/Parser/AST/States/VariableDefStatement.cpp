@@ -7,7 +7,10 @@
 
 VariableDefStatement::VariableDefStatement(Variable var, std::unique_ptr<Expression> expr)
 	: m_variable(std::move(var)), m_expr(std::move(expr)) {
-
+	if (m_variable.type->safety == Safety::UNSAFE) {
+		m_safety = Safety::UNSAFE;
+		g_safety.tryUse(m_safety, m_errLine);
+	}
 }
 
 void VariableDefStatement::accept(Visitor* visitor, std::unique_ptr<Statement>& node) {

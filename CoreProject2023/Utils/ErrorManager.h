@@ -60,6 +60,8 @@ enum ErrorID : u32 {
 	E2108_OPERATOR_IMPOSSIBLE_ARGUMENTS_NUMBER, // An impossible number of arguments of an operator
 	E2109_CONDITIONAL_OPERATOR_MUST_RETURN_BOOL, // A conditional user-defined operator must be of bool type
 
+	E2201_UNSAFE_CODE_IN_SAFE_ONLY, // Some code marked as safe-only (default) contains unsafe code
+
 	
 	// Type errors
 	E3001_TYPE_NOT_SPECIFIED, // No type expression found where it is expected

@@ -353,6 +353,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Lexer\Token.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Module\Symbols\Annotations.cpp" />
+    <ClCompile Include="Parser\AST\SafetyManager.cpp" />
     <ClCompile Include="Project\Compiler.cpp" />
     <ClCompile Include="Module\Symbols\BasicType.cpp" />
     <ClCompile Include="Module\Symbols\Function.cpp" />
@@ -419,6 +420,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Lexer\ModulePeeker.h" />
     <ClInclude Include="Lexer\Token.h" />
     <ClInclude Include="Module\Symbols\Annotations.h" />
+    <ClInclude Include="Parser\AST\SafetyManager.h" />
     <ClInclude Include="Project\Compiler.h" />
     <ClInclude Include="Module\Symbols\BasicType.h" />
     <ClInclude Include="Module\Symbols\Function.h" />

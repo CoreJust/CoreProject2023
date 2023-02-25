@@ -9,7 +9,7 @@ Function* g_function;
 
 FunctionDeclaration::FunctionDeclaration(Function* func, std::unique_ptr<Statement> body)
 	: m_function(func), m_body(std::move(body)) {
-
+	m_safety = m_function->prototype.getQualities().getSafety();
 }
 
 void FunctionDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>& node) {
@@ -17,6 +17,7 @@ void FunctionDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>&
 }
 
 void FunctionDeclaration::generate() {
+	g_safety.push(m_safety);
 	if (!m_function->prototype.getQualities().isNative()) {
 		llvm::Function* fun = m_function->functionManager->getOriginalValue();
 		llvm::BasicBlock* bb = llvm::BasicBlock::Create(g_context, "entry", fun);
@@ -63,6 +64,8 @@ void FunctionDeclaration::generate() {
 		llvm::verifyFunction(*fun);
 		g_functionPassManager->run(*fun, *g_functionAnalysisManager);
 	}
+
+	g_safety.pop();
 }
 
 void FunctionDeclaration::generateConstructor() {
@@ -92,6 +95,8 @@ std::string FunctionDeclaration::toString() const {
 	static std::string CONVENTION_STR[7] = {
 		"@ccall\n", "@stdcall\n", "@fastcall\n", "@thiscall\n", "@vectorcall\n", "@coldcall\n", "@tailcall\n"
 	};
+
+	s_tabs += '\t';
 
 	std::string result = "";
 	FunctionQualities qualities = m_function->prototype.getQualities();
@@ -135,7 +140,7 @@ std::string FunctionDeclaration::toString() const {
 
 	if (m_function->prototype.isVaArgs()) {
 		result += "...";
-	} else {
+	} else if (m_function->prototype.args().size()) {
 		result.pop_back();
 		result.pop_back();
 	}
@@ -144,6 +149,7 @@ std::string FunctionDeclaration::toString() const {
 
 	if (qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR && qualities.getFunctionKind() != FunctionKind::DESTRUCTOR) {
 		result += m_function->prototype.getReturnType()->toString();
+		result += ' ';
 	}
 
 	if (!qualities.isNative()) {
@@ -153,6 +159,8 @@ std::string FunctionDeclaration::toString() const {
 	}
 
 	result += "\n\n";
+
+	s_tabs.pop_back();
 
 	return result;
 }

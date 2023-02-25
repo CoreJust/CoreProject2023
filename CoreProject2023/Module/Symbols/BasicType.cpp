@@ -61,6 +61,10 @@ bool isTruePointer(BasicType type) {
     return type == BasicType::ARRAY || type == BasicType::POINTER || type == BasicType::FUNCTION;
 }
 
+bool isUnsafe(BasicType type, bool isConst) {
+    return type == BasicType::LVAL_REFERENCE && isConst == false;
+}
+
 int getBasicTypeSize(BasicType type) {
     static int TYPE_SIZE[] = {
         0, 8, 16, 32, 64, 8, 16, 32, 64,

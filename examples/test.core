@@ -1,17 +1,11 @@
 import core.io.console;
+import core.crt.cstdio;
 
 use console;
 
 def main() i32 {
-	str8 s = "abcdefgh";
-	u64 i = 0;
-	
-	println("Do-While: ");
-	do println(s[i]);
-	while ++i < s.size;
-	
-	println("\nFor: ");
-	for u64 j = 0; j < s.size; println(s[j++]);
+	const c8* ptr = "wow\n";
+	const c8*& ref = ptr;
 	
 	console.pause();
 	return 0;

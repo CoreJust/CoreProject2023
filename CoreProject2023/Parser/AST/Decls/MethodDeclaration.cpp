@@ -10,7 +10,7 @@ extern std::shared_ptr<TypeNode> g_type;
 
 MethodDeclaration::MethodDeclaration(Function* method, std::unique_ptr<Statement> body)
 	: m_method(method), m_body(std::move(body)) {
-
+	m_safety = m_method->prototype.getQualities().getSafety();
 }
 
 void MethodDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>& node) {
@@ -18,6 +18,7 @@ void MethodDeclaration::accept(Visitor* visitor, std::unique_ptr<Declaration>& n
 }
 
 void MethodDeclaration::generate() {
+	g_safety.push(m_safety);
 	if (!m_method->prototype.getQualities().isNative()) {
 		llvm::Function* fun = m_method->functionManager->getOriginalValue();
 		llvm::BasicBlock* bb = llvm::BasicBlock::Create(g_context, "entry", fun);
@@ -61,6 +62,8 @@ void MethodDeclaration::generate() {
 		llvm::verifyFunction(*fun);
 		g_functionPassManager->run(*fun, *g_functionAnalysisManager);
 	}
+
+	g_safety.pop();
 }
 
 void MethodDeclaration::generateConstructor() {
@@ -93,22 +96,34 @@ std::string MethodDeclaration::toString() const {
 		"@ccall\n", "@stdcall\n", "@fastcall\n", "@thiscall\n", "@vectorcall\n", "@coldcall\n", "@tailcall\n"
 	};
 
+	s_tabs += '\t';
+
 	std::string result = "";
 	FunctionQualities qualities = m_method->prototype.getQualities();
 	if (qualities.isNoExcept()) {
+		result += s_tabs;
 		result += "@noexcept\n";
 	} if (qualities.isNoReturn()) {
+		result += s_tabs;
 		result += "@noreturn\n";
 	} if (qualities.isOverride()) {
+		result += s_tabs;
 		result += "@override\n";
 	} if (qualities.getFunctionKind() == FunctionKind::CONSTRUCTOR) {
+		result += s_tabs;
 		result += IMPLICIT_STR[(u8)qualities.isImplicit()];
 	}
 
+	result += s_tabs;
 	result += MANGLE_STR[(u8)qualities.isManglingOn()];
+
+	result += s_tabs;
 	result += SAFETY_STR[(u8)qualities.getSafety()];
+
+	result += s_tabs;
 	result += CONVENTION_STR[(u8)qualities.getCallingConvention()];
 
+	result += s_tabs;
 	result += "def ";
 
 	result += VISIBILITY_STR[(u8)qualities.getVisibility()];
@@ -142,7 +157,7 @@ std::string MethodDeclaration::toString() const {
 
 	if (m_method->prototype.isVaArgs()) {
 		result += "...";
-	} else {
+	} else if (result.back() != '(') {
 		result.pop_back();
 		result.pop_back();
 	}
@@ -151,6 +166,7 @@ std::string MethodDeclaration::toString() const {
 
 	if (qualities.getFunctionKind() != FunctionKind::CONSTRUCTOR && qualities.getFunctionKind() != FunctionKind::DESTRUCTOR) {
 		result += m_method->prototype.getReturnType()->toString();
+		result += ' ';
 	}
 
 	if (!qualities.isNative()) {
@@ -160,6 +176,8 @@ std::string MethodDeclaration::toString() const {
 	}
 
 	result += "\n\n";
+
+	s_tabs.pop_back();
 
 	return result;
 }

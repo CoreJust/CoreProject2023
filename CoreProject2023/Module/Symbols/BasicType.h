@@ -63,6 +63,8 @@ bool isTrueReference(BasicType type); // is represented by a pointer: lval_refer
 bool isPointer(BasicType type); // is pointer-like
 bool isTruePointer(BasicType type); // is actually a pointer: static array, pointer, function
 
+bool isUnsafe(BasicType type, bool isConst);
+
 // Size of a basic type in bits. If it is varies (e.g. tuple), returns -1
 int getBasicTypeSize(BasicType type);
 

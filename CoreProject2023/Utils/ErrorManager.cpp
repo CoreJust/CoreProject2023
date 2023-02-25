@@ -56,6 +56,8 @@ std::string ErrorIDStrings[] = {
 	"E2108: Impossible number of arguments of operator-function",
 	"E2109: Conditional operator must return bool",
 
+	"E2201: Unsafe code met in a safe-only code: remove the unsafe code or mark it as safe",
+
 
 	"E3001: Type not specified; type expression expected",
 	"E3002: Unexpected token while parsing a type",

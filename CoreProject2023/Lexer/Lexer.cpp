@@ -10,7 +10,7 @@ std::vector<std::string> KEY_WORDS{
 	"class", "interface", "struct", "enum", "union", "tuple",
 	"public", "private", "protected", "abstract", "virtual", "this",
 	"const", "var", "extern", "static",
-	"unsafe", "ct",
+	"safe", "ct",
 	"if", "else", "elif",
 	"switch", "match", "case", "default",
 	"for", "while", "do",

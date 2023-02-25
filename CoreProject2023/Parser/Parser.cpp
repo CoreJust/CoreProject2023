@@ -69,6 +69,7 @@ void Parser::useDeclaration() {
 std::unique_ptr<Declaration> Parser::structDeclaration() {
 	std::string name = consume(TokenType::WORD).data;
 	std::shared_ptr<TypeNode> typeNode = g_module->getType(m_pos - 2);
+	g_safety.push(typeNode->qualities.getSafety());
 
 	std::shared_ptr<TypeNode> previousGType = g_type;
 	g_type = typeNode;
@@ -90,6 +91,7 @@ std::unique_ptr<Declaration> Parser::structDeclaration() {
 	}
 
 	g_type = previousGType;
+	g_safety.pop();
 	return std::make_unique<TypeDeclaration>(typeNode, std::move(fields), std::move(methods));
 }
 
@@ -171,6 +173,7 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 	}
 
 	ASSERT(function, "cannot be null");
+	g_safety.push(function->prototype.getQualities().getSafety());
 
 	TypeParser(m_toks, m_pos).parseTypeOrGetNoType();
 	if (function->prototype.getQualities().isNative()) {
@@ -192,12 +195,14 @@ std::unique_ptr<Declaration> Parser::methodDeclaration(std::shared_ptr<TypeNode>
 
 			g_module->deleteBlock();
 			consume(TokenType::SEMICOLON);
+			g_safety.pop();
 			return std::make_unique<MethodDeclaration>(function, std::move(body));
 		} else if (match(TokenType::LBRACE)) {
 			m_pos--;
 			std::unique_ptr<Statement> body = stateOrBlock();
 
 			g_module->deleteBlock();
+			g_safety.pop();
 			return std::make_unique<MethodDeclaration>(function, std::move(body));
 		} else {
 			ErrorManager::parserError(
@@ -238,6 +243,7 @@ std::unique_ptr<Declaration> Parser::fieldDeclaration(std::shared_ptr<TypeNode> 
 
 std::unique_ptr<Declaration> Parser::functionDeclaration() {
 	Function* function = g_module->getFunction(m_pos);
+	g_safety.push(function->prototype.getQualities().getSafety());
 
 	match(TokenType::NATIVE);
 	if (match(TokenType::TYPE)) {
@@ -282,6 +288,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 	if (function->prototype.getQualities().isNative()) {
 		consume(TokenType::SEMICOLON);
 		g_module->deleteBlock();
+		g_safety.pop();
 		return std::make_unique<FunctionDeclaration>(function, nullptr);
 	} else {
 		if (function->prototype.getQualities().getFunctionKind() == FunctionKind::CONSTRUCTOR) {
@@ -295,12 +302,14 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 
 			g_module->deleteBlock();
 			consume(TokenType::SEMICOLON);
+			g_safety.pop();
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		} else if (match(TokenType::LBRACE)) {
 			m_pos--;
 			std::unique_ptr<Statement> body = stateOrBlock();
 
 			g_module->deleteBlock();
+			g_safety.pop();
 			return std::make_unique<FunctionDeclaration>(function, std::move(body));
 		} else {
 			ErrorManager::parserError(
@@ -310,6 +319,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 			);
 
 			g_module->deleteBlock();
+			g_safety.pop();
 			return nullptr;
 		}
 	}
@@ -317,6 +327,7 @@ std::unique_ptr<Declaration> Parser::functionDeclaration() {
 
 std::unique_ptr<Declaration> Parser::variableDeclaration() {
 	Variable* variable = g_module->getVariable(m_pos);
+	g_safety.push(variable->qualities.getSafety());
 
 	match(TokenType::CONST);
 	match(TokenType::EXTERN);
@@ -330,19 +341,29 @@ std::unique_ptr<Declaration> Parser::variableDeclaration() {
 	}
 	
 	consume(TokenType::SEMICOLON);
+	g_safety.pop();
 	return std::make_unique<VariableDeclaration>(variable, std::move(expr));
 }
 
-std::unique_ptr<Statement> Parser::stateOrBlock() {
+std::unique_ptr<Statement> Parser::stateOrBlock(bool isSafe) {
 	if (match(TokenType::LBRACE)) {
+		Safety safety = isSafe ? Safety::SAFE : g_safety.getCurrentSafety();
+		if (isSafe) {
+			g_safety.push(Safety::SAFE);
+		}
+
 		g_module->addBlock();
 		std::vector<std::unique_ptr<Statement>> states;
 		while (!match(TokenType::RBRACE)) {
 			states.push_back(statement());
 		}
 
+		if (isSafe) {
+			g_safety.pop();
+		}
+
 		g_module->deleteBlock();
-		return std::make_unique<BlockStatement>(std::move(states));
+		return std::make_unique<BlockStatement>(std::move(states), safety);
 	} else {
 		return statement();
 	}
@@ -351,6 +372,8 @@ std::unique_ptr<Statement> Parser::stateOrBlock() {
 std::unique_ptr<Statement> Parser::statement() {
 	if (match(TokenType::SEMICOLON)) {
 		return std::make_unique<NopeStatement>();
+	} else if (match(TokenType::SAFE)) {
+		return stateOrBlock(true);
 	}
 
 	if (match(TokenType::IF)) {

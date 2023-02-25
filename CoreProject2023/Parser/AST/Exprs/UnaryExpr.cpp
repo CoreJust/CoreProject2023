@@ -53,6 +53,8 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 		)) {
 			m_operatorFunc = operFunc;
 			m_type = m_operatorFunc->prototype.getReturnType();
+			m_safety = operFunc->prototype.getQualities().getSafety();
+			g_safety.tryUse(m_safety, m_errLine);
 
 			return;
 		}
@@ -126,6 +128,9 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 					);
 				}
 			}
+
+			m_safety = Safety::UNSAFE;
+			g_safety.tryUse(m_safety, m_errLine);
 
 			break;
 		case UnaryExpr::MOVE:

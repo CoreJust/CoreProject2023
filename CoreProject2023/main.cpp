@@ -2,8 +2,8 @@
 #include <Project/Compiler.h>
 
 // TODO: refactor operation expressions, arguments' default values
-// Long term TODO: project settings file, implement optionals, add ct preprocesing
-// Current tasks: ternary, power, safe/unsafe code, templates, internal types, llvm intrinsics, destructors, ranges (for ranges)
+// Long term TODO: implement optionals, add ct preprocesing
+// Current tasks: ternary, power, templates, internal types, llvm intrinsics, destructors, ranges (for ranges)
 // To test: strings, format strings, str's convertions
 
 int main() {

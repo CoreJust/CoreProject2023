@@ -56,7 +56,7 @@ enum class TokenType : u8 {
 	EXTERN,
 	STATIC,
 
-	UNSAFE,
+	SAFE,
 	CT,
 
 	IF,

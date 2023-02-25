@@ -36,11 +36,14 @@ std::string FieldDeclaration::toString() const {
 
 	std::string result = "";
 	if (field->qualities.isThreadLocal()) {
+		result += s_tabs;
 		result += "@thread_local\n";
 	}
 
+	result += s_tabs;
 	result += SAFETY_STR[(u8)field->qualities.getSafety()];
 
+	result += s_tabs;
 	result += VISIBILITY_STR[(u8)field->qualities.getVisibility()];
 	if (field->qualities.getVariableType() != VariableType::FIELD) {
 		result += "static ";

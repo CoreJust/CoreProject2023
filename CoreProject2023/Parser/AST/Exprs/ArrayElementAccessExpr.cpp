@@ -16,6 +16,8 @@ ArrayElementAccessExpr::ArrayElementAccessExpr(std::unique_ptr<Expression> array
 		)) {
 			m_operatorFunc = operFunc;
 			m_type = m_operatorFunc->prototype.getReturnType();
+			m_safety = m_operatorFunc->prototype.getQualities().getSafety();
+			g_safety.tryUse(m_safety, m_errLine);
 
 			return;
 		}
@@ -31,6 +33,11 @@ ArrayElementAccessExpr::ArrayElementAccessExpr(std::unique_ptr<Expression> array
 		);
 
 		return;
+	}
+
+	if (arrayType->basicType == BasicType::POINTER) {
+		m_safety = Safety::UNSAFE;
+		g_safety.tryUse(m_safety, m_errLine);
 	}
 
 	if (!isImplicitlyConverible(m_indexExpr->getType(), Type::createType(BasicType::U64), m_indexExpr->isCompileTime())) {

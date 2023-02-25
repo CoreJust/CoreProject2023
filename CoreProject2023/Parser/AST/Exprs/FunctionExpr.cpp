@@ -5,7 +5,9 @@
 
 FunctionExpr::FunctionExpr(Function* func)
     : m_function(func) {
-    m_type = func->prototype.genType();
+    m_type = m_function->prototype.genType();
+    m_safety = m_function->prototype.getQualities().getSafety();
+    g_safety.tryUse(m_safety, m_errLine);
 }
 
 void FunctionExpr::accept(Visitor* visitor, std::unique_ptr<Expression>& node) {

@@ -48,14 +48,8 @@ void DoWhileStatement::generate() {
 std::string DoWhileStatement::toString() const {
 	std::string result = "do ";
 	result += m_body->toString();
-	while (result.back() == '\n') {
-		result.pop_back();
-	}
 
-	if (result.back() != '}') {
-		result += '\n';
-	}
-
+	result += s_tabs;
 	result += "while ";
 	result += m_condition->toString();
 	result += ";\n";

@@ -255,11 +255,11 @@ Cycles:
     for -type- a : b -statement-
         Iterates throught b and executes -statement- for each element a in b.
         
-    for [-type- a = -expression-]; [-expression-]; [-expression-] -statement-
+    for [-type- a = -expression-][, -type- b = -expression-]...; [-expression-]; [-expression-][, -expression-]... -statement-
         First executes first block, then checks the second block, is true, executes statement, executes third block, returns to step 2.
         A usual C-like for.
         
-    for -expression- -statement-
+    times -expression- -statement-
         Saves the result of the expression. It must be an unsigned integer. Executes -statement- -expression- times.
         Equivalent to: for u64 i = -expression-; i; i-- -statement-.
         

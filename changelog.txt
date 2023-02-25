@@ -241,3 +241,12 @@ Initial development
 	Type system rewriten with shared_ptr instead of unique_ptr, Types representing the same type now refer to the same instance
 
 	Commited as "Compiler's type system edited"
+
+	Created module DoWhileStatement
+
+25.02.2023
+	Created modules ForStatement, NopeStatement
+
+	Commited as "for, do-while, empty statement"
+
+	TODO: project file => commit, safe/unsafe => commit, expressions => commit, templates => commit

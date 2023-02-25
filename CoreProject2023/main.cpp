@@ -1,9 +1,9 @@
 #include <iostream>
 #include "Compiler.h"
 
-// TODO: refactor operation expressions, arguments' default values, make all the Types in single instance (as basic Type)
+// TODO: refactor operation expressions, arguments' default values
 // Long term TODO: project settings file, implement optionals, add ct preprocesing
-// Current tasks: expressions, safe/unsafe code, for, do-while, times, templates, internal types, llvm intrinsics, destructors
+// Current tasks: ternary, power, safe/unsafe code, templates, internal types, llvm intrinsics, destructors, ranges (for ranges)
 // To test: strings, format strings, str's convertions
 
 int main() {

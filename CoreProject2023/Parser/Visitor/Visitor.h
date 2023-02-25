@@ -11,11 +11,14 @@ public:
 	virtual void visit(FunctionDeclaration* decl, std::unique_ptr<Declaration>& node);
 
 	virtual void visit(BlockStatement* state, std::unique_ptr<Statement>& node);
+	virtual void visit(ForStatement* state, std::unique_ptr<Statement>& node);
 	virtual void visit(WhileStatement* state, std::unique_ptr<Statement>& node);
+	virtual void visit(DoWhileStatement* state, std::unique_ptr<Statement>& node);
 	virtual void visit(IfElseStatement* state, std::unique_ptr<Statement>& node);
 	virtual void visit(VariableDefStatement* state, std::unique_ptr<Statement>& node);
 	virtual void visit(ReturnStatement* state, std::unique_ptr<Statement>& node);
 	virtual void visit(ExpressionStatement* state, std::unique_ptr<Statement>& node);
+	virtual void visit(NopeStatement* state, std::unique_ptr<Statement>& node);
 
 	virtual void visit(MethodCallExpr* expr, std::unique_ptr<Expression>& node);
 	virtual void visit(FunctionCallExpr* expr, std::unique_ptr<Expression>& node);

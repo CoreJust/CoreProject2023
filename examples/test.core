@@ -2,17 +2,16 @@ import core.io.console;
 
 use console;
 
-def arrTest(u8 val) u8[10] {
-	return u8[10] { val, 2*val, 3*val, 4*val };
-}
-
 def main() i32 {
-	str8 s = "sss";
-	println(s[2]);
-
-	u8[] a = arrTest(15);
+	str8 s = "abcdefgh";
 	u64 i = 0;
-	while i < a.size println(a[i++]);
+	
+	println("Do-While: ");
+	do println(s[i]);
+	while ++i < s.size;
+	
+	println("\nFor: ");
+	for u64 j = 0; j < s.size; println(s[j++]);
 	
 	console.pause();
 	return 0;

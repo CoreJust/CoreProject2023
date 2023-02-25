@@ -32,7 +32,26 @@ void Visitor::visit(BlockStatement* state, std::unique_ptr<Statement>& node) {
 	}
 }
 
+void Visitor::visit(ForStatement* state, std::unique_ptr<Statement>& node) {
+	for (auto& var : state->m_varDefs) {
+		var->accept(this, var);
+	}
+
+	state->m_condition->accept(this, state->m_condition);
+
+	for (auto& inc : state->m_increments) {
+		inc->accept(this, inc);
+	}
+
+	state->m_body->accept(this, state->m_body);
+}
+
 void Visitor::visit(WhileStatement* state, std::unique_ptr<Statement>& node) {
+	state->m_condition->accept(this, state->m_condition);
+	state->m_body->accept(this, state->m_body);
+}
+
+void Visitor::visit(DoWhileStatement* state, std::unique_ptr<Statement>& node) {
 	state->m_condition->accept(this, state->m_condition);
 	state->m_body->accept(this, state->m_body);
 }
@@ -57,6 +76,10 @@ void Visitor::visit(ReturnStatement* state, std::unique_ptr<Statement>& node) {
 
 void Visitor::visit(ExpressionStatement* state, std::unique_ptr<Statement>& node) {
 	state->m_expression->accept(this, state->m_expression);
+}
+
+void Visitor::visit(NopeStatement* state, std::unique_ptr<Statement>& node) {
+
 }
 
 void Visitor::visit(MethodCallExpr* expr, std::unique_ptr<Expression>& node) {

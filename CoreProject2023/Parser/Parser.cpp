@@ -349,10 +349,18 @@ std::unique_ptr<Statement> Parser::stateOrBlock() {
 }
 
 std::unique_ptr<Statement> Parser::statement() {
+	if (match(TokenType::SEMICOLON)) {
+		return std::make_unique<NopeStatement>();
+	}
+
 	if (match(TokenType::IF)) {
 		return ifElseStatement();
 	} else if(match(TokenType::WHILE)) {
 		return whileStatement();
+	} else if (match(TokenType::DO)) {
+		return doWhileStatement();
+	} else if (match(TokenType::FOR)) {
+		return forStatement();
 	} else if (peek().type == TokenType::LBRACE) {
 		return stateOrBlock();
 	} else if (peek().type == TokenType::VAR || peek().type == TokenType::CONST
@@ -375,7 +383,7 @@ std::unique_ptr<Statement> Parser::statement() {
 	return result;
 }
 
-std::unique_ptr<Statement> Parser::variableDefStatement() {
+std::unique_ptr<Statement> Parser::variableDefStatement(bool toConsumeSemicolon) {
 	std::shared_ptr<Type> type;
 	bool isConst = match(TokenType::CONST);
 	if (!match(TokenType::VAR)) {
@@ -406,8 +414,52 @@ std::unique_ptr<Statement> Parser::variableDefStatement() {
 	g_module->addLocalVariable(alias, type, qualities, nullptr);
 	Variable variable(alias, std::move(type), qualities, nullptr);
 
-	consume(TokenType::SEMICOLON);
+	if (toConsumeSemicolon) {
+		consume(TokenType::SEMICOLON);
+	}
+
 	return std::make_unique<VariableDefStatement>(std::move(variable), std::move(expr));
+}
+
+std::unique_ptr<Statement> Parser::forStatement() {
+	std::vector<std::unique_ptr<Statement>> varDefs;
+	std::unique_ptr<Expression> condition;
+	std::vector<std::unique_ptr<Expression>> increments;
+	std::unique_ptr<Statement> body;
+	bool hasParen = match(TokenType::LPAR);
+
+	g_module->addBlock();
+	while (peek().type != TokenType::SEMICOLON) {
+		varDefs.push_back(variableDefStatement(false));
+
+		if (match(TokenType::COMMA)) {
+			continue;
+		} else {
+			break;
+		}
+	}
+
+	consume(TokenType::SEMICOLON);
+	condition = expression();
+	consume(TokenType::SEMICOLON);
+
+	while (!hasParen || peek().type != TokenType::RPAR) {
+		increments.push_back(expression());
+
+		if (match(TokenType::COMMA)) {
+			continue;
+		} else {
+			break;
+		}
+	}
+
+	if (hasParen)
+		consume(TokenType::RPAR);
+
+	body = stateOrBlock();
+
+	g_module->deleteBlock();
+	return std::make_unique<ForStatement>(std::move(varDefs), std::move(condition), std::move(increments), std::move(body));
 }
 
 std::unique_ptr<Statement> Parser::whileStatement() {
@@ -424,6 +476,26 @@ std::unique_ptr<Statement> Parser::whileStatement() {
 
 	g_module->deleteBlock();
 	return std::make_unique<WhileStatement>(std::move(condition), std::move(body));
+}
+
+std::unique_ptr<Statement> Parser::doWhileStatement() {
+	std::unique_ptr<Expression> condition;
+	std::unique_ptr<Statement> body;
+
+	g_module->addBlock();
+
+	body = stateOrBlock();
+
+	consume(TokenType::WHILE);
+
+	bool hasParen = match(TokenType::LPAR);
+	condition = expression();
+	if (hasParen)
+		consume(TokenType::RPAR);
+
+	consume(TokenType::SEMICOLON);
+	g_module->deleteBlock();
+	return std::make_unique<DoWhileStatement>(std::move(condition), std::move(body));
 }
 
 std::unique_ptr<Statement> Parser::ifElseStatement() {

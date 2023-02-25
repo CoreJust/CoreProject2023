@@ -195,6 +195,15 @@
     <ClCompile Include="Parser\AST\Exprs\ArrayExpr.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Parser\AST\States\DoWhileStatement.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser\AST\States\ForStatement.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser\AST\States\NopeStatement.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer\Lexer.h">
@@ -390,6 +399,15 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Parser\AST\Exprs\ArrayExpr.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser\AST\States\DoWhileStatement.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser\AST\States\ForStatement.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser\AST\States\NopeStatement.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

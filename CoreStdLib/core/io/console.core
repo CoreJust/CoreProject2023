@@ -1,33 +1,90 @@
+# console.core - the module implementing console I/O functions
+@set visibility direct_import
 @set safety safe
+@set default_imports false
 import core.crt.cstdio;
 import core.crt.cstdlib;
+import core.utils.format;
 
-def pause() i32 = cstdlib.system("pause");
+def pause() {
+	cstdlib.system("pause");
+}
+
+def newline() {
+	cstdio.putchar(i32('\n'));
+}
 
 # Prints the value to the console
-def print(const str8 str) i32 = cstdio.printf("%.*s", str.size, str.data);
-def print(const c8* str) i32 = cstdio.printf("%s", str);
-def print(c8 ch) i32 = cstdio.putchar(i32(ch));
-def print(i32 i) i32 = cstdio.printf("%d", i);
-def print(i64 i) i32 = cstdio.printf("%lld", i);
-def print(u64 i) i32 = cstdio.printf("%llu", i);
-def print(f64 i) i32 = cstdio.printf("%f", i);
-def print(bool b) i32 {
-	if b return print("true");
-	else return print("false");
+def print(const str8 str) {
+	cstdio.fwrite(u8*(str.data), 1, str.size, cstdio.stdout);
+}
+
+def print(const c8* str) {
+	cstdio.fputs(str, cstdio.stdout);
+}
+
+def print(c8 ch){
+	cstdio.putchar(i32(ch));
+}
+
+def print(i32 i) {
+	const c8* asStr = format.static_tostr(i);
+	cstdio.fputs(asStr, cstdio.stdout);
+}
+
+def print(i64 i) {
+	const c8* asStr = format.static_tostr(i);
+	cstdio.fputs(asStr, cstdio.stdout);
+}
+
+def print(u64 i) {
+	const c8* asStr = format.static_tostr(i);
+	cstdio.fputs(asStr, cstdio.stdout);
+}
+
+def print(f64 i) = cstdio.printf("%f", i); # TODO: optimize
+
+def print(bool b) {
+	const c8* asStr = format.static_tostr(b);
+	cstdio.fputs(asStr, cstdio.stdout);
 }
 
 # Prints the value to console and prints a new line
-def println(const str8 str) i32 = cstdio.printf("%.*s\n", str.size, str.data);
-def println(const c8* str) i32 = cstdio.printf("%s\n", str);
-def println(c8 ch) i32 = cstdio.printf("%c\n", ch);
-def println(i32 i) i32 = cstdio.printf("%d\n", i);
-def println(i64 i) i32 = cstdio.printf("%lld\n", i);
-def println(u64 i) i32 = cstdio.printf("%llu\n", i);
-def println(f64 i) i32 = cstdio.printf("%f\n", i);
-def println(bool b) i32 {
-	if b return println("true");
-	else return println("false");
+def println(const str8 str) {
+	cstdio.fwrite(u8*(str.data), 1, str.size, cstdio.stdout);
+	cstdio.putchar(i32('\n'));
+}
+
+def println(const c8* str) {
+	cstdio.puts(str);
+}
+
+def println(c8 ch) {
+	static c8[3] s_buff = { ' ', '\n', '\0' };
+	s_buff[0] = ch;
+	cstdio.fputs(c8*(s_buff), cstdio.stdout);
+}
+
+def println(i32 i) {
+	const c8* asStr = format.static_tostr(i);
+	cstdio.puts(asStr);
+}
+
+def println(i64 i) {
+	const c8* asStr = format.static_tostr(i);
+	cstdio.puts(asStr);
+}
+
+def println(u64 i) {
+	const c8* asStr = format.static_tostr(i);
+	cstdio.puts(asStr);
+}
+
+def println(f64 i) = cstdio.printf("%f\n", i);
+
+def println(bool b) {
+	const c8* asStr = format.static_tostr(b);
+	cstdio.puts(asStr);
 }
 
 

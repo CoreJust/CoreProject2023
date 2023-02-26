@@ -2,6 +2,7 @@
 @set visibility direct_import
 @set safety unsafe
 @set mangling nomangle
+@set default_imports false
 
 def native iswalnum(c16 c) i32;
 def native iswalpha(c16 c) i32;

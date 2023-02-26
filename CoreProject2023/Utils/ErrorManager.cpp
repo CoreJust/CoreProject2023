@@ -170,7 +170,8 @@ void ErrorManager::warning(ErrorID id, const std::string& data) {
 
 void ErrorManager::printError(const std::string& error, int line, const std::string& msg) {
 	std::string text = "\a";
-	text.append(error + " in " + g_currFileName + ", line " + std::to_string(line + 1) + ": ");
+	text.append("[" + g_currFileName + ".core], line " + std::to_string(line + 1) + ": ");
+	text.append(error + " - ");
 	text.append(msg);
 
 	if (_mode & CONSOLE) {

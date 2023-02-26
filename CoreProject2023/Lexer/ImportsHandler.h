@@ -14,6 +14,8 @@ class ImportsHandler final {
 	std::vector<std::string> m_result;
 
 public:
+	ImportsHandler(bool addDefaultImports);
+
 	void addImport(std::string module);
 
 	// Get the resulting imported files list, clears stored list

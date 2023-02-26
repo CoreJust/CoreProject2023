@@ -1,6 +1,4 @@
-#include <wchar.h>
 
-#if 0
 extern "C"
 int puts(const char* str);
 
@@ -13,6 +11,24 @@ int system(const char* fmt);
 extern "C"
 void* malloc(unsigned long size);
 
+union U {
+	int i;
+	double f;
+	struct {
+		char c;
+		bool b;
+	};
+};
+
+int main() {
+	U u;
+	u.i = 10;
+	printf("%f", u.f);
+	
+	return 0;
+}
+
+#if 0
 #include <setjmp.h>
 
 /* Declare a global jmp_buf variable that is available to both func and main */

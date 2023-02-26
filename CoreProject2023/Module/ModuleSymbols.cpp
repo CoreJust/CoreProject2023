@@ -233,7 +233,11 @@ std::vector<std::shared_ptr<TypeNode>>& ModuleSymbolsUnit::getTypes() {
 }
 
 bool ModuleSymbolsUnit::isEmpty() const {
-	return m_variables.size() == 0 && m_functions.size() == 0 && m_types.size() == 0;
+	return m_variables.size() == 0
+		&& m_functions.size() == 0
+		&& m_types.size() == 0
+		&& m_constructors.size() == 0
+		&& m_operators.size() == 0;
 }
 
 ModuleSymbolsUnit& ModuleSymbols::getModuleSymbolsUnit(Visibility visibility) {

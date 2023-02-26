@@ -104,6 +104,12 @@ void Visitor::visit(AssignmentExpr* expr, std::unique_ptr<Expression>& node) {
 	expr->m_expr->accept(this, expr->m_expr);
 }
 
+void Visitor::visit(TernaryExpr* expr, std::unique_ptr<Expression>& node) {
+	expr->m_condition->accept(this, expr->m_condition);
+	expr->m_left->accept(this, expr->m_left);
+	expr->m_right->accept(this, expr->m_right);
+}
+
 void Visitor::visit(ConditionalExpr* expr, std::unique_ptr<Expression>& node) {
 	for (auto& e : expr->m_exprs) {
 		e->accept(this, e);
@@ -132,6 +138,10 @@ void Visitor::visit(TypeConversionExpr* expr, std::unique_ptr<Expression>& node)
 	for (auto& a : expr->m_args) {
 		a->accept(this, a);
 	}
+}
+
+void Visitor::visit(AsExpr* expr, std::unique_ptr<Expression>& node) {
+	expr->m_arg->accept(this, expr->m_arg);
 }
 
 void Visitor::visit(VariableExpr* expr, std::unique_ptr<Expression>& node) {

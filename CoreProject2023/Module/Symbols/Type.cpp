@@ -228,7 +228,9 @@ PointerType::PointerType(BasicType basicType, std::shared_ptr<Type> elementType,
 	
 	if (isReference(this->basicType) && this->elementType->isConst) {
 		*(bool*)&this->isConst = true;
-		this->elementType = this->elementType->copy(0);
+		if (this->elementType->basicType > BasicType::STR32) {
+			this->elementType = this->elementType->copy(0);
+		}
 	}
 
 	if (this->basicType == BasicType::LVAL_REFERENCE && this->isConst) {
@@ -777,6 +779,14 @@ bool isImplicitlyConverible(
 		return true;
 	}
 
+	if (bfrom == bto && bfrom < BasicType::STR8) {
+		return true;
+	}
+
+	if (bfrom == bto && bto == BasicType::ARRAY && isFromCompileTime) {
+		return true;
+	}
+
 	// Extracting references
 	if (isTrueReference(bfrom) && isTrueReference(bto) && isReference(from->asPointerType()->elementType->basicType)) {
 		return isImplicitlyConverible(from->asPointerType()->elementType, to);
@@ -817,10 +827,6 @@ bool isImplicitlyConverible(
 
 	if (bfrom == BasicType::ARRAY && bto == BasicType::DYN_ARRAY) {
 		return from->asArrayType()->elementType->equalsOrLessConstantThan(to->asPointerType()->elementType) >= 0;
-	}
-
-	if (bfrom == bto && bfrom <= BasicType::STR32) {
-		return true;
 	}
 
 	if (isString(bfrom) && bto == BasicType::POINTER && isFromCompileTime) {
@@ -870,7 +876,7 @@ bool isExplicitlyConverible(const std::shared_ptr<Type>& from, const std::shared
 	BasicType bto = to->basicType;
 
 	if (isReference(bfrom)) {
-		return isExplicitlyConverible(to, from->asPointerType()->elementType);
+		return isExplicitlyConverible(from->asPointerType()->elementType, to);
 	}
 
 	if (!isReference(bto) && from->equalsOrLessConstantThan(to) >= -4096) { // equals not considering constantness

@@ -1,6 +1,7 @@
 # cstdarg.core - the standard core library module that is an interface with C stdarg functions.
 @set visibility direct_import
 @set safety unsafe
+@set default_imports false
 
 # TODO: add versions of va_list for other systems
 type va_list = u8*;

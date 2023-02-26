@@ -316,7 +316,7 @@ std::shared_ptr<Type> TypeParser::parseType() {
 				} else {
 					u64 size = std::stoull(peek(-1).data);
 					consume(TokenType::RBRACKET);
-					result = ArrayType::createType(std::move(result), size, true);
+					result = ArrayType::createType(std::move(result), size, isConst);
 					continue;
 				}
 			}

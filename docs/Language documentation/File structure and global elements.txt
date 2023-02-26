@@ -32,6 +32,11 @@ Format:
         Values:
             mangle - turns on C++-like mangling.
             nomangle - turns off mangling.
+			
+		default_imports (default true) - allows (or forbids) the additional default imports.
+		Values:
+			true - adds import lang.core;
+			false - does nothing.
 
 
 /////   IMPORT   /////

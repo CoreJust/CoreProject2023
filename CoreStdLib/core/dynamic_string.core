@@ -1,4 +1,5 @@
 # DynamicString - the type used for operations with strings that need them to change in size in the process
+@set visibility direct_import
 @set safety safe
 import core.crt.cstring;
 import core.crt.cstdlib;

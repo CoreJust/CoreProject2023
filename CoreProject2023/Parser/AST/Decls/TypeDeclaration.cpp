@@ -57,10 +57,9 @@ std::string TypeDeclaration::toString() const {
 		result += method->toString();
 	}
 
+	s_tabs.pop_back();
 	result += s_tabs;
 	result += "}\n\n";
-
-	s_tabs.pop_back();
 
 	return result;
 }

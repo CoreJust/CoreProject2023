@@ -5,6 +5,12 @@
 
 std::vector<std::string> g_importPaths;
 
+ImportsHandler::ImportsHandler(bool addDefaultImports) {
+	if (addDefaultImports) {
+		addImport("core.lang");
+	}
+}
+
 void ImportsHandler::addImport(std::string module) {
 	// Getting file name
 	size_t lastDot = module.find_last_of('.');

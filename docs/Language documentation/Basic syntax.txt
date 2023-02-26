@@ -64,7 +64,7 @@ Explicit type conversions:
     5. Characters can be casted to string (e.g. str8(c8)).
     6. Character and numbers are mutually convertible (e.g. c8(u8), i32(c16)).
     7. Pointers/functions/arrays are convertible to integers and vice versa (e.g. u64(i8*)).
-    8. Functions, arrays, classes can be casted to each other (e.g. u8*(func(), i32*(i32[8])).
+    8. Functions, arrays, classes can be casted to each other (e.g. u8*(func()), i32*(i32[8])).
     9. Numbers, pointers, arrays, tuples, bool and enums can be casted to string.
     10. Bool can be converted to character and float.
     11. Enums convert according to their types.
@@ -206,7 +206,7 @@ Operator precedence(from highest to lowest):
         
     9.  a &&, || b - logical AND and OR. Applcable to any types that can be converted into bool.
     
-    10. if e a else b - ternary operator. e is anything convertible to bool. If e is true then a would be the result, else b.
+    10. e ? a : b - ternary operator. e is anything convertible to bool. If e is true then a would be the result, else b.
         match e { case -val-: a, case -val- b..., default: c } - match operator. If e matches any of the cases, the respective value is the result, otherwise default.
             Default must be specified anyway.
         a =, +=, -=, *=, **=, /=, //=, %=, ^=, |=, &=, <<=, >>= b - compound and direct assignments. Applcable to any types that can be used
@@ -249,9 +249,10 @@ safe statement:
     Used to declare the statement as safe. Allows to used unsafe code in it.
 
 Variable declaration:
-    [const] -type- -name- [= -expression-];
+    [static] [const] -type- -name- [= -expression-];
     The same as of a global variable, apart from that local variable cannot be extern nor have any annotations.
 	Also, local variable can be declared through var keyword, unlike global one.
+	Static keyword makes the variable a hidden global, so it would be a global available only in the function.
     
 if -expression- -statement- [elif -expression- -statement-][else -statement-]
     If the first expression is true, the first statement if executed, else if the second expression is true, the second statement is executed.

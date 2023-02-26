@@ -2,6 +2,7 @@
 @set visibility direct_import
 @set safety unsafe
 @set mangling nomangle
+@set default_imports false
 
 # Memory manipulation
 def native memcpy(u8* dest, const u8* src, u64 count) u8*;

@@ -1,5 +1,6 @@
 # cassert.core - the standard core library module that is an interface with C assert functions.
 @set visibility direct_import
+@set default_imports false
 
 import core.crt.cstdio;
 import core.crt.cstdlib;

@@ -305,7 +305,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX20_CISO646_REMOVED_WARNING;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
@@ -327,7 +327,7 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX20_CISO646_REMOVED_WARNING;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4005;4141;4146;4180;4244;4258;4267;4291;4345;4351;4355;4456;4457;4458;4459;4503;4624;4722;4800;4100;4127;4512;4505;4610;4510;4702;4245;4706;4310;4701;4703;4389;4611;4805;4204;4577;4091;4592;4319;4324</DisableSpecificWarnings>
@@ -353,6 +353,8 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClCompile Include="Lexer\Token.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Module\Symbols\Annotations.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\AsExpr.cpp" />
+    <ClCompile Include="Parser\AST\Exprs\TernaryExpr.cpp" />
     <ClCompile Include="Parser\AST\SafetyManager.cpp" />
     <ClCompile Include="Project\Compiler.cpp" />
     <ClCompile Include="Module\Symbols\BasicType.cpp" />
@@ -420,6 +422,8 @@ advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="Lexer\ModulePeeker.h" />
     <ClInclude Include="Lexer\Token.h" />
     <ClInclude Include="Module\Symbols\Annotations.h" />
+    <ClInclude Include="Parser\AST\Exprs\AsExpr.h" />
+    <ClInclude Include="Parser\AST\Exprs\TernaryExpr.h" />
     <ClInclude Include="Parser\AST\SafetyManager.h" />
     <ClInclude Include="Project\Compiler.h" />
     <ClInclude Include="Module\Symbols\BasicType.h" />

@@ -8,7 +8,7 @@
 	"additional-linked-files": [ "../CoreStdLib/built/crt.o" ],
 	"output": {
 		"tokens": [ "no-output" ],
-		"ast": [ "console" ],
+		"ast": [ "no-output" ],
 		"optimized-ast": [ "no-output" ],
 		"llvm-ir": [ "console" ],
 		"optimized-llvm-ir": [ "console" ],

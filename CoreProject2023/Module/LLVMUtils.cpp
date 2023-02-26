@@ -87,6 +87,76 @@ llvm::Value* llvm_utils::createGlobalVariable(Variable& var, Expression* initial
 	return varValue;
 }
 
+llvm::Value* llvm_utils::createStaticVariable(
+	llvm::Function* func, 
+	Variable& var, 
+	Expression* initializer
+) {
+	VariableType varType = var.qualities.getVariableType();
+	bool isConst = varType == VariableType::CONST;
+	bool isConstructorNeeded = false;
+
+	Expression* init = (Expression*)initializer;
+	std::string name = func->getName().str() + "@" + var.name;
+
+	// Generating the value by default
+	llvm::Constant* defaultVal = nullptr;
+	if (init != nullptr && init->isCompileTime()) {
+		defaultVal = (llvm::Constant*)init->generate();
+		defaultVal = (llvm::Constant*)llvm_utils::tryImplicitlyConvertTo(
+			var.type, // resulting type
+			init->getType(), // initializing type
+			defaultVal,  // initializing valie
+			init->getErrLine(), // the line in the original file
+			init->isCompileTime() // is the value compile-time
+		);
+	} else {
+		defaultVal = getDefaultValueOf(var.type);
+		isConstructorNeeded = true;
+	}
+
+	llvm::GlobalVariable* varValue = new llvm::GlobalVariable(
+		g_module->getLLVMModule(), // current llvm::Module
+		var.type->to_llvm(), // variable type
+		!isConstructorNeeded && isConst, // is constant
+		llvm::Function::InternalLinkage, // linkage
+		defaultVal, // default value
+		name, // variable name
+		nullptr, // insert before
+		llvm::GlobalValue::GeneralDynamicTLSModel, // is it thread-local
+		0, // address space
+		false // is externally initialized
+	);
+
+	// Creating variable's global constructore if needed
+	if (init != nullptr && isConstructorNeeded) {
+		// Creating global constructor function
+		llvm::FunctionType* initFuncType = llvm::FunctionType::get(llvm::Type::getVoidTy(g_context), false);
+		llvm::Function* initFunc = llvm::Function::Create(
+			initFuncType,
+			llvm::Function::ExternalLinkage,
+			"$init_" + name,
+			g_module->getLLVMModule()
+		);
+
+		// Adding initializing code to the constructor
+		llvm::BasicBlock* bb = llvm::BasicBlock::Create(g_context, "entry", initFunc);
+		g_builder->SetInsertPoint(bb);
+
+		llvm::Value* val = init->generate();
+		val = (llvm::Constant*)llvm_utils::tryImplicitlyConvertTo(var.type, init->getType(), val, init->getErrLine());
+
+		g_builder->CreateStore(val, varValue, var.qualities.getVisibility() != Visibility::PRIVATE);
+		g_builder->CreateRetVoid();
+
+		// Adding the constructor to module's global constructor list
+		llvm::appendToGlobalCtors(g_module->getLLVMModule(), initFunc, 1);
+	}
+
+	var.valueManager->setInitialValue(varValue);
+	return varValue;
+}
+
 llvm::Value* llvm_utils::addGlobalVariableFromOtherModule(Variable& var, llvm::Module& module) {
 	llvm::GlobalValue::ThreadLocalMode threadLocalMode = var.qualities.isThreadLocal() ?
 		llvm::GlobalValue::GeneralDynamicTLSModel :

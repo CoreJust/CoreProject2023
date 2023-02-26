@@ -39,6 +39,7 @@ public:
 /*
 * bits starting from common qualities' last one:
 *	4: is nomangling
+*	5: is to add default imports
 */
 class ModuleQualities final : public CommonQualities {
 public:
@@ -46,6 +47,9 @@ public:
 
 	bool isManglingOn() const;
 	void setMangling(bool isToMangle);
+
+	bool isDefaultImports() const;
+	void setDefaultImports(bool isToAdd);
 
 	u64 getData() const override;
 };

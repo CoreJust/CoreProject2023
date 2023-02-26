@@ -1,12 +1,19 @@
 import core.io.console;
-import core.crt.cstdio;
+import core.crt.cmath;
 
 use console;
 
 def main() i32 {
-	const c8* ptr = "wow\n";
-	const c8*& ref = ptr;
+	safe {
+		println(11 ** 5 as f64);
+		println('w' as f32);
+		println(1352646242u64 as i8);
+		println(12.43 * 0.1 as c8);
+		println(245.74 % 0.7);
+	}
 	
-	console.pause();
+	println(cmath.abs(-123435i64));
+	
+	pause();
 	return 0;
 }

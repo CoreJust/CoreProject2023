@@ -31,7 +31,7 @@ private:
 	std::unique_ptr<Statement> ifElseStatement();
 
 	std::unique_ptr<Expression> expression();
-	std::unique_ptr<Expression> assignment();
+	std::unique_ptr<Expression> assignmentAndTernary();
 	std::unique_ptr<Expression> logical();
 	std::unique_ptr<Expression> conditional();
 	std::unique_ptr<Expression> rangeAndAs();

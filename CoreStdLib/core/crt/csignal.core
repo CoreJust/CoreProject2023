@@ -2,6 +2,7 @@
 @set visibility direct_import
 @set safety unsafe
 @set mangling nomangle
+@set default_imports false
 
 
 # Constants and types are platform-specific

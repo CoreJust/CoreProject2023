@@ -2,6 +2,7 @@
 @set visibility direct_import
 @set safety unsafe
 @set mangling nomangle
+@set default_imports false
 
 struct lconv {
     c8*    decimal_point;

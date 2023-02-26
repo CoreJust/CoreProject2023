@@ -183,17 +183,31 @@ void SymbolPreloader::loadFunction() {
 		}
 
 		// Save results
-		m_symbols.addFunction(
-			qualities.getVisibility(),
-			FunctionPrototype(
-				alias,
-				nullptr,
-				{ },
-				qualities,
-				isVaArgs
-			),
-			tokenPos
-		);
+		if (qualities.getFunctionKind() == FunctionKind::OPERATOR) {
+			m_symbols.addOperator(
+				qualities.getVisibility(),
+				FunctionPrototype(
+					alias,
+					nullptr,
+					{ },
+					qualities,
+					isVaArgs
+				),
+				tokenPos
+			);
+		} else { // common function
+			m_symbols.addFunction(
+				qualities.getVisibility(),
+				FunctionPrototype(
+					alias,
+					nullptr,
+					{ },
+					qualities,
+					isVaArgs
+				),
+				tokenPos
+			);
+		}
 	} else { // constructor
 		m_symbols.addConstructor(
 			qualities.getVisibility(),

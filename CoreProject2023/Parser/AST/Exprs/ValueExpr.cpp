@@ -34,6 +34,45 @@ llvm::Value* ValueExpr::generate() {
 }
 
 std::string ValueExpr::toString() const {
+	auto makeCharPrintable = [](uint32_t ch, bool addQuots) -> std::string {
+		std::string result = addQuots ? "'" : "";
+		switch (ch) {
+			case '\n': result += "\\n"; break;
+			case '\0': result += "\\0"; break;
+			case '\a': result += "\\a"; break;
+			case '\t': result += "\\t"; break;
+			case '\r': result += "\\r"; break;
+			case '\v': result += "\\v"; break;
+			case '\b': result += "\\b"; break;
+			case '\f': result += "\\f"; break;
+			case '\'': result += "\\'"; break;
+			case '"': result += "\\\""; break;
+			case '\\': result += "\\\\"; break;
+		default: result += ch; break;
+		}
+
+		if (addQuots) {
+			result += "'";
+		}
+
+		return result;
+	};
+
+	auto makeStringPrintable = [&](std::string str, int char_width) -> std::string {
+		std::string result = "\"";
+		for (size_t i = 0; i < str.size(); i += char_width) {
+			switch (char_width) {
+				case 1: str += makeCharPrintable(str[i], false); break;
+				case 2: str += makeCharPrintable(*(uint16_t*)&str[i], false); break;
+				case 4: str += makeCharPrintable(*(uint32_t*)&str[i], false); break;
+			default: break;
+			}
+		}
+
+		result += "\"";
+		return result;
+	};
+
 	BasicType type = m_type->basicType;
 	switch (type) {
 	case BasicType::I8:
@@ -52,22 +91,15 @@ std::string ValueExpr::toString() const {
 	case BasicType::BOOL:
 		return m_val.value.uintVal ? "true" : "false";
 	case BasicType::C8:
-		return std::string({ '\'', char(m_val.value.uintVal), '\'' });
 	case BasicType::C16:
-		return std::string({ '\'', char(m_val.value.uintVal >> 8), char(m_val.value.uintVal), '\'' });
 	case BasicType::C32:
-		return std::string({
-			 '\'',
-			char(m_val.value.uintVal >> 24),
-			char(m_val.value.uintVal >> 16),
-			char(m_val.value.uintVal >> 8),
-			char(m_val.value.uintVal),
-			'\''
-		});
+		return makeCharPrintable(m_val.value.uintVal, true);
 	case BasicType::STR8:
+		return makeStringPrintable(m_val.value.strVal, 1);
 	case BasicType::STR16:
+		return makeStringPrintable(m_val.value.strVal, 2);
 	case BasicType::STR32:
-		return "\"" + m_val.value.strVal + "\"";
+		return makeStringPrintable(m_val.value.strVal, 4);
 	default: return "";
 	}
 }

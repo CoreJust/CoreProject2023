@@ -2,6 +2,7 @@
 @set visibility direct_import
 @set safety unsafe
 @set mangling nomangle
+@set default_imports false
 
 struct div_t {
 	i32 quot;

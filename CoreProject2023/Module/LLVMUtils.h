@@ -11,6 +11,13 @@ namespace llvm_utils {
 		Expression* initializer
 	);
 
+	// Creates a static variable in current llvm::Module for a function
+	llvm::Value* createStaticVariable(
+		llvm::Function* func,
+		Variable& var,
+		Expression* initializer
+	);
+
 	// Creates a reference to external global variable in module
 	llvm::Value* addGlobalVariableFromOtherModule(
 		Variable& var, 

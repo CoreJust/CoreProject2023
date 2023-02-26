@@ -63,10 +63,10 @@ UnaryExpr::UnaryExpr(std::unique_ptr<Expression> expr, UnaryOp op)
 	switch (m_op) {
 		case UnaryExpr::PLUS:
 		case UnaryExpr::NOT:
-			m_type = m_expr->getType();
+			m_type = Type::dereference(m_expr->getType());
 			break;
 		case UnaryExpr::MINUS:
-			m_type = m_expr->getType();
+			m_type = Type::dereference(m_expr->getType());
 			if (isUnsigned(m_type->basicType)) {
 				ErrorManager::typeError(
 					ErrorID::E3054_CANNOT_NEGATE_UNSIGNED_INT,
@@ -181,24 +181,33 @@ llvm::Value* UnaryExpr::generate() {
 		value = llvm_utils::convertToBool(m_expr->getType(), value);
 		return g_builder->CreateNot(value);
 	}
+
+	auto genExpr = [&]() -> llvm::Value* {
+		llvm::Value* result = m_expr->generate();
+		return llvm_utils::convertValueTo(
+			Type::dereference(m_expr->getType()),
+			m_expr->getType(),
+			result
+		);
+	};
 	
 	BasicType btype = Type::dereference(m_type)->basicType;
 	if (isInteger(btype) || btype == BasicType::BOOL) {
 		switch (m_op) {
-			case UnaryExpr::PLUS: return m_expr->generate();
-			case UnaryExpr::MINUS: return g_builder->CreateNeg(m_expr->generate());
+			case UnaryExpr::PLUS: return genExpr();
+			case UnaryExpr::MINUS: return g_builder->CreateNeg(genExpr());
 			case UnaryExpr::POST_INC: return createIncOrDecrement(btype, true, true, true);
 			case UnaryExpr::POST_DEC: return createIncOrDecrement(btype, false, true, true);
 			case UnaryExpr::PRE_INC: return createIncOrDecrement(btype, true, false, true);
 			case UnaryExpr::PRE_DEC: return createIncOrDecrement(btype, false, false, true);
-			case UnaryExpr::NOT: return g_builder->CreateNot(m_expr->generate());
+			case UnaryExpr::NOT: return g_builder->CreateNot(genExpr());
 		default:
 			break;
 		}
 	} else if (isFloat(btype)) {
 		switch (m_op) {
-			case UnaryExpr::PLUS: return m_expr->generate();
-			case UnaryExpr::MINUS: return g_builder->CreateFNeg(m_expr->generate());
+			case UnaryExpr::PLUS: return genExpr();
+			case UnaryExpr::MINUS: return g_builder->CreateFNeg(genExpr());
 		default:
 			break;
 		}

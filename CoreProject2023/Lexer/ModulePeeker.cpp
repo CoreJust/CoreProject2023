@@ -111,8 +111,7 @@ void ModulePeeker::processModuleQualities() {
 					"@set safety " + m_buffer
 				);
 			}
-		}
-		else if (parameter == "mangling") {
+		} else if (parameter == "mangling") {
 			if (m_buffer == "mangle") {
 				m_qualities.setMangling(true);
 			} else if (m_buffer == "nomangle") {
@@ -122,6 +121,18 @@ void ModulePeeker::processModuleQualities() {
 					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE,
 					m_line,
 					"@set mangling " + m_buffer
+				);
+			}
+		} else if (parameter == "default_imports") {
+			if (m_buffer == "true") {
+				m_qualities.setDefaultImports(true);
+			} else if (m_buffer == "false") {
+				m_qualities.setDefaultImports(false);
+			} else {
+				ErrorManager::lexerError(
+					ErrorID::E1056_UNKNOWN_ANNOTATION_VALUE,
+					m_line,
+					"@set default_imports " + m_buffer
 				);
 			}
 		} else {
@@ -135,7 +146,7 @@ void ModulePeeker::processModuleQualities() {
 }
 
 void ModulePeeker::processImports() {
-	ImportsHandler imports;
+	ImportsHandler imports(m_qualities.isDefaultImports());
 	while (m_pos < m_text.size()) {
 		skipWhitespaces(false);
 		if (m_pos < m_text.size() && m_text[m_pos] == '#') {

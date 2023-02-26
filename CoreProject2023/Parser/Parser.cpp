@@ -386,7 +386,7 @@ std::unique_ptr<Statement> Parser::statement() {
 		return forStatement();
 	} else if (peek().type == TokenType::LBRACE) {
 		return stateOrBlock();
-	} else if (peek().type == TokenType::VAR || peek().type == TokenType::CONST
+	} else if (peek().type == TokenType::VAR || peek().type == TokenType::CONST || peek().type == TokenType::STATIC
 		|| TypeParser(m_toks, m_pos).isType(true)) {
 		return variableDefStatement();
 	}
@@ -408,9 +408,9 @@ std::unique_ptr<Statement> Parser::statement() {
 
 std::unique_ptr<Statement> Parser::variableDefStatement(bool toConsumeSemicolon) {
 	std::shared_ptr<Type> type;
-	bool isConst = match(TokenType::CONST);
+	bool isStatic = match(TokenType::STATIC);
 	if (!match(TokenType::VAR)) {
-		type = TypeParser(m_toks, m_pos).consumeType()->copy(isConst);
+		type = TypeParser(m_toks, m_pos).consumeType();
 	}
 
 	std::string alias = consume(TokenType::WORD).data;
@@ -433,7 +433,8 @@ std::unique_ptr<Statement> Parser::variableDefStatement(bool toConsumeSemicolon)
 	}
 
 	VariableQualities qualities;
-	qualities.setVariableType(isConst ? VariableType::CONST : VariableType::COMMON);
+	qualities.setVariableType(type->isConst ? VariableType::CONST : VariableType::COMMON);
+	qualities.setVisibility(isStatic ? Visibility::PRIVATE : Visibility::LOCAL);
 	g_module->addLocalVariable(alias, type, qualities, nullptr);
 	Variable variable(alias, std::move(type), qualities, nullptr);
 
@@ -550,15 +551,19 @@ std::unique_ptr<Statement> Parser::ifElseStatement() {
 }
 
 std::unique_ptr<Expression> Parser::expression() {
-	return assignment();
+	return assignmentAndTernary();
 }
 
-std::unique_ptr<Expression> Parser::assignment() {
+std::unique_ptr<Expression> Parser::assignmentAndTernary() {
 	std::unique_ptr<Expression> result = logical();
 
 	if (matchRange(TokenType::EQ, TokenType::RSHIFT_EQ)) {
 		AssignmentExpr::AssignmentOp op = AssignmentExpr::AssignmentOp(+peek(-1).type - +TokenType::EQ);
-		return std::make_unique<AssignmentExpr>(std::move(result), assignment(), op);
+		return std::make_unique<AssignmentExpr>(std::move(result), assignmentAndTernary(), op);
+	} if (match(TokenType::QUESTION)) {
+		std::unique_ptr<Expression> left = expression();
+		consume(TokenType::COLON);
+		return std::make_unique<TernaryExpr>(std::move(result), std::move(left), assignmentAndTernary());
 	}
 
 	return result;
@@ -628,8 +633,18 @@ std::unique_ptr<Expression> Parser::conditional() {
 }
 
 std::unique_ptr<Expression> Parser::rangeAndAs() {
-	// TODO: implement
-	return bitwise();
+	std::unique_ptr<Expression> result = bitwise();
+
+	while (true) {
+		if (match(TokenType::AS)) {
+			result = std::make_unique<AsExpr>(std::move(result), TypeParser(m_toks, m_pos).consumeType());
+			continue;
+		}
+
+		break;
+	}
+
+	return result;
 }
 
 std::unique_ptr<Expression> Parser::bitwise() {
@@ -762,7 +777,8 @@ std::unique_ptr<Expression> Parser::postfix() {
 			std::unique_ptr<Expression> index = expression();
 			consume(TokenType::RBRACKET);
 
-			return std::make_unique<ArrayElementAccessExpr>(std::move(expr), std::move(index));
+			expr = std::make_unique<ArrayElementAccessExpr>(std::move(expr), std::move(index));
+			continue;
 		} if (match(TokenType::INCREMENT)) {
 			expr = std::make_unique<UnaryExpr>(std::move(expr), UnaryExpr::POST_INC);
 			continue;

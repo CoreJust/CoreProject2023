@@ -1,6 +1,7 @@
 # cctype.core - the standard core library module that is an interface with C ctype functions.
 @set visibility direct_import
 @set mangling nomangle
+@set default_imports false
 
 def native isalnum(i32 c) i32;
 def native isalpha(i32 c) i32;

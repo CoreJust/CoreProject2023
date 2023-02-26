@@ -53,9 +53,17 @@ BinaryExpr::BinaryExpr(
 {
 	auto& rightType = m_right->getType();
 	auto& leftType = m_left->getType();
+	bool isRightIntegerLike = isInteger(Type::dereference(rightType)->basicType)
+		|| Type::dereference(rightType)->basicType == BasicType::BOOL;
+
+	bool isLeftIntegerLike = isInteger(Type::dereference(leftType)->basicType)
+		|| Type::dereference(leftType)->basicType == BasicType::BOOL;
+
 	if (isBinaryOpDefinable(m_op)
 		&& (Type::dereference(rightType)->basicType >= BasicType::STR8
-			|| Type::dereference(leftType)->basicType >= BasicType::STR8)) {
+			|| Type::dereference(leftType)->basicType >= BasicType::STR8
+			|| m_op == BinaryOp::POWER
+			|| (m_op == BinaryOp::MOD && (!isRightIntegerLike || !isLeftIntegerLike)))) {
 		std::vector<std::shared_ptr<Type>> argTypes = { leftType, rightType };
 		if (Function* operFunc = g_module->chooseOperator(
 			binaryOpToString(m_op),
@@ -205,7 +213,6 @@ llvm::Value* BinaryExpr::generateBinaryOperation(
 			case BinaryOp::MOD: return isSigned(resultingType->basicType) ?
 				g_builder->CreateSRem(leftVal, rightVal)
 				: g_builder->CreateURem(leftVal, rightVal);
-			case BinaryOp::POWER: // TODO: implement
 			case BinaryOp::AND: return g_builder->CreateAnd(leftVal, rightVal);
 			case BinaryOp::OR: return g_builder->CreateOr(leftVal, rightVal);
 			case BinaryOp::XOR: return g_builder->CreateXor(leftVal, rightVal);
@@ -223,8 +230,6 @@ llvm::Value* BinaryExpr::generateBinaryOperation(
 			case BinaryOp::PLUS: return g_builder->CreateFAdd(leftVal, rightVal);
 			case BinaryOp::MINUS: return g_builder->CreateFSub(leftVal, rightVal);
 			case BinaryOp::MULT: return g_builder->CreateFMul(leftVal, rightVal);
-			case BinaryOp::MOD: // TODO: implement
-			case BinaryOp::POWER: // TODO: implement
 			case BinaryOp::IDIV:
 			case BinaryOp::DIV: return g_builder->CreateFDiv(leftVal, rightVal);
 		default:

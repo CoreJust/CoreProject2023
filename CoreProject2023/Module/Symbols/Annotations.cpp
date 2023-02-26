@@ -28,6 +28,7 @@ ModuleQualities::ModuleQualities() {
     setVisibility(Visibility::PUBLIC);
     setSafety(Safety::SAFE_ONLY);
     setMangling(true);
+    setDefaultImports(true);
 }
 
 bool ModuleQualities::isManglingOn() const {
@@ -36,6 +37,14 @@ bool ModuleQualities::isManglingOn() const {
 
 void ModuleQualities::setMangling(bool isToMangle) {
     m_data = (m_data & ~0b10000) | (u8(isToMangle ? 1 : 0) << 4);
+}
+
+bool ModuleQualities::isDefaultImports() const {
+    return bool(m_data & (1 << 5));
+}
+
+void ModuleQualities::setDefaultImports(bool isToAdd) {
+    m_data = (m_data & ~0b100000) | (u8(isToAdd ? 1 : 0) << 5);
 }
 
 u64 ModuleQualities::getData() const {

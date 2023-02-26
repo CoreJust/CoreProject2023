@@ -259,5 +259,11 @@ Initial development
 
 	Commited as "Safe/unsafe code"
 
-	TODO: fix AST str values output
-	TODO: expressions => commit, templates => commit
+	Added static variables in functions
+	Implemented core.utils.format (partially, integer and boolean conversions)
+	Optimized core.io.console
+	Created modules TernaryExpr, AsExpr
+
+	Commited as "Static variables, ternary expression, operator as, core.utils.format"
+
+	TODO: templates => commit

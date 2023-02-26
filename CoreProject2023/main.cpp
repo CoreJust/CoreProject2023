@@ -3,7 +3,7 @@
 
 // TODO: refactor operation expressions, arguments' default values
 // Long term TODO: implement optionals, add ct preprocesing
-// Current tasks: ternary, power, templates, internal types, llvm intrinsics, destructors, ranges (for ranges)
+// Current tasks: templates, internal types, llvm intrinsics, destructors, ranges (for ranges)
 // To test: strings, format strings, str's convertions
 
 int main() {

@@ -1,0 +1,100 @@
+# format.core - the module implementing functions for conversion to/from string's
+@set visibility direct_import
+@set safety safe
+import core.crt.cstdlib;
+import core.crt.cstring;
+
+# Fast functions convert the value to the buff, but do not check for the buff's size
+# Note that rbuff is a reversed buffer (pointer to the last byte of the buffer), and it would grow backwards
+# For example, if we have some buffer buff with size 10, then rbuff would be buff + 9 (buffer's last byte)
+
+@unsafe
+def fast_tostr(i64 x, c8* rbuff) c8* {
+	bool is_negative = x < 0;
+	if (is_negative) {
+		rbuff = fast_tostr(u64(-x), rbuff);
+		*(--rbuff) = '-';
+		return rbuff;
+	} else {
+		return fast_tostr(u64(x), rbuff);
+	}
+}
+
+@unsafe
+def fast_tostr(u64 x, c8* rbuff) c8* {
+	if (x == 0) {
+		*rbuff = '0';
+		return rbuff;
+	}
+	
+	while (x) {
+		*(rbuff--) = c8(u8('0') + u8(x % 10));
+		x //= 10;
+	}
+	
+	return rbuff + 1;
+}
+
+# Static functions use fast functions with own internal buffer
+# They are safe, but the returned value cannot be changed, and every new call would rewrite it
+def static_tostr(i64 x) const c8* {
+	static c8[24] s_buff = c8[24]{ };
+	return fast_tostr(x, c8*(s_buff) + 22);
+}
+
+def static_tostr(i32 x) const c8* {
+	static c8[16] s_buff = c8[16]{ };
+	return fast_tostr(x, c8*(s_buff) + 14);
+}
+
+def static_tostr(i16 x) const c8* {
+	static c8[8] s_buff = c8[8]{ };
+	return fast_tostr(x, c8*(s_buff) + 6);
+}
+
+def static_tostr(i8 x) const c8* {
+	static c8[8] s_buff = c8[8]{ };
+	return fast_tostr(x, c8*(s_buff) + 6);
+}
+
+def static_tostr(u64 x) const c8* {
+	static c8[24] s_buff = c8[24]{ };
+	return fast_tostr(x, c8*(s_buff) + 22);
+}
+
+def static_tostr(u32 x) const c8* {
+	static c8[16] s_buff = c8[16]{ };
+	return fast_tostr(x, c8*(s_buff) + 14);
+}
+
+def static_tostr(u16 x) const c8* {
+	static c8[8] s_buff = c8[8]{ };
+	return fast_tostr(x, c8*(s_buff) + 6);
+}
+
+def static_tostr(u8 x) const c8* {
+	static c8[8] s_buff = c8[8]{ };
+	return fast_tostr(x, c8*(s_buff) + 6);
+}
+
+def static_tostr(bool x) const c8* {
+	static str8[2] s_values = { "false", "true\0"	};
+	return s_values[u8(x)].data;
+}
+
+# Common conversion functions are safe to use, but they are slightly slower than the previous ones
+def tostr(i64 x) c8* {
+	c8* buff = c8*(cstdlib.calloc(1, 24));
+	return fast_tostr(x, buff + 22);
+}
+
+def tostr(u64 x) c8* {
+	c8* buff = c8*(cstdlib.calloc(1, 24));
+	return fast_tostr(x, buff + 22);
+}
+
+def tostr(bool x) c8* {
+	c8* buff = c8*(cstdlib.calloc(1, 6));
+	cstring.memcpy(u8*(buff), u8*(static_tostr(x)), 5);
+	return buff;
+}

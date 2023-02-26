@@ -2,7 +2,6 @@
 #include "Expression.h"
 #include <Module/Symbols/Function.h>
 
-// Literals of integer, floating point, char, bool and string types as well as null
 class TypeConversionExpr final : public Expression {
 	FRIEND_CLASS_VISITORS
 

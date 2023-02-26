@@ -2,52 +2,32 @@
 @set visibility direct_import
 @set safety safe
 @set mangling nomangle
+@set default_imports false
 
 # Note: most of the functions must be ct
 
 
 # Absolute value functions
 @mangle
-def abs(i32 j) i32 {
-	if j < 0 return -j;
-	return j;
-}
+def abs(i32 j) i32 = j < 0 ? -j : j;
 
 @mangle
-def abs(i64 j) i64 {
-	if j < 0 return -j;
-	return j;
-}
+def abs(i64 j) i64 = j < 0 ? -j : j;
 
 @mangle
-def abs(f32 j) f32 {
-	if j < 0 return -j;
-	return j;
-}
+def abs(f32 j) f32 = j < 0 ? -j : j;
 
 @mangle
-def abs(f64 j) f64 {
-	if j < 0 return -j;
-	return j;
-}
+def abs(f64 j) f64 = j < 0 ? -j : j;
  
 @mangle
-def fabs(f32 x) f32 {
-	if j < 0 return -j;
-	return j;
-}
+def fabs(f32 j) f32 = j < 0 ? -j : j;
 
 @mangle
-def fabs(f64 x) f64 {
-	if j < 0 return -j;
-	return j;
-}
+def fabs(f64 j) f64 = j < 0 ? -j : j;
 
 @mangle
-def fabsf(f32 x) f32 {
-	if j < 0 return -j;
-	return j;
-}
+def fabsf(f32 j) f32 = j < 0 ? -j : j;
 
 
 
